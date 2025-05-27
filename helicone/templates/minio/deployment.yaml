@@ -1,0 +1,61 @@
+{{- if .Values.helicone.minio.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "minio.name" . }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.helicone.minio.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "minio.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "minio.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ include "minio.name" $ }}
+          image: "{{ .Values.helicone.minio.image.repository }}:{{ .Values.helicone.minio.image.tag }}"
+          imagePullPolicy: {{ .Values.helicone.minio.image.pullPolicy }}
+          command:
+            - /bin/bash
+            - -c
+          args:
+            - minio server /data --console-address :9001
+          env:
+            {{- with .Values.helicone.minio.extraEnvVars }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: api
+              containerPort: {{ .Values.helicone.minio.service.port }}
+              protocol: TCP
+            - name: console
+              containerPort: {{ .Values.helicone.minio.service.consolePort }}
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          {{- with .Values.helicone.minio.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: api
+            periodSeconds: 10
+            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: api
+            periodSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "minio.name" . }}
+{{- end }} 

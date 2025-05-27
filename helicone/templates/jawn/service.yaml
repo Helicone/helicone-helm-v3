@@ -1,0 +1,21 @@
+{{- if .Values.helicone.jawn.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "jawn.name" . }}
+  {{- with .Values.helicone.jawn.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.helicone.jawn.service.type }}
+  ports:
+    - port: {{ .Values.helicone.jawn.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "helicone.jawn.selectorLabels" . | nindent 4 }}
+{{- end }}

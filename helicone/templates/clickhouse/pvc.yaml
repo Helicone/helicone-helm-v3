@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clickhouse.name" . }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.helicone.clickhouse.persistence.storageClass | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.helicone.clickhouse.persistence.size | quote }}

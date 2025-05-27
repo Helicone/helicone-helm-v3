@@ -1,0 +1,15 @@
+{{- if .Values.helicone.minio.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "minio.name" . }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.helicone.minio.persistence.storageClass | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.helicone.minio.persistence.size | quote }}
+{{- end }} 

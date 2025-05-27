@@ -1,0 +1,66 @@
+{{- if .Values.helicone.jawn.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "jawn.name" . }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.helicone.jawn.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "helicone.jawn.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "helicone.jawn.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ include "jawn.name" $ }}
+          image: "{{ .Values.helicone.jawn.image.repository }}:{{ .Values.helicone.jawn.image.tag }}"
+          imagePullPolicy: {{ .Values.helicone.jawn.image.pullPolicy }}
+          env:
+            {{- include "helicone.env.clickhouseHost" . | nindent 12 }}
+            {{- include "helicone.env.clickhouseUser" . | nindent 12 }}
+            {{- include "helicone.env.dbHost" . | nindent 12 }}
+            {{- include "helicone.env.dbPort" . | nindent 12 }}
+            {{- include "helicone.env.dbUser" . | nindent 12 }}
+            {{- include "helicone.env.dbPassword" . | nindent 12 }}
+            {{- include "helicone.env.dbName" . | nindent 12 }}
+            {{- include "helicone.env.s3AccessKey" . | nindent 12 }}
+            {{- include "helicone.env.s3SecretKey" . | nindent 12 }}
+            {{- include "helicone.env.s3BucketName" . | nindent 12 }}
+            {{- include "helicone.env.s3Endpoint" . | nindent 12 }}
+            {{- include "helicone.env.betterAuthSecret" . | nindent 12 }}
+            {{- include "helicone.env.stripeSecretKey" . | nindent 12 }}
+            {{- include "helicone.env.azureApiKey" . | nindent 12 }}
+            {{- include "helicone.env.azureApiVersion" . | nindent 12 }}
+            {{- include "helicone.env.azureDeploymentName" . | nindent 12 }}
+            {{- include "helicone.env.azureBaseUrl" . | nindent 12 }}
+            {{- include "helicone.env.openaiApiKey" . | nindent 12 }}
+            {{- include "helicone.env.enablePromptSecurity" . | nindent 12 }}
+            {{- include "helicone.env.supabaseUrl" . | nindent 12 }}
+            {{- include "helicone.env.supabaseDatabaseUrl" . | nindent 12 }}
+            {{- include "helicone.env.enableCronJob" . | nindent 12 }}
+            {{- include "helicone.env.databaseUrl" . | nindent 12 }}
+            {{- include "helicone.env.env" . | nindent 12 }}
+            {{- include "helicone.env.nextPublicBetterAuth" . | nindent 12 }}
+            {{- with .Values.helicone.jawn.extraEnvVars }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.helicone.jawn.service.port }}
+              protocol: TCP
+          {{- with .Values.helicone.jawn.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 4
+{{- end }}

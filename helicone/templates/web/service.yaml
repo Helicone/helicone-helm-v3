@@ -1,0 +1,21 @@
+{{- if .Values.helicone.web.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "web.name" . }}
+  {{- with .Values.helicone.web.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.helicone.web.service.type }}
+  ports:
+    - port: {{ .Values.helicone.web.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "helicone.web.selectorLabels" . | nindent 4 }}
+{{- end }}

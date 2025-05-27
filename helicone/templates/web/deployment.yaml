@@ -1,0 +1,123 @@
+{{- if .Values.helicone.web.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "web.name" . }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.helicone.web.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "helicone.web.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "helicone.web.selectorLabels" . | nindent 8 }}
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:15-alpine
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              until pg_isready -h helicone-postgresql -p 5432 -U postgres; do
+                echo "PostgreSQL is not ready yet. Waiting..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-secrets
+                  key: postgres-password
+        {{- if .Values.helicone.minio.enabled }}
+        - name: wait-for-minio
+          image: minio/mc:latest
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for MinIO to be ready..."
+              until mc alias set localminio http://helicone-minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}; do
+                echo "MinIO is not ready yet. Waiting..."
+                sleep 2
+              done
+              echo "MinIO is ready!"
+        {{- end }}
+        - name: wait-for-clickhouse
+          image: curlimages/curl:latest
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for ClickHouse to be ready..."
+              until curl -sSf http://helicone-clickhouse:8123/ping; do
+                echo "ClickHouse is not ready yet. Waiting..."
+                sleep 2
+              done
+              echo "ClickHouse is ready!"
+        - name: postgres-migration-runner
+          image: "{{ .Values.helicone.web.postgresMigrationRunner.image.repository }}:{{ .Values.helicone.web.postgresMigrationRunner.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          {{- with .Values.helicone.web.postgresMigrationRunner.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: FLYWAY_URL
+              value: jdbc:postgresql://helicone-postgresql:5432/helicone_test
+            - name: FLYWAY_USER
+              value: postgres
+            - name: FLYWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-secrets
+                  key: postgres-password
+      containers:
+        - name: web
+          image: "{{ .Values.helicone.web.image.repository }}:{{ .Values.helicone.web.image.tag }}"
+          imagePullPolicy: {{ .Values.helicone.web.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.helicone.web.service.port }}
+              protocol: TCP
+          env:
+            {{- include "helicone.web.env" . | nindent 12 }}
+            {{- include "helicone.web.clickhouseEnv" . | nindent 12 }}
+            {{- include "helicone.env.clickhouseHostDocker" . | nindent 12 }}
+            {{- include "helicone.env.clickhousePort" . | nindent 12 }}
+            {{- include "helicone.env.smtpHost" . | nindent 12 }}
+            {{- include "helicone.env.smtpPort" . | nindent 12 }}
+            {{- include "helicone.env.smtpSecure" . | nindent 12 }}
+            {{- include "helicone.env.nodeEnv" . | nindent 12 }}
+            {{- include "helicone.env.vercelEnv" . | nindent 12 }}
+            {{- include "helicone.env.nextPublicBetterAuth" . | nindent 12 }}
+            {{- include "helicone.env.s3ForcePathStyle" . | nindent 12 }}
+            {{- include "helicone.env.betterAuthSecret" . | nindent 12 }}
+            {{- include "helicone.env.stripeSecretKey" . | nindent 12 }}
+            {{- with .Values.helicone.web.extraEnvVars }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.helicone.web.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            failureThreshold: 4
+{{- end }}

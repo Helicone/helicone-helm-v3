@@ -1,0 +1,25 @@
+{{- if .Values.helicone.minio.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "minio.name" . }}
+  {{- with .Values.helicone.minio.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.helicone.minio.service.type }}
+  ports:
+    - port: {{ .Values.helicone.minio.service.port }}
+      targetPort: api
+      protocol: TCP
+      name: api
+    - port: {{ .Values.helicone.minio.service.consolePort }}
+      targetPort: console
+      protocol: TCP
+      name: console
+  selector:
+    {{- include "minio.selectorLabels" . | nindent 4 }}
+{{- end }} 

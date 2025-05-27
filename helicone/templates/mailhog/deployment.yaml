@@ -1,0 +1,32 @@
+{{- if .Values.mailhog.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helicone.fullname" . }}-mailhog
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mailhog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "helicone.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: mailhog
+  template:
+    metadata:
+      labels:
+        {{- include "helicone.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: mailhog
+    spec:
+      containers:
+        - name: mailhog
+          image: {{ .Values.mailhog.image.repository }}:{{ .Values.mailhog.image.tag }}
+          imagePullPolicy: {{ .Values.mailhog.image.pullPolicy }}
+          ports:
+            - containerPort: 1025
+              name: smtp
+            - containerPort: 8025
+              name: web
+          resources:
+            {{- toYaml .Values.mailhog.resources | nindent 12 }} 
+{{- end }}

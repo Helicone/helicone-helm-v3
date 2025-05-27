@@ -1,0 +1,20 @@
+{{- if .Values.mailhog.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "helicone.fullname" . }}-mailhog
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mailhog
+spec:
+  ports:
+    - port: 1025
+      targetPort: 1025
+      name: smtp
+    - port: 8025
+      targetPort: 8025
+      name: web
+  selector:
+    {{- include "helicone.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: mailhog 
+{{- end }}
