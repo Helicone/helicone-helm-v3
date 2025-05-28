@@ -1,0 +1,45 @@
+{{- if and .Values.helicone.jawn.enabled .Values.helicone.jawn.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "jawn.name" . }}-hpa
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "jawn.name" . }}
+  minReplicas: {{ .Values.helicone.jawn.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.helicone.jawn.autoscaling.maxReplicas }}
+  metrics:
+  {{- if .Values.helicone.jawn.autoscaling.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.helicone.jawn.autoscaling.targetCPUUtilizationPercentage }}
+  {{- end }}
+  {{- if .Values.helicone.jawn.autoscaling.targetMemoryUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.helicone.jawn.autoscaling.targetMemoryUtilizationPercentage }}
+  {{- end }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: {{ .Values.helicone.jawn.autoscaling.behavior.scaleDown.stabilizationWindowSeconds | default 300 }}
+      policies:
+      - type: Percent
+        value: {{ .Values.helicone.jawn.autoscaling.behavior.scaleDown.percentPolicy | default 50 }}
+        periodSeconds: {{ .Values.helicone.jawn.autoscaling.behavior.scaleDown.periodSeconds | default 60 }}
+    scaleUp:
+      stabilizationWindowSeconds: {{ .Values.helicone.jawn.autoscaling.behavior.scaleUp.stabilizationWindowSeconds | default 60 }}
+      policies:
+      - type: Percent
+        value: {{ .Values.helicone.jawn.autoscaling.behavior.scaleUp.percentPolicy | default 100 }}
+        periodSeconds: {{ .Values.helicone.jawn.autoscaling.behavior.scaleUp.periodSeconds | default 15 }}
+{{- end }} 

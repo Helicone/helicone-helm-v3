@@ -1,0 +1,18 @@
+{{- if and .Values.helicone.web.enabled .Values.helicone.web.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "web.name" . }}-pdb
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.helicone.web.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.helicone.web.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.helicone.web.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.helicone.web.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "helicone.web.selectorLabels" . | nindent 6 }}
+{{- end }} 

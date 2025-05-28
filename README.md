@@ -49,6 +49,212 @@ Verify available storage classes:
 kubectl get storageclass
 ```
 
+### Autoscaling Configuration
+
+The Helicone Helm chart supports both Cluster Autoscaling (node-level) and Horizontal Pod Autoscaling (HPA) for automatic scaling based on workload demands.
+
+#### Prerequisites for Autoscaling
+
+1. **Metrics Server** (required for HPA):
+
+   ```bash
+   kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+   ```
+
+2. **IAM OIDC Provider** (required for cluster autoscaling):
+
+   ```bash
+   eksctl utils associate-iam-oidc-provider \
+     --region us-east-2 \
+     --cluster helicone \
+     --approve
+   ```
+
+#### Setting up Cluster Autoscaling
+
+Cluster Autoscaler automatically adjusts the number of nodes in your cluster based on pod requirements.
+
+1. **Create IAM Policy** for Cluster Autoscaler:
+
+   Create a file `cluster-autoscaler-policy.json`:
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": [
+           "autoscaling:DescribeAutoScalingGroups",
+           "autoscaling:DescribeAutoScalingInstances",
+           "autoscaling:DescribeLaunchConfigurations",
+           "autoscaling:DescribeScalingActivities",
+           "autoscaling:DescribeTags",
+           "ec2:DescribeImages",
+           "ec2:DescribeInstanceTypes",
+           "ec2:DescribeLaunchTemplateVersions",
+           "ec2:GetInstanceTypesFromInstanceRequirements"
+         ],
+         "Resource": "*"
+       },
+       {
+         "Effect": "Allow",
+         "Action": [
+           "autoscaling:SetDesiredCapacity",
+           "autoscaling:TerminateInstanceInAutoScalingGroup"
+         ],
+         "Resource": "*",
+         "Condition": {
+           "StringEquals": {
+             "autoscaling:ResourceTag/k8s.io/cluster-autoscaler/helicone": "owned",
+             "autoscaling:ResourceTag/k8s.io/cluster-autoscaler/enabled": "true"
+           }
+         }
+       }
+     ]
+   }
+   ```
+
+   Apply the policy:
+
+   ```bash
+   aws iam create-policy \
+     --policy-name EKSClusterAutoscalerPolicy \
+     --policy-document file://cluster-autoscaler-policy.json
+   ```
+
+2. **Create Service Account** with IAM role:
+
+   ```bash
+   eksctl create iamserviceaccount \
+     --cluster=helicone \
+     --namespace=kube-system \
+     --name=cluster-autoscaler \
+     --attach-policy-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:policy/EKSClusterAutoscalerPolicy \
+     --override-existing-serviceaccounts \
+     --approve
+   ```
+
+3. **Tag Auto Scaling Groups**:
+
+   ```bash
+   # Get node group names
+   NODE_GROUPS=$(aws eks list-nodegroups --cluster-name helicone --query 'nodegroups[]' --output text)
+   
+   # Tag each ASG
+   for ng in $NODE_GROUPS; do
+     ASG_NAME=$(aws eks describe-nodegroup --cluster-name helicone --nodegroup-name $ng \
+       --query 'nodegroup.resources.autoScalingGroups[0].name' --output text)
+     
+     aws autoscaling create-or-update-tags \
+       --tags "ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=false" \
+              "ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/helicone,Value=owned,PropagateAtLaunch=false"
+   done
+   ```
+
+4. **Configure in values.yaml**:
+
+   ```yaml
+   clusterAutoscaler:
+     enabled: true
+     image:
+       tag: "v1.29.2"  # Use version compatible with your K8s version
+     clusterName: "helicone"
+     serviceAccount:
+       roleArn: "arn:aws:iam::<AWS_ACCOUNT_ID>:role/eksctl-helicone-addon-iamserviceaccount-ku-Role1-XXXXX"
+   ```
+
+#### Horizontal Pod Autoscaling (HPA)
+
+HPA automatically scales the number of pods based on CPU/memory utilization.
+
+The Helicone chart includes HPA configuration for web and jawn services by default:
+
+```yaml
+# In values.yaml
+helicone:
+  web:
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+  
+  jawn:
+    autoscaling:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+```
+
+#### Vertical Pod Autoscaling (VPA) - Optional
+
+VPA automatically adjusts pod resource requests and limits based on usage patterns.
+
+1. **Install VPA**:
+
+   ```bash
+   git clone https://github.com/kubernetes/autoscaler.git
+   cd autoscaler/vertical-pod-autoscaler/
+   ./hack/vpa-install.sh
+   ```
+
+2. **Enable in values.yaml**:
+
+   ```yaml
+   helicone:
+     web:
+       verticalPodAutoscaler:
+         enabled: true
+         updateMode: "Off"  # Options: "Off", "Initial", "Recreate", "Auto"
+   ```
+
+#### Automated Setup Script
+
+For convenience, use the provided setup script:
+
+```bash
+./setup-autoscaling.sh
+```
+
+This script will:
+
+- Check prerequisites
+- Install Metrics Server
+- Create IAM policies and service accounts
+- Tag Auto Scaling Groups
+- Update your values.yaml automatically
+
+#### Verifying Autoscaling
+
+1. **Check HPA status**:
+
+   ```bash
+   kubectl get hpa -n default
+   ```
+
+2. **Monitor Cluster Autoscaler logs**:
+
+   ```bash
+   kubectl logs -f deployment/cluster-autoscaler -n kube-system
+   ```
+
+3. **Test autoscaling**:
+
+   ```bash
+   # Create a load test to trigger HPA
+   kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://helicone-web:3000; done"
+   ```
+
+4. **Monitor node scaling**:
+
+   ```bash
+   kubectl get nodes --watch
+   ```
+
 ### Install Cert-Manager & Ingress Controller
 
 For production deployments with HTTPS, set up ingress:

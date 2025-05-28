@@ -1,0 +1,27 @@
+{{- if and .Values.helicone.web.enabled .Values.helicone.web.verticalPodAutoscaler.enabled }}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "web.name" . }}-vpa
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "web.name" . }}
+  updatePolicy:
+    updateMode: {{ .Values.helicone.web.verticalPodAutoscaler.updateMode | default "Off" }}
+  resourcePolicy:
+    containerPolicies:
+    - containerName: web
+      {{- if .Values.helicone.web.verticalPodAutoscaler.minAllowed }}
+      minAllowed:
+        {{- toYaml .Values.helicone.web.verticalPodAutoscaler.minAllowed | nindent 8 }}
+      {{- end }}
+      {{- if .Values.helicone.web.verticalPodAutoscaler.maxAllowed }}
+      maxAllowed:
+        {{- toYaml .Values.helicone.web.verticalPodAutoscaler.maxAllowed | nindent 8 }}
+      {{- end }}
+      controlledResources: ["cpu", "memory"]
+{{- end }} 
