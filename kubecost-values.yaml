@@ -1,0 +1,148 @@
+# Kubecost configuration for AWS EKS
+global:
+  # Enable AWS integration for accurate pricing
+  aws:
+    enabled: true
+    # Set your AWS region
+    region: "us-east-2"
+    # Enable spot instance detection
+    spotInstanceDetection: true
+
+# Cost analyzer configuration
+costAnalyzer:
+  # Enable the cost analyzer
+  enabled: true
+  
+  # Resource requests and limits
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+  # Persistence for cost data
+  persistentVolume:
+    enabled: true
+    size: 10Gi
+    storageClass: "gp2"
+    accessModes:
+      - ReadWriteOnce
+
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 9090
+
+  # Ingress configuration (optional)
+  ingress:
+    enabled: false
+    # Uncomment and configure if you want external access
+    # className: "nginx"
+    # annotations:
+    #   cert-manager.io/cluster-issuer: letsencrypt-prod
+    # hosts:
+    #   - host: kubecost.your-domain.com
+    #     paths:
+    #       - path: /
+    #         pathType: Prefix
+    # tls:
+    #   - secretName: kubecost-tls
+    #     hosts:
+    #       - kubecost.your-domain.com
+
+# Prometheus configuration
+prometheus:
+  # Use existing Prometheus if available, otherwise install
+  enabled: true
+  
+  # Server configuration
+  server:
+    persistentVolume:
+      enabled: true
+      size: 10Gi
+      storageClass: "gp2"
+      accessModes:
+        - ReadWriteOnce
+    
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+  # Node exporter for node metrics
+  nodeExporter:
+    enabled: true
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+
+  # Kube state metrics
+  kubeStateMetrics:
+    enabled: true
+
+# Grafana configuration (optional)
+grafana:
+  enabled: true
+  
+  # Admin credentials
+  adminPassword: "admin123"
+  
+  # Persistence
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: "gp2"
+    accessModes:
+      - ReadWriteOnce
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Network costs (optional, requires additional setup)
+networkCosts:
+  enabled: false
+
+# Cluster controller for multi-cluster (optional)
+clusterController:
+  enabled: false
+
+# Reporting configuration
+reporting:
+  # Enable cost reports
+  enabled: true
+  
+  # Report frequency
+  schedule: "0 2 * * *"  # Daily at 2 AM
+
+# AWS specific configurations
+awsCloudProviderConfig:
+  # Enable AWS cloud provider
+  enabled: true
+  
+  # AWS pricing API
+  pricing:
+    enabled: true
+    
+  # Spot instance pricing
+  spotPricing:
+    enabled: true
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001 

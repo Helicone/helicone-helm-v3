@@ -1,0 +1,80 @@
+# Minimal Kubecost configuration for resource-constrained environments
+global:
+  aws:
+    enabled: true
+    region: "us-east-2"
+
+# Cost analyzer with minimal resources
+costAnalyzer:
+  enabled: true
+  
+  # Minimal resource requests
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+  # Disable persistence to save resources
+  persistentVolume:
+    enabled: false
+
+  service:
+    type: ClusterIP
+    port: 9090
+
+  ingress:
+    enabled: false
+
+# Use existing Prometheus if available, otherwise minimal setup
+prometheus:
+  enabled: true
+  
+  server:
+    # Minimal Prometheus resources
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    
+    # Disable persistence for minimal setup
+    persistentVolume:
+      enabled: false
+    
+    # Minimum retention required by Kubecost
+    retention: "50h"
+
+  # Disable node exporter to save resources
+  nodeExporter:
+    enabled: false
+
+  # Disable kube state metrics to save resources
+  kubeStateMetrics:
+    enabled: false
+
+# Disable Grafana to save resources
+grafana:
+  enabled: false
+
+# Disable network costs
+networkCosts:
+  enabled: false
+
+# Disable cluster controller
+clusterController:
+  enabled: false
+
+# Disable reporting to save resources
+reporting:
+  enabled: false
+
+# Minimal security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001 

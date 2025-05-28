@@ -70,191 +70,6 @@ The Helicone Helm chart supports both Cluster Autoscaling (node-level) and Horiz
      --approve
    ```
 
-#### Setting up Cluster Autoscaling
-
-Cluster Autoscaler automatically adjusts the number of nodes in your cluster based on pod requirements.
-
-1. **Create IAM Policy** for Cluster Autoscaler:
-
-   Create a file `cluster-autoscaler-policy.json`:
-
-   ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Action": [
-           "autoscaling:DescribeAutoScalingGroups",
-           "autoscaling:DescribeAutoScalingInstances",
-           "autoscaling:DescribeLaunchConfigurations",
-           "autoscaling:DescribeScalingActivities",
-           "autoscaling:DescribeTags",
-           "ec2:DescribeImages",
-           "ec2:DescribeInstanceTypes",
-           "ec2:DescribeLaunchTemplateVersions",
-           "ec2:GetInstanceTypesFromInstanceRequirements"
-         ],
-         "Resource": "*"
-       },
-       {
-         "Effect": "Allow",
-         "Action": [
-           "autoscaling:SetDesiredCapacity",
-           "autoscaling:TerminateInstanceInAutoScalingGroup"
-         ],
-         "Resource": "*",
-         "Condition": {
-           "StringEquals": {
-             "autoscaling:ResourceTag/k8s.io/cluster-autoscaler/helicone": "owned",
-             "autoscaling:ResourceTag/k8s.io/cluster-autoscaler/enabled": "true"
-           }
-         }
-       }
-     ]
-   }
-   ```
-
-   Apply the policy:
-
-   ```bash
-   aws iam create-policy \
-     --policy-name EKSClusterAutoscalerPolicy \
-     --policy-document file://cluster-autoscaler-policy.json
-   ```
-
-2. **Create Service Account** with IAM role:
-
-   ```bash
-   eksctl create iamserviceaccount \
-     --cluster=helicone \
-     --namespace=kube-system \
-     --name=cluster-autoscaler \
-     --attach-policy-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:policy/EKSClusterAutoscalerPolicy \
-     --override-existing-serviceaccounts \
-     --approve
-   ```
-
-3. **Tag Auto Scaling Groups**:
-
-   ```bash
-   # Get node group names
-   NODE_GROUPS=$(aws eks list-nodegroups --cluster-name helicone --query 'nodegroups[]' --output text)
-   
-   # Tag each ASG
-   for ng in $NODE_GROUPS; do
-     ASG_NAME=$(aws eks describe-nodegroup --cluster-name helicone --nodegroup-name $ng \
-       --query 'nodegroup.resources.autoScalingGroups[0].name' --output text)
-     
-     aws autoscaling create-or-update-tags \
-       --tags "ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=false" \
-              "ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/helicone,Value=owned,PropagateAtLaunch=false"
-   done
-   ```
-
-4. **Configure in values.yaml**:
-
-   ```yaml
-   clusterAutoscaler:
-     enabled: true
-     image:
-       tag: "v1.29.2"  # Use version compatible with your K8s version
-     clusterName: "helicone"
-     serviceAccount:
-       roleArn: "arn:aws:iam::<AWS_ACCOUNT_ID>:role/eksctl-helicone-addon-iamserviceaccount-ku-Role1-XXXXX"
-   ```
-
-#### Horizontal Pod Autoscaling (HPA)
-
-HPA automatically scales the number of pods based on CPU/memory utilization.
-
-The Helicone chart includes HPA configuration for web and jawn services by default:
-
-```yaml
-# In values.yaml
-helicone:
-  web:
-    autoscaling:
-      enabled: true
-      minReplicas: 2
-      maxReplicas: 10
-      targetCPUUtilizationPercentage: 80
-      targetMemoryUtilizationPercentage: 80
-  
-  jawn:
-    autoscaling:
-      enabled: true
-      minReplicas: 1
-      maxReplicas: 10
-      targetCPUUtilizationPercentage: 80
-      targetMemoryUtilizationPercentage: 80
-```
-
-#### Vertical Pod Autoscaling (VPA) - Optional
-
-VPA automatically adjusts pod resource requests and limits based on usage patterns.
-
-1. **Install VPA**:
-
-   ```bash
-   git clone https://github.com/kubernetes/autoscaler.git
-   cd autoscaler/vertical-pod-autoscaler/
-   ./hack/vpa-install.sh
-   ```
-
-2. **Enable in values.yaml**:
-
-   ```yaml
-   helicone:
-     web:
-       verticalPodAutoscaler:
-         enabled: true
-         updateMode: "Off"  # Options: "Off", "Initial", "Recreate", "Auto"
-   ```
-
-#### Automated Setup Script
-
-For convenience, use the provided setup script:
-
-```bash
-./setup-autoscaling.sh
-```
-
-This script will:
-
-- Check prerequisites
-- Install Metrics Server
-- Create IAM policies and service accounts
-- Tag Auto Scaling Groups
-- Update your values.yaml automatically
-
-#### Verifying Autoscaling
-
-1. **Check HPA status**:
-
-   ```bash
-   kubectl get hpa -n default
-   ```
-
-2. **Monitor Cluster Autoscaler logs**:
-
-   ```bash
-   kubectl logs -f deployment/cluster-autoscaler -n kube-system
-   ```
-
-3. **Test autoscaling**:
-
-   ```bash
-   # Create a load test to trigger HPA
-   kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://helicone-web:3000; done"
-   ```
-
-4. **Monitor node scaling**:
-
-   ```bash
-   kubectl get nodes --watch
-   ```
-
 ### Install Cert-Manager & Ingress Controller
 
 For production deployments with HTTPS, set up ingress:
@@ -441,3 +256,271 @@ When done with testing or to delete the deployment:
    ```bash
    eksctl delete cluster --name helicone --region us-east-2
    ```
+
+## Setting up Cluster Autoscaling
+
+Cluster Autoscaler automatically adjusts the number of nodes in your cluster based on pod requirements.
+
+1. Apply IAM policy:
+
+   ```bash
+   aws iam create-policy \
+     --policy-name EKSClusterAutoscalerPolicy \
+     --policy-document file://cluster-autoscaler-policy.json
+   ```
+
+2. **Create Service Account** with IAM role:
+
+   ```bash
+   eksctl create iamserviceaccount \
+     --cluster=helicone \
+     --namespace=kube-system \
+     --name=cluster-autoscaler \
+     --attach-policy-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:policy/EKSClusterAutoscalerPolicy \
+     --override-existing-serviceaccounts \
+     --approve
+   ```
+
+3. **Tag Auto Scaling Groups**:
+
+   ```bash
+   # Get node group names
+   NODE_GROUPS=$(aws eks list-nodegroups --cluster-name helicone --query 'nodegroups[]' --output text)
+   
+   # Tag each ASG
+   for ng in $NODE_GROUPS; do
+     ASG_NAME=$(aws eks describe-nodegroup --cluster-name helicone --nodegroup-name $ng \
+       --query 'nodegroup.resources.autoScalingGroups[0].name' --output text)
+     
+     aws autoscaling create-or-update-tags \
+       --tags "ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=false" \
+              "ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/helicone,Value=owned,PropagateAtLaunch=false"
+   done
+   ```
+
+4. **Configure in values.yaml**:
+
+   ```yaml
+   clusterAutoscaler:
+     enabled: true
+     image:
+       tag: "v1.29.2"  # Use version compatible with your K8s version
+     clusterName: "helicone"
+     serviceAccount:
+       roleArn: "arn:aws:iam::<AWS_ACCOUNT_ID>:role/eksctl-helicone-addon-iamserviceaccount-ku-Role1-XXXXX"
+   ```
+
+#### Horizontal Pod Autoscaling (HPA)
+
+HPA automatically scales the number of pods based on CPU/memory utilization.
+
+The Helicone chart includes HPA configuration for web and jawn services by default:
+
+```yaml
+# In values.yaml
+helicone:
+  web:
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+  
+  jawn:
+    autoscaling:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+```
+
+#### Vertical Pod Autoscaling (VPA) - Optional
+
+VPA automatically adjusts pod resource requests and limits based on usage patterns.
+
+1. **Install VPA**:
+
+   ```bash
+   git clone https://github.com/kubernetes/autoscaler.git
+   cd autoscaler/vertical-pod-autoscaler/
+   ./hack/vpa-install.sh
+   ```
+
+2. **Enable in values.yaml**:
+
+   ```yaml
+   helicone:
+     web:
+       verticalPodAutoscaler:
+         enabled: true
+         updateMode: "Off"  # Options: "Off", "Initial", "Recreate", "Auto"
+   ```
+
+#### Automated Setup Script
+
+For convenience, use the provided setup script:
+
+```bash
+./setup-autoscaling.sh
+```
+
+This script will:
+
+- Check prerequisites
+- Install Metrics Server
+- Create IAM policies and service accounts
+- Tag Auto Scaling Groups
+- Update your values.yaml automatically
+
+#### Verifying Autoscaling
+
+1. **Check HPA status**:
+
+   ```bash
+   kubectl get hpa -n default
+   ```
+
+2. **Monitor Cluster Autoscaler logs**:
+
+   ```bash
+   kubectl logs -f deployment/cluster-autoscaler -n kube-system
+   ```
+
+3. **Test autoscaling**:
+
+   ```bash
+   # Create a load test to trigger HPA
+   kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://helicone-web:3000; done"
+   ```
+
+4. **Monitor node scaling**:
+
+   ```bash
+   kubectl get nodes --watch
+   ```
+
+## Cost Monitoring with Kubecost
+
+Kubecost is a powerful dashboard that provides real-time visibility into your Kubernetes cluster costs and identifies areas where you can optimize your cluster spending. It breaks down costs by pods, namespaces, services, and other Kubernetes resources, helping you understand exactly where your money is going.
+
+### What Kubecost Provides
+
+- **Real-time cost visibility** by pods, namespaces, clusters, and teams
+- **Cost optimization recommendations** to reduce infrastructure spend by 30-50%
+- **Resource efficiency insights** showing CPU/memory utilization vs. requests
+- **Cost allocation and chargeback** capabilities for multi-tenant environments
+- **Integration with AWS billing** for accurate pricing data
+- **Alerts and governance** to prevent cost overruns
+
+### Installing Kubecost
+
+#### Option 1: Quick Installation (Recommended)
+
+For a quick setup with minimal resource usage:
+
+```bash
+# Add Kubecost Helm repository
+helm repo add kubecost https://kubecost.github.io/cost-analyzer/
+helm repo update
+
+# Create namespace
+kubectl create namespace kubecost
+
+# Install with minimal resources
+helm install kubecost kubecost/cost-analyzer \
+  --namespace kubecost \
+  --set kubecostModel.resources.requests.cpu=50m \
+  --set kubecostModel.resources.requests.memory=128Mi \
+  --set kubecostModel.resources.limits.cpu=200m \
+  --set kubecostModel.resources.limits.memory=256Mi \
+  --set prometheus.server.resources.requests.cpu=50m \
+  --set prometheus.server.resources.requests.memory=128Mi \
+  --set prometheus.server.resources.limits.cpu=200m \
+  --set prometheus.server.resources.limits.memory=256Mi \
+  --set grafana.enabled=false
+```
+
+### Using Kubecost for Optimization
+
+#### 1. **Cost Overview Dashboard**
+
+- View total cluster costs broken down by namespace, deployment, and service
+- Identify the most expensive workloads in your cluster
+- Track cost trends over time
+
+#### 2. **Resource Efficiency**
+
+- **CPU/Memory Utilization**: See actual vs. requested resources
+- **Right-sizing Recommendations**: Get suggestions to optimize resource requests
+- **Idle Resources**: Identify underutilized nodes and pods
+
+#### 3. **Cost Allocation**
+
+- **Namespace Costs**: Understand costs per team or application
+- **Label-based Allocation**: Group costs by custom labels
+- **Chargeback Reports**: Generate reports for internal billing
+
+#### 4. **Optimization Recommendations**
+
+Kubecost provides actionable recommendations such as:
+
+- **Reduce CPU/Memory Requests**: For over-provisioned pods
+- **Increase Resource Limits**: For resource-constrained applications
+- **Node Right-sizing**: Optimize instance types
+- **Spot Instance Usage**: Recommendations for non-critical workloads
+
+#### 5. **Common Optimization Areas**
+
+Based on Kubecost insights, focus on:
+
+```bash
+# Check resource utilization
+kubectl top pods --all-namespaces
+
+# Review resource requests vs limits
+kubectl describe pod <pod-name> | grep -A 10 "Requests\|Limits"
+
+# Optimize based on Kubecost recommendations
+# Example: Reduce memory requests for over-provisioned pods
+```
+
+### Integration with AWS Cost and Usage Reports
+
+For accurate AWS pricing data, Kubecost can integrate with AWS Cost and Usage Reports:
+
+1. **Enable AWS Integration** in Kubecost settings
+2. **Configure IAM permissions** for cost data access
+3. **Set up Cost and Usage Reports** in AWS Billing Console
+
+### Monitoring and Alerts
+
+Set up cost alerts to prevent budget overruns:
+
+1. **Budget Alerts**: Set spending thresholds per namespace
+2. **Efficiency Alerts**: Get notified when utilization drops below thresholds
+3. **Anomaly Detection**: Identify unusual spending patterns
+
+### Verifying Installation
+
+```bash
+# Check pod status
+kubectl get pods -n kubecost
+
+# View Kubecost logs
+kubectl logs -f deployment/kubecost-cost-analyzer -n kubecost
+
+# Test access
+kubectl port-forward --namespace kubecost deployment/kubecost-cost-analyzer 9090
+```
+
+### Cost Optimization Best Practices
+
+1. **Regular Review**: Check Kubecost dashboard weekly for new recommendations
+2. **Resource Right-sizing**: Adjust CPU/memory requests based on actual usage
+3. **Namespace Budgets**: Set cost limits per team or application
+4. **Spot Instances**: Use for non-critical workloads (Kubecost will show savings)
+5. **Storage Optimization**: Monitor PVC usage and resize as needed
+
+**Note**: Allow 25 minutes after installation for Kubecost to gather initial metrics and provide accurate cost data.
