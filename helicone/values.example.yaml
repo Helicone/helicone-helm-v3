@@ -1,0 +1,265 @@
+################################################################################
+#
+#                                 HELICONE
+#
+################################################################################
+global:
+  # Postgresql helm chart expects this format
+  postgresql:
+    auth:
+      database: helicone_test
+      username: postgres
+      postgresPassword: "your-super-secret-and-long-postgres-password"
+
+primary:
+  persistence:
+    size: 5Gi
+    storageClass: "gp2-immediate"
+
+helicone:
+  web:
+    enabled: true
+    image:
+      repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/web
+      pullPolicy: IfNotPresent
+      tag: "v2025.05.23"
+    replicaCount: 1
+    service:
+      annotations: {}
+      type: ClusterIP
+      port: 3000
+    extraEnvVars: []
+    ingress:
+      enabled: true
+      ingressClassName: "nginx"
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      tls:
+        - secretName: helicone-tls
+          hosts:
+            - heliconetest.com
+      hosts:
+        - host: heliconetest.com
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+              backend:
+                serviceName: helicone-web
+                servicePort: 3000
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    verticalPodAutoscaler:
+      enabled: false
+      updateMode: "Off"
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
+      maxUnavailable: null
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          percentPolicy: 50
+          periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          percentPolicy: 100
+          periodSeconds: 15
+    postgresMigrationRunner:
+      image:
+        repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/migrations
+        pullPolicy: IfNotPresent
+        tag: "v2025.05.23-3" 
+      resources: {}
+
+  clickhouse:
+    enabled: true
+    image:
+      repository: clickhouse/clickhouse-server
+      pullPolicy: IfNotPresent
+      tag: "23.4.2.11"
+    replicaCount: 1
+    service:
+      annotations: {}
+      type: ClusterIP
+      port: 8123
+    resources: {}
+    persistence:
+      storageClass: "gp2-immediate"
+      size: 10Gi
+
+  minio:
+    enabled: true
+    image:
+      repository: minio/minio
+      pullPolicy: IfNotPresent
+      tag: "RELEASE.2023-05-18T00-05-36Z"
+    replicaCount: 1
+    service:
+      annotations: {}
+      type: ClusterIP
+      port: 9000
+      consolePort: 9001
+    resources: {}
+    persistence:
+      storageClass: "gp2-immediate"
+      size: 20Gi
+    ingress:
+      enabled: false
+      ingressClassName: ""
+      annotations: {}
+    setup:
+      image:
+        repository: minio/mc
+        tag: "latest"
+        pullPolicy: IfNotPresent
+      buckets:
+        - "request-response-storage"
+
+  jawn:
+    enabled: true
+    image:
+      repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/jawn
+      pullPolicy: IfNotPresent
+      tag: "v2025.05.19"
+    replicaCount: 1
+    service:
+      annotations: {}
+      type: ClusterIP
+      port: 8585
+    extraEnvVars: []
+    publicUrl: "https://heliconetest.com/jawn"
+    ingress:
+      enabled: false
+      ingressClassName: ""
+      annotations: {}
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 512Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          percentPolicy: 50
+          periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          percentPolicy: 100
+          periodSeconds: 15
+
+  config:
+    vercelEnv: "development"
+    clickhouseHost: "helicone-clickhouse"
+    clickhousePort: "8123"
+    clickhouseUser: "default"
+    s3BucketName: "helm-request-response-storage"
+    s3Endpoint: "https://s3.us-west-2.amazonaws.com"
+    openaiProxyPort: "8787"
+    heliconeApiPort: "8788"
+    anthropicProxyPort: "8789"
+    gatewayApiPort: "8790"
+    jawnPort: "8585"
+    jawnPublicUrl: "http://localhost:8585"
+    kongHttpPort: "8000"
+    kongHttpsPort: "8443"
+    pgrstDbSchemas: "public,storage,graphql_public"
+    siteUrl: "http://localhost:3000"
+    additionalRedirectUrls: ""
+    jwtExpiry: "3600"
+    disableSignup: "false"
+    apiExternalUrl: "http://localhost:8000"
+    mailerUrlpathsConfirmation: "/auth/v1/verify"
+    mailerUrlpathsInvite: "/auth/v1/verify"
+    mailerUrlpathsRecovery: "/auth/v1/verify"
+    mailerUrlpathsEmailChange: "/auth/v1/verify"
+    enableEmailSignup: "true"
+    enableEmailAutoconfirm: "false"
+    enablePhoneSignup: "true"
+    enablePhoneAutoconfirm: "true"
+    studioDefaultOrganization: "Default Organization"
+    studioDefaultProject: "Default Project"
+    studioPort: "3000"
+    imgproxyEnableWebpDetection: "true"
+    functionsVerifyJwt: "false"
+    dockerSocketLocation: "/var/run/docker.sock"
+    googleProjectId: "GOOGLE_PROJECT_ID"
+    googleProjectNumber: "GOOGLE_PROJECT_NUMBER"
+
+  secrets:
+    betterAuthSecret: "your-better-auth-secret-key-change-this-in-production"
+    stripeSecretKey: "your-stripe-secret-key-change-this-in-production"
+    minioRootUser: "minioadmin"
+    minioRootPassword: "your-super-secret-minio-password-change-this-in-production"
+    user: "default"
+    s3AccessKey: "your-s3-access-key-change-this-in-production"
+    s3SecretKey: "your-s3-secret-key-change-this-in-production"
+
+mailhog:
+  enabled: true
+  image:
+    repository: mailhog/mailhog
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+extraObjects:
+  - apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: helicone-services-ingress
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+        nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    spec:
+      rules:
+        - host: heliconetest.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: helicone-jawn
+                    port:
+                      number: 8585
+                path: /jawn(/|$)(.*)
+                pathType: ImplementationSpecific
+      tls:
+        - hosts:
+            - heliconetest.com
+          secretName: helicone-tls
+
+clusterAutoscaler:
+  enabled: true
+  image:
+    tag: "v1.29.2" 
+  clusterName: "helicone"
+  extraArgs: []
+  serviceAccount:
+    roleArn: "arn:aws:iam::849596434884:role/cluster-autoscaler-role"
