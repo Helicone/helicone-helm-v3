@@ -107,6 +107,51 @@ For production deployments with HTTPS, set up ingress:
 
 4. Configure your DNS to point to this Load Balancer IP.
 
+## Observability with Grafana
+
+For comprehensive monitoring and observability of your Helicone deployment, you can set up a complete Grafana stack that includes Prometheus, Grafana dashboards, and AlertManager.
+
+### Quick Setup
+
+```bash
+cd grafana-observability
+./install-grafana-stack.sh
+```
+
+This will deploy:
+
+- **Prometheus** - Metrics collection and time-series database
+- **Grafana** - Visualization dashboards with 20+ pre-configured Kubernetes dashboards
+- **AlertManager** - Alert routing and notification management
+- **Node Exporter** - Node-level metrics
+- **Kube State Metrics** - Kubernetes object metrics
+
+### Accessing the Services
+
+After installation, access the services via port-forwarding:
+
+```bash
+# Grafana (admin/admin - change password on first login)
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+# Access at http://localhost:3000
+
+# Prometheus
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
+
+# AlertManager
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-alertmanager 9093:9093
+```
+
+### Key Features
+
+- **Cluster Overview** - High-level cluster health and resource usage
+- **Application Monitoring** - Pod, deployment, and service metrics
+- **Node Monitoring** - CPU, memory, disk, and network metrics
+- **Pre-configured Alerts** - Pod crashes, high resource usage, API server issues
+- **Persistent Storage** - Metrics retained for 30 days by default
+
+For detailed configuration, custom dashboards, and production setup instructions, see the complete documentation in [`grafana-observability/README.md`](./grafana-observability/README.md).
+
 ## Deploy Helicone
 
 1. Install necessary helm dependencies:
@@ -400,35 +445,3 @@ This script will:
    ```bash
    kubectl get nodes --watch
    ```
-
-## Cost Monitoring with Kubecost
-
-Kubecost is a powerful dashboard that provides real-time visibility into your Kubernetes cluster costs and identifies areas where you can optimize your cluster spending. It breaks down costs by pods, namespaces, services, and other Kubernetes resources, helping you understand exactly where your money is going.
-
-### Installing Kubecost
-
-#### Option 1: Quick Installation (Recommended)
-
-For a quick setup with minimal resource usage:
-
-```bash
-# Add Kubecost Helm repository
-helm repo add kubecost https://kubecost.github.io/cost-analyzer/
-helm repo update
-
-# Create namespace
-kubectl create namespace kubecost
-
-# Install with minimal resources
-helm install kubecost kubecost/cost-analyzer \
-  --namespace kubecost \
-  --set kubecostModel.resources.requests.cpu=50m \
-  --set kubecostModel.resources.requests.memory=128Mi \
-  --set kubecostModel.resources.limits.cpu=200m \
-  --set kubecostModel.resources.limits.memory=256Mi \
-  --set prometheus.server.resources.requests.cpu=50m \
-  --set prometheus.server.resources.requests.memory=128Mi \
-  --set prometheus.server.resources.limits.cpu=200m \
-  --set prometheus.server.resources.limits.memory=256Mi \
-  --set grafana.enabled=false
-```
