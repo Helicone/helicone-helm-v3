@@ -61,9 +61,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -495,11 +493,7 @@
   "refresh": "30s",
   "schemaVersion": 36,
   "style": "dark",
-  "tags": [
-    "helicone",
-    "application",
-    "kubernetes"
-  ],
+  "tags": ["helicone", "application", "kubernetes"],
   "templating": {
     "list": []
   },
@@ -512,4 +506,4 @@
   "title": "Helicone Application Dashboard",
   "uid": "helicone-app-dashboard",
   "version": 0
-} 
+}

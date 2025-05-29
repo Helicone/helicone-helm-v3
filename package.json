@@ -1,0 +1,16 @@
+{
+  "name": "helicone-helm-formatting",
+  "version": "1.0.0",
+  "description": "Prettier configuration for Helicone Helm chart",
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.5.0"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:yaml": "prettier --write '**/*.{yaml,yml}'",
+    "format:md": "prettier --write '**/*.md'",
+    "format:json": "prettier --write '**/*.json'"
+  }
+}

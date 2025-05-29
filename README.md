@@ -11,9 +11,11 @@ This Helm chart deploys the complete Helicone stack on Kubernetes.
 ### Prerequisites
 
 1. **[AWS CLI](https://aws.amazon.com/cli/)** - Install and configure with appropriate permissions
-2. **[kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)** - For Kubernetes operations
+2. **[kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)** - For Kubernetes
+   operations
 3. **[Helm](https://helm.sh/docs/intro/install/)** - For chart deployment
-4. **[eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)** - For EKS cluster management
+4. **[eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)** - For EKS cluster
+   management
 
 ### AWS IAM Permissions
 
@@ -51,7 +53,8 @@ kubectl get storageclass
 
 ### Autoscaling Configuration
 
-The Helicone Helm chart supports both Cluster Autoscaling (node-level) and Horizontal Pod Autoscaling (HPA) for automatic scaling based on workload demands.
+The Helicone Helm chart supports both Cluster Autoscaling (node-level) and Horizontal Pod
+Autoscaling (HPA) for automatic scaling based on workload demands.
 
 #### Prerequisites for Autoscaling
 
@@ -109,7 +112,8 @@ For production deployments with HTTPS, set up ingress:
 
 ## Observability with Grafana
 
-For comprehensive monitoring and observability of your Helicone deployment, you can set up a complete Grafana stack that includes Prometheus, Grafana dashboards, and AlertManager.
+For comprehensive monitoring and observability of your Helicone deployment, you can set up a
+complete Grafana stack that includes Prometheus, Grafana dashboards, and AlertManager.
 
 ### Quick Setup
 
@@ -150,7 +154,8 @@ kubectl port-forward -n monitoring svc/kube-prometheus-stack-alertmanager 9093:9
 - **Pre-configured Alerts** - Pod crashes, high resource usage, API server issues
 - **Persistent Storage** - Metrics retained for 30 days by default
 
-For detailed configuration, custom dashboards, and production setup instructions, see the complete documentation in [`grafana-observability/README.md`](./grafana-observability/README.md).
+For detailed configuration, custom dashboards, and production setup instructions, see the complete
+documentation in [`grafana-observability/README.md`](./grafana-observability/README.md).
 
 ## Deploy Helicone
 
@@ -178,46 +183,41 @@ For detailed configuration, custom dashboards, and production setup instructions
 
 ## Configuring S3 (Optional)
 
-If minio is enabled, then it will take the place of S3. Minio is a storage solution similar to AWS S3, which can be used for local testing.
-If minio is disabled by setting the enabled flag under that service to false, then the following parameters are used to configure the bucket:
+If minio is enabled, then it will take the place of S3. Minio is a storage solution similar to AWS
+S3, which can be used for local testing. If minio is disabled by setting the enabled flag under that
+service to false, then the following parameters are used to configure the bucket:
 
 - s3BucketName
 - s3Endpoint
 - s3AccessKey (secret)
 - s3SecretKey (secret)
 
-Make sure to enable the following CORS policy on the S3 bucket, such that the web service can fetch URL's from the bucket. To do so in AWS, in the bucket settings, set the following under Permissions -> Cross-origin resource sharing (CORS):
+Make sure to enable the following CORS policy on the S3 bucket, such that the web service can fetch
+URL's from the bucket. To do so in AWS, in the bucket settings, set the following under Permissions
+-> Cross-origin resource sharing (CORS):
 
-   ```yaml
-   [
-      {
-         "AllowedHeaders": [
-               "*"
-         ],
-         "AllowedMethods": [
-               "GET"
-         ],
-         "AllowedOrigins": [
-               "https://heliconetest.com"
-         ],
-         "ExposeHeaders": [
-               "ETag"
-         ],
-         "MaxAgeSeconds": 3000
-      }
-   ]
-   ```
+```yaml
+[
+  {
+    'AllowedHeaders': ['*'],
+    'AllowedMethods': ['GET'],
+    'AllowedOrigins': ['https://heliconetest.com'],
+    'ExposeHeaders': ['ETag'],
+    'MaxAgeSeconds': 3000,
+  },
+]
+```
 
 ## Scaling and Production Considerations
 
 **Increase Node Count for Production:**
 
-   ```bash
-   eksctl scale nodegroup \
-     --cluster helicone \
-     --name <nodegroup-name> \
-     --nodes 3
-   ```
+```bash
+eksctl scale nodegroup \
+  --cluster helicone \
+  --name <nodegroup-name> \
+  --nodes 3
+```
 
 ## Troubleshooting
 
@@ -304,7 +304,8 @@ When done with testing or to delete the deployment:
 
 ## Setting up Cluster Autoscaling
 
-Cluster Autoscaler automatically adjusts the number of nodes in your cluster based on pod requirements.
+Cluster Autoscaler automatically adjusts the number of nodes in your cluster based on pod
+requirements.
 
 1. Apply IAM policy:
 
@@ -331,12 +332,12 @@ Cluster Autoscaler automatically adjusts the number of nodes in your cluster bas
    ```bash
    # Get node group names
    NODE_GROUPS=$(aws eks list-nodegroups --cluster-name helicone --query 'nodegroups[]' --output text)
-   
+
    # Tag each ASG
    for ng in $NODE_GROUPS; do
      ASG_NAME=$(aws eks describe-nodegroup --cluster-name helicone --nodegroup-name $ng \
        --query 'nodegroup.resources.autoScalingGroups[0].name' --output text)
-     
+
      aws autoscaling create-or-update-tags \
        --tags "ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=false" \
               "ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/helicone,Value=owned,PropagateAtLaunch=false"
@@ -349,10 +350,10 @@ Cluster Autoscaler automatically adjusts the number of nodes in your cluster bas
    clusterAutoscaler:
      enabled: true
      image:
-       tag: "v1.29.2"  # Use version compatible with your K8s version
-     clusterName: "helicone"
+       tag: 'v1.29.2' # Use version compatible with your K8s version
+     clusterName: 'helicone'
      serviceAccount:
-       roleArn: "arn:aws:iam::<AWS_ACCOUNT_ID>:role/eksctl-helicone-addon-iamserviceaccount-ku-Role1-XXXXX"
+       roleArn: 'arn:aws:iam::<AWS_ACCOUNT_ID>:role/eksctl-helicone-addon-iamserviceaccount-ku-Role1-XXXXX'
    ```
 
 #### Horizontal Pod Autoscaling (HPA)
@@ -371,7 +372,7 @@ helicone:
       maxReplicas: 10
       targetCPUUtilizationPercentage: 80
       targetMemoryUtilizationPercentage: 80
-  
+
   jawn:
     autoscaling:
       enabled: true
@@ -400,7 +401,7 @@ VPA automatically adjusts pod resource requests and limits based on usage patter
      web:
        verticalPodAutoscaler:
          enabled: true
-         updateMode: "Off"  # Options: "Off", "Initial", "Recreate", "Auto"
+         updateMode: 'Off' # Options: "Off", "Initial", "Recreate", "Auto"
    ```
 
 #### Automated Setup Script

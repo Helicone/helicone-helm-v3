@@ -80,7 +80,7 @@ helicone:
       image:
         repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/migrations
         pullPolicy: IfNotPresent
-        tag: "v2025.05.23-3" 
+        tag: "v2025.05.23-3"
       resources: {}
 
   clickhouse:
@@ -258,7 +258,7 @@ extraObjects:
 clusterAutoscaler:
   enabled: true
   image:
-    tag: "v1.29.2" 
+    tag: "v1.29.2"
   clusterName: "helicone"
   extraArgs: []
   serviceAccount:

@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+charts/
+*.tgz
+
+# Generated files
+Chart.lock
+
+# Git
+.git/
+
+# IDE
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Secrets (should not be formatted to avoid accidental exposure)
+*secret*
+*Secret*
+*SECRET*
+
+# Helm templates (contain Go template syntax)
+helicone/templates/
+**/templates/
+
+# Helm template files anywhere
+**/*template*.yaml
+**/*template*.yml 

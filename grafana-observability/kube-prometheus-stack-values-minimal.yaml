@@ -53,7 +53,7 @@ prometheus:
     # Short retention for development
     retention: 3d
     retentionSize: "1GB"
-    
+
     # Minimal resources
     resources:
       requests:
@@ -62,14 +62,14 @@ prometheus:
       limits:
         cpu: 500m
         memory: 1Gi
-    
+
     # No persistence in minimal setup
     storageSpec: {}
-    
+
     # Reduce scrape interval to save resources
     scrapeInterval: "60s"
     evaluationInterval: "60s"
-    
+
     # Disable features not needed in dev
     enableAdminAPI: false
     enableFeatures: []
@@ -77,14 +77,14 @@ prometheus:
 # Grafana - minimal configuration
 grafana:
   enabled: true
-  
+
   # Default admin credentials
   adminPassword: "admin"
-  
+
   # No persistence
   persistence:
     enabled: false
-  
+
   # Minimal resources
   resources:
     limits:
@@ -93,7 +93,7 @@ grafana:
     requests:
       cpu: 50m
       memory: 128Mi
-  
+
   # Sidecar for dashboards
   sidecar:
     dashboards:
@@ -101,7 +101,7 @@ grafana:
     datasources:
       enabled: true
       defaultDatasourceEnabled: true
-  
+
   # NodePort for easy access without LoadBalancer
   service:
     type: NodePort
@@ -146,19 +146,19 @@ kubelet:
   serviceMonitor:
     # Reduce metric cardinality
     metricRelabelings:
-    - action: drop
-      regex: container_cpu_usage_seconds_total
-      sourceLabels:
-      - __name__
-    - action: drop
-      regex: container_fs_.*
-      sourceLabels:
-      - __name__
-    - action: drop
-      regex: container_network_.*
-      sourceLabels:
-      - __name__
+      - action: drop
+        regex: container_cpu_usage_seconds_total
+        sourceLabels:
+          - __name__
+      - action: drop
+        regex: container_fs_.*
+        sourceLabels:
+          - __name__
+      - action: drop
+        regex: container_network_.*
+        sourceLabels:
+          - __name__
 kubeProxy:
   enabled: false
 coreDns:
-  enabled: false 
+  enabled: false

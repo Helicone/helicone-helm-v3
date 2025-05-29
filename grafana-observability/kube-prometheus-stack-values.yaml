@@ -20,7 +20,7 @@ prometheus:
     # Retention period for metrics
     retention: 30d
     retentionSize: "10GB"
-    
+
     # Resource allocation for Prometheus
     resources:
       requests:
@@ -29,7 +29,7 @@ prometheus:
       limits:
         cpu: 2000m
         memory: 8Gi
-    
+
     # Storage configuration
     storageSpec:
       volumeClaimTemplate:
@@ -38,30 +38,30 @@ prometheus:
           resources:
             requests:
               storage: 50Gi
-    
+
     # Service monitors to discover
     serviceMonitorSelector: {}
     serviceMonitorNamespaceSelector: {}
     podMonitorSelector: {}
     podMonitorNamespaceSelector: {}
-    
+
     # Enable admin API (useful for metric deletion)
     enableAdminAPI: true
 
 # Grafana Configuration
 grafana:
   enabled: true
-  
+
   # Admin credentials
-  adminPassword: "admin"  # Change this in production!
-  
+  adminPassword: "admin" # Change this in production!
+
   # Persistence for Grafana
   persistence:
     enabled: true
     size: 10Gi
     accessModes:
       - ReadWriteOnce
-  
+
   # Resource allocation
   resources:
     limits:
@@ -70,7 +70,7 @@ grafana:
     requests:
       cpu: 100m
       memory: 128Mi
-  
+
   # Grafana configuration
   grafana.ini:
     server:
@@ -82,7 +82,7 @@ grafana:
       auto_assign_org_role: Editor
     dashboards:
       default_home_dashboard_path: /var/lib/grafana/dashboards/default/kubernetes-cluster-monitoring.json
-  
+
   # Sidecar for dashboard provisioning
   sidecar:
     dashboards:
@@ -93,10 +93,10 @@ grafana:
     datasources:
       enabled: true
       defaultDatasourceEnabled: true
-  
+
   # Service configuration
   service:
-    type: LoadBalancer  # Change to ClusterIP if using Ingress
+    type: LoadBalancer # Change to ClusterIP if using Ingress
     port: 80
     targetPort: 3000
 
@@ -118,23 +118,23 @@ alertmanager:
       limits:
         cpu: 200m
         memory: 256Mi
-  
+
   # Basic alert routing configuration
   config:
     global:
       resolve_timeout: 5m
     route:
-      group_by: ['alertname', 'cluster', 'service']
+      group_by: ["alertname", "cluster", "service"]
       group_wait: 10s
       group_interval: 10s
       repeat_interval: 12h
-      receiver: 'null'
+      receiver: "null"
       routes:
-      - match:
-          alertname: Watchdog
-        receiver: 'null'
+        - match:
+            alertname: Watchdog
+          receiver: "null"
     receivers:
-    - name: 'null'
+      - name: "null"
 
 # Node Exporter for node metrics
 nodeExporter:
@@ -162,35 +162,35 @@ kubeProxy:
 additionalPrometheusRulesMap:
   custom-rules:
     groups:
-    - name: kubernetes-apps
-      interval: 15s
-      rules:
-      - alert: PodCrashLooping
-        expr: |
-          rate(kube_pod_container_status_restarts_total[5m]) > 0
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
-          description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been restarting frequently"
-      
-      - alert: HighMemoryUsage
-        expr: |
-          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High memory usage on {{ $labels.instance }}"
-          description: "Memory usage is above 90% on {{ $labels.instance }}"
-      
-      - alert: HighCPUUsage
-        expr: |
-          100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High CPU usage on {{ $labels.instance }}"
-          description: "CPU usage is above 80% on {{ $labels.instance }}" 
+      - name: kubernetes-apps
+        interval: 15s
+        rules:
+          - alert: PodCrashLooping
+            expr: |
+              rate(kube_pod_container_status_restarts_total[5m]) > 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+              description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been restarting frequently"
+
+          - alert: HighMemoryUsage
+            expr: |
+              (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage on {{ $labels.instance }}"
+              description: "Memory usage is above 90% on {{ $labels.instance }}"
+
+          - alert: HighCPUUsage
+            expr: |
+              100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage on {{ $labels.instance }}"
+              description: "CPU usage is above 80% on {{ $labels.instance }}"

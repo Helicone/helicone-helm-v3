@@ -4,7 +4,7 @@ metadata:
   name: helicone-application-dashboard
   namespace: monitoring
   labels:
-    grafana_dashboard: "1"  # This label tells Grafana to discover and import this dashboard
+    grafana_dashboard: "1" # This label tells Grafana to discover and import this dashboard
 data:
   helicone-application-dashboard.json: |
     {
@@ -521,4 +521,4 @@ data:
       "title": "Helicone Application Dashboard",
       "uid": "helicone-app-dashboard",
       "version": 0
-    } 
+    }

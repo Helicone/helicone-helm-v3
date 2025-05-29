@@ -9,7 +9,7 @@ dependencies:
   - name: postgresql
     version: 17.4.0
     repository: oci://registry-1.docker.io/bitnamicharts
-    alias: db 
+    alias: db
   - name: common
     repository: oci://registry-1.docker.io/bitnamicharts
     tags:
