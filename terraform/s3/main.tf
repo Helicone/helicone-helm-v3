@@ -1,4 +1,13 @@
 terraform {
+    cloud { 
+    
+    organization = "helicone" 
+
+    workspaces { 
+      name = "helicone" 
+    } 
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -8,7 +17,7 @@ terraform {
 }
 
 provider "aws" {
-  region = var.region
+  region     = var.region
 }
 
 resource "aws_s3_bucket" "helm_request_response_storage" {
