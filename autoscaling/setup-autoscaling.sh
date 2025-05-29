@@ -247,7 +247,7 @@ update_values() {
         -e "s/your-eks-cluster-name/$CLUSTER_NAME/g" \
         -e "s/YOUR-ACCOUNT-ID/$ACCOUNT_ID/g" \
         -e "s|arn:aws:iam::YOUR-ACCOUNT-ID:role/cluster-autoscaler-role|$SA_ROLE_ARN|g" \
-        helicone/values.yaml
+        ../helicone/values.yaml
     
     print_status "values.yaml updated"
 }
@@ -256,10 +256,10 @@ update_values() {
 deploy_helm() {
     print_status "Deploying Helm chart with autoscaling enabled..."
     
-    helm upgrade --install helicone ./helicone \
+    helm upgrade --install helicone ../helicone \
         --namespace helicone \
         --create-namespace \
-        --values ./helicone/values.yaml
+        --values ../helicone/values.yaml
     
     print_status "Helm deployment complete"
 }
