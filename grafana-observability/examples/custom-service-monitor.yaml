@@ -1,0 +1,116 @@
+# Example ServiceMonitor for monitoring custom applications
+# This shows how to configure Prometheus to scrape metrics from your own services
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: example-app-monitor
+  namespace: monitoring  # ServiceMonitor should be in the monitoring namespace
+  labels:
+    app: example-app
+    release: kube-prometheus-stack  # Important: must match serviceMonitorSelector in Prometheus
+spec:
+  # Select services to monitor based on labels
+  selector:
+    matchLabels:
+      app: example-app  # Your service must have this label
+      metrics: "true"   # Optional: only monitor services explicitly marked
+  
+  # Which namespaces to look for services in
+  namespaceSelector:
+    matchNames:
+    - default
+    - production
+    - staging
+    # Or use 'any: true' to monitor services in all namespaces
+  
+  # Endpoints to scrape
+  endpoints:
+  - port: metrics  # Name of the service port exposing metrics
+    path: /metrics  # Path where metrics are exposed (default: /metrics)
+    interval: 30s   # How often to scrape
+    scrapeTimeout: 10s
+    
+    # Optional: Basic auth
+    # basicAuth:
+    #   username:
+    #     key: username
+    #     name: example-app-basic-auth
+    #   password:
+    #     key: password
+    #     name: example-app-basic-auth
+    
+    # Optional: Bearer token auth
+    # bearerTokenSecret:
+    #   name: example-app-token
+    #   key: token
+    
+    # Optional: TLS config
+    # scheme: https
+    # tlsConfig:
+    #   caFile: /etc/prometheus/tls/ca.crt
+    #   certFile: /etc/prometheus/tls/cert.crt
+    #   keyFile: /etc/prometheus/tls/key.pem
+    #   insecureSkipVerify: false
+    
+    # Optional: Relabeling - modify labels before storing
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_name]
+      targetLabel: service
+    - sourceLabels: [__meta_kubernetes_namespace]
+      targetLabel: namespace
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+    
+    # Optional: Metric relabeling - filter/modify metrics
+    metricRelabelings:
+    # Drop expensive histogram buckets
+    - sourceLabels: [__name__]
+      regex: 'http_request_duration_seconds_bucket'
+      action: drop
+    # Keep only specific metrics
+    # - sourceLabels: [__name__]
+    #   regex: 'app_(requests|errors|duration)_.*'
+    #   action: keep
+
+---
+# Example Service that would be monitored
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-app
+  namespace: default
+  labels:
+    app: example-app
+    metrics: "true"  # This matches our ServiceMonitor selector
+spec:
+  selector:
+    app: example-app
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: metrics  # This port name matches the ServiceMonitor endpoint
+    port: 9090
+    targetPort: 9090
+
+---
+# Example: Monitoring a service using annotations instead of ServiceMonitor
+# Some operators support prometheus annotations for auto-discovery
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-app-annotated
+  namespace: default
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+spec:
+  selector:
+    app: example-app-annotated
+  ports:
+  - name: http
+    port: 8080
+  - name: metrics
+    port: 9090 
