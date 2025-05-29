@@ -17,6 +17,14 @@ This Helm chart deploys the complete Helicone stack on Kubernetes.
 4. **[eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)** - For EKS cluster
    management
 
+## Cluster Creation on EKS with Terraform
+
+1. Set up [Terraform](https://developer.hashicorp.com/terraform/install)
+2. Go to terraform/eks, then `terraform init`, followed by `terrform validate` followed by
+   `terraform apply`
+
+## Manual Setup
+
 ### AWS IAM Permissions
 
 Create the necessary IAM policies for EKS and EBS volumes:
@@ -182,6 +190,12 @@ documentation in [`grafana-observability/README.md`](./grafana-observability/REA
    ```
 
 ## Configuring S3 (Optional)
+
+### Terraform Setup
+
+Go to terraform/s3, then `terraform validate` followed by `terraform apply`
+
+### Manual Setup
 
 If minio is enabled, then it will take the place of S3. Minio is a storage solution similar to AWS
 S3, which can be used for local testing. If minio is disabled by setting the enabled flag under that
