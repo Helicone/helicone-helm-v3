@@ -1,0 +1,42 @@
+{
+    "nodegroup": {
+        "nodegroupName": "helicone-node-group",
+        "nodegroupArn": "arn:aws:eks:us-west-2:849596434884:nodegroup/helicone/helicone-node-group/68cb8f01-1049-c395-a203-d378a90be0c1",
+        "clusterName": "helicone",
+        "version": "1.29",
+        "releaseVersion": "1.29.15-20250519",
+        "createdAt": "2025-05-29T14:45:46.946000-07:00",
+        "modifiedAt": "2025-05-29T14:45:46.946000-07:00",
+        "status": "CREATING",
+        "capacityType": "ON_DEMAND",
+        "scalingConfig": {
+            "minSize": 1,
+            "maxSize": 3,
+            "desiredSize": 2
+        },
+        "instanceTypes": [
+            "t3.medium"
+        ],
+        "subnets": [
+            "subnet-06626e7fcd4ab1af4",
+            "subnet-04f3173dbfed39c21",
+            "subnet-0e9de48139f1b9eb0"
+        ],
+        "amiType": "AL2_x86_64",
+        "nodeRole": "arn:aws:iam::849596434884:role/helicone-node-role",
+        "diskSize": 20,
+        "health": {
+            "issues": []
+        },
+        "updateConfig": {
+            "maxUnavailable": 1
+        },
+        "tags": {
+            "Project": "helicone",
+            "Environment": "production",
+            "k8s.io/cluster-autoscaler/helicone": "owned",
+            "ManagedBy": "terraform",
+            "k8s.io/cluster-autoscaler/enabled": "true"
+        }
+    }
+}

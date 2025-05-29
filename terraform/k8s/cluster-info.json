@@ -1,0 +1,83 @@
+{
+    "cluster": {
+        "name": "helicone",
+        "arn": "arn:aws:eks:us-west-2:849596434884:cluster/helicone",
+        "createdAt": "2025-05-29T13:58:38.157000-07:00",
+        "version": "1.29",
+        "endpoint": "https://C8727E8DA0C9384DA9FE369A74AB5F39.gr7.us-west-2.eks.amazonaws.com",
+        "roleArn": "arn:aws:iam::849596434884:role/helicone-cluster-role",
+        "resourcesVpcConfig": {
+            "subnetIds": [
+                "subnet-06626e7fcd4ab1af4",
+                "subnet-0d97fa6ea5402b1e1",
+                "subnet-0c38ef6da029db16d",
+                "subnet-04f3173dbfed39c21",
+                "subnet-01e806bbb8b15c864",
+                "subnet-0e9de48139f1b9eb0"
+            ],
+            "securityGroupIds": [],
+            "clusterSecurityGroupId": "sg-0ef86af5aef7933fc",
+            "vpcId": "vpc-0e6c4c80ff9c06f72",
+            "endpointPublicAccess": true,
+            "endpointPrivateAccess": true,
+            "publicAccessCidrs": [
+                "0.0.0.0/0"
+            ]
+        },
+        "kubernetesNetworkConfig": {
+            "serviceIpv4Cidr": "172.20.0.0/16",
+            "ipFamily": "ipv4",
+            "elasticLoadBalancing": {
+                "enabled": false
+            }
+        },
+        "logging": {
+            "clusterLogging": [
+                {
+                    "types": [
+                        "api",
+                        "audit",
+                        "authenticator",
+                        "controllerManager",
+                        "scheduler"
+                    ],
+                    "enabled": true
+                }
+            ]
+        },
+        "identity": {
+            "oidc": {
+                "issuer": "https://oidc.eks.us-west-2.amazonaws.com/id/C8727E8DA0C9384DA9FE369A74AB5F39"
+            }
+        },
+        "status": "ACTIVE",
+        "certificateAuthority": {
+            "data": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJQUpvVHdVRUpwVjB3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRBMU1qa3lNRFU0TVRWYUZ3MHpOVEExTWpjeU1UQXpNVFZhTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUUNtOHkxcHA1Q2JVYVdpMFlZR00rREFqRUQwMTM1RlkzRXhUSDlQanZjSTNCa2VYVWs1WHVTVkkrQXIKeFFsWE5BRkllaWdTMk1jN1puRTVhUmgyeVpKbmQ3RzczUUU2VWdOWGJ1WkFPalpzKzNUNWMzeklIT2Y0NlZQRgpBV3B4aC9iM3VyVEZKVjF0ajMrRFBLNmxsNXVVbHJkQzZrZTBIdk51Z29qYWdnaFo5VkJtOW9oTjNJbE5DT0FDCnR3Tk5LSFVPRThCaEZHTitOZTZtWmtsT1BadGUxeENPaUQyNzNFRlBzNmZjZkxva1ppMHNoVWhIbTlSVk9ZQWMKVlJacm5jM0R4ZGNOV3dPN21Ga29ERkdsdFp2SklaQnNDS3FiYjNjVHUyNmk2bDhTUXArVnhQVEc5RE9KNDFxegptMnFQZjBOOU5Ea3BoRks3bFhQWDlGbjdWamR0QWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJTUDdpZENkc24wUHhOaFVDdGRicHdxTDhqcGhqQVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQjZUd3VQWCtMUApCUlhjZjRnVzhtVDFMMkdycUhFblpkOTRqc2hIZmtNQlBUVi82bjZXdDNoN1QrT1UyWUxMajVsN0hhaXN2MmxsCjhXcStUblpBSElDZ0Z6M2x1aUxmaElJYjg3UXptakpHUFZOWnhFWFBranlpRDdVU0hqVEF0dTBTZ1IyVVpWbE4KSEtpTCtkOHU2cmJNKzNvZ0JSNEFkRkNRRUZiQXRPUktha2JUM1lzOXNyZTUyYUgzMnZJRzc2R1ZPSGc1cXF5UwpUWE1OUkxGbmpCOXdsZnJIMTB6Rk1CelhBLzJoeVdvNVlxREMwSGM2MlBOZmJFdFhDSTVIT0d4K2FzOEU3aUJyCmF4VDQ1QXB0eitXNk11OWd5SzdzQ2hTMm5UTm9wN1Z4STczVG4rSmZwVTRobThoNUFvZDE2KzZ0RkdiaFpPRzYKSnRPcUJtRDNyamwrCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+        },
+        "platformVersion": "eks.38",
+        "tags": {
+            "Project": "helicone",
+            "Environment": "production",
+            "ManagedBy": "terraform"
+        },
+        "encryptionConfig": [
+            {
+                "resources": [
+                    "secrets"
+                ],
+                "provider": {
+                    "keyArn": "arn:aws:kms:us-west-2:849596434884:key/08691fb8-d2a0-4ad1-91cf-9053235a8773"
+                }
+            }
+        ],
+        "health": {
+            "issues": []
+        },
+        "accessConfig": {
+            "authenticationMode": "CONFIG_MAP"
+        },
+        "upgradePolicy": {
+            "supportType": "EXTENDED"
+        }
+    }
+}

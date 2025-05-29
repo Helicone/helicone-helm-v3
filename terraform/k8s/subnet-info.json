@@ -1,0 +1,56 @@
+{
+    "Subnets": [
+        {
+            "AvailabilityZoneId": "usw2-az1",
+            "MapCustomerOwnedIpOnLaunch": false,
+            "OwnerId": "849596434884",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [
+                {
+                    "Key": "kubernetes.io/role/internal-elb",
+                    "Value": "1"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "helicone-vpc-private-us-west-2b"
+                },
+                {
+                    "Key": "ManagedBy",
+                    "Value": "terraform"
+                },
+                {
+                    "Key": "Environment",
+                    "Value": "production"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "helicone"
+                },
+                {
+                    "Key": "kubernetes.io/cluster/helicone",
+                    "Value": "shared"
+                }
+            ],
+            "SubnetArn": "arn:aws:ec2:us-west-2:849596434884:subnet/subnet-0e9de48139f1b9eb0",
+            "EnableDns64": false,
+            "Ipv6Native": false,
+            "PrivateDnsNameOptionsOnLaunch": {
+                "HostnameType": "ip-name",
+                "EnableResourceNameDnsARecord": false,
+                "EnableResourceNameDnsAAAARecord": false
+            },
+            "BlockPublicAccessStates": {
+                "InternetGatewayBlockMode": "off"
+            },
+            "SubnetId": "subnet-0e9de48139f1b9eb0",
+            "State": "available",
+            "VpcId": "vpc-0e6c4c80ff9c06f72",
+            "CidrBlock": "10.0.2.0/24",
+            "AvailableIpAddressCount": 249,
+            "AvailabilityZone": "us-west-2b",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": false
+        }
+    ]
+}

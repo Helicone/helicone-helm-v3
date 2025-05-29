@@ -1,0 +1,51 @@
+{
+    "RouteTables": [
+        {
+            "Associations": [
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-04854176570c7a5de",
+                    "RouteTableId": "rtb-05e6e70dc03805aaa",
+                    "SubnetId": "subnet-0e9de48139f1b9eb0",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "PropagatingVgws": [],
+            "RouteTableId": "rtb-05e6e70dc03805aaa",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "10.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "helicone-vpc-private-us-west-2b"
+                },
+                {
+                    "Key": "Environment",
+                    "Value": "production"
+                },
+                {
+                    "Key": "ManagedBy",
+                    "Value": "terraform"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "helicone"
+                },
+                {
+                    "Key": "kubernetes.io/cluster/helicone",
+                    "Value": "shared"
+                }
+            ],
+            "VpcId": "vpc-0e6c4c80ff9c06f72",
+            "OwnerId": "849596434884"
+        }
+    ]
+}
