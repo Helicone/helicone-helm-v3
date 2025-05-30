@@ -231,7 +231,7 @@ resource "kubernetes_cluster_role_binding" "cluster_autoscaler" {
   }
 }
 
-# Create gp2-immediate storage class for immediate binding (needed by Helicone)
+# Create gp2-immediate storage class for immediate binding
 resource "kubernetes_storage_class" "gp2_immediate" {
   metadata {
     name = "gp2-immediate"
