@@ -31,9 +31,8 @@ helicone:
     extraEnvVars: []
     ingress:
       enabled: true
-      ingressClassName: "nginx"
+      className: "nginx"
       annotations:
-        kubernetes.io/ingress.class: nginx
         cert-manager.io/cluster-issuer: letsencrypt-prod
       tls:
         - secretName: helicone-tls
@@ -43,10 +42,12 @@ helicone:
         - host: heliconetest.com
           paths:
             - path: /
-              pathType: ImplementationSpecific
+              pathType: Prefix
               backend:
-                serviceName: helicone-web
-                servicePort: 3000
+                service:
+                  name: helicone-web
+                  port:
+                    number: 3000
     resources:
       requests:
         cpu: 100m
@@ -234,11 +235,11 @@ extraObjects:
     metadata:
       name: helicone-services-ingress
       annotations:
-        kubernetes.io/ingress.class: nginx
         cert-manager.io/cluster-issuer: letsencrypt-prod
         nginx.ingress.kubernetes.io/rewrite-target: /$2
         nginx.ingress.kubernetes.io/proxy-body-size: "100m"
     spec:
+      ingressClassName: nginx
       rules:
         - host: heliconetest.com
           http:
@@ -254,7 +255,6 @@ extraObjects:
         - hosts:
             - heliconetest.com
           secretName: helicone-tls
-
 clusterAutoscaler:
   enabled: true
   image:
