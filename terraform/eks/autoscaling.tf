@@ -229,4 +229,30 @@ resource "kubernetes_cluster_role_binding" "cluster_autoscaler" {
     name      = kubernetes_service_account.cluster_autoscaler[0].metadata[0].name
     namespace = "kube-system"
   }
+}
+
+# Create gp2-immediate storage class for immediate binding (needed by Helicone)
+resource "kubernetes_storage_class" "gp2_immediate" {
+  metadata {
+    name = "gp2-immediate"
+    annotations = {
+      "storageclass.kubernetes.io/is-default-class" = "false"
+    }
+  }
+  
+  storage_provisioner    = "kubernetes.io/aws-ebs"
+  reclaim_policy         = "Delete"
+  volume_binding_mode    = "Immediate"
+  allow_volume_expansion = true
+  
+  parameters = {
+    type      = "gp2"
+    fsType    = "ext4"
+    encrypted = "true"
+  }
+
+  depends_on = [
+    aws_eks_cluster.eks_cluster,
+    aws_eks_node_group.eks_nodes
+  ]
 } 
