@@ -73,7 +73,7 @@ variable "node_capacity_type" {
 variable "node_disk_size" {
   description = "Disk size in GB for worker nodes"
   type        = number
-  default     = 20
+  default     = 100
 }
 
 variable "node_desired_size" {
