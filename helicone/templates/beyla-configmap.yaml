@@ -1,0 +1,59 @@
+{{- if .Values.beyla.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "helicone.fullname" . }}-beyla-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    component: beyla
+data:
+  beyla-config.yml: |
+    # Enable Kubernetes metadata decoration
+    attributes:
+      kubernetes:
+        enable: true
+    
+    # Configure service discovery
+    discovery:
+      services:
+        - open_ports: {{ .Values.beyla.config.services.openPorts | quote }}
+          {{- if .Values.beyla.config.services.executableName }}
+          exe_path: {{ .Values.beyla.config.services.executableName | quote }}
+          {{- end }}
+    
+    # Route configuration to minimize cardinality
+    routes:
+      {{- if .Values.beyla.config.routes.unmatched }}
+      unmatched: {{ .Values.beyla.config.routes.unmatched }}
+      {{- end }}
+      {{- if .Values.beyla.config.routes.patterns }}
+      patterns:
+        {{- range .Values.beyla.config.routes.patterns }}
+        - {{ . | quote }}
+        {{- end }}
+      {{- end }}
+    
+    # Trace sampling configuration
+    {{- if .Values.beyla.config.tracing.enabled }}
+    otel_traces_export:
+      sampler:
+        name: {{ .Values.beyla.config.tracing.sampler.name | default "parentbased_traceidratio" }}
+        {{- if .Values.beyla.config.tracing.sampler.arg }}
+        arg: {{ .Values.beyla.config.tracing.sampler.arg | quote }}
+        {{- end }}
+    {{- end }}
+    
+    # Metrics configuration
+    otel_metrics_export:
+      interval: {{ .Values.beyla.config.metrics.interval | default "30s" }}
+      {{- if .Values.beyla.config.metrics.buckets }}
+      buckets:
+        {{- range .Values.beyla.config.metrics.buckets }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
+    
+    # Log level
+    log_level: {{ .Values.beyla.config.logLevel | default "info" }}
+{{- end }} 

@@ -205,6 +205,7 @@ helicone:
     dockerSocketLocation: "/var/run/docker.sock"
     googleProjectId: "GOOGLE_PROJECT_ID"
     googleProjectNumber: "GOOGLE_PROJECT_NUMBER"
+    nodeEnv: "development"
 
   secrets:
     betterAuthSecret: "your-better-auth-secret-key-change-this-in-production"
@@ -263,3 +264,45 @@ clusterAutoscaler:
   extraArgs: []
   serviceAccount:
     roleArn: "arn:aws:iam::849596434884:role/cluster-autoscaler-role"
+
+beyla:
+  enabled: true
+  image:
+    repository: grafana/beyla
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  securityContext:
+    privileged: true
+    capabilities:
+      sysAdmin: false
+  otel:
+    endpoint: ""
+    headers: ""
+    protocol: "http/protobuf"
+  config:
+    logLevel: "info"
+    services:
+      openPorts: "3000,8585"
+    routes:
+      unmatched: "heuristic"
+      patterns:
+        - "/healthcheck"
+        - "/api/v1/{id}"
+        - "/auth/{action}"
+    tracing:
+      enabled: true
+      sampler:
+        name: "always_on"
+        arg: "1.0"
+    metrics:
+      interval: "15s"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  extraEnvVars:
+    BEYLA_PRINT_TRACES: "true"
+    BEYLA_PROMETHEUS_PORT: "9090"

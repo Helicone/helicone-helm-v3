@@ -1,0 +1,38 @@
+{{- if .Values.beyla.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "helicone.fullname" . }}-beyla
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    component: beyla
+    # Required label for kube-prometheus-stack discovery
+    release: kube-prometheus-stack
+spec:
+  # Select all pods with Beyla sidecars
+  selector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: 
+          - helicone-web
+          - helicone-jawn
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  podMetricsEndpoints:
+    - port: beyla-metrics
+      path: /metrics
+      interval: 15s
+      honorLabels: true
+      scrapeTimeout: 10s
+      # Add relabeling to identify the service
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+          targetLabel: beyla_service
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+{{- end }} 

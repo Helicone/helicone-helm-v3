@@ -15,6 +15,11 @@ spec:
       labels:
         {{- include "helicone.web.selectorLabels" . | nindent 8 }}
     spec:
+      {{- if .Values.beyla.enabled }}
+      # Required for Beyla sidecar to access the main container's processes
+      shareProcessNamespace: true
+      serviceAccountName: {{ include "helicone.fullname" . }}-beyla
+      {{- end }}
       initContainers:
         - name: wait-for-postgres
           image: postgres:15-alpine
@@ -120,4 +125,77 @@ spec:
             initialDelaySeconds: 120
             periodSeconds: 10
             failureThreshold: 4
+        {{- if .Values.beyla.enabled }}
+        # Beyla sidecar container for eBPF auto-instrumentation
+        - name: beyla
+          image: "{{ .Values.beyla.image.repository }}:{{ .Values.beyla.image.tag }}"
+          imagePullPolicy: {{ .Values.beyla.image.pullPolicy }}
+          ports:
+            - name: beyla-metrics
+              containerPort: 9090
+              protocol: TCP
+          securityContext:
+            # Privileges are required to install the eBPF probes
+            {{- if .Values.beyla.securityContext.privileged }}
+            privileged: true
+            {{- else }}
+            runAsUser: 0
+            readOnlyRootFilesystem: true
+            capabilities:
+              add:
+                - BPF                 # Required for most eBPF probes to function correctly
+                - SYS_PTRACE          # Allows Beyla to access container namespaces and inspect executables
+                - NET_RAW             # Allows Beyla to use socket filters for HTTP requests
+                - CHECKPOINT_RESTORE  # Allows Beyla to open ELF files
+                - DAC_READ_SEARCH     # Allows Beyla to open ELF files
+                - PERFMON             # Allows Beyla to load BPF programs
+                {{- if .Values.beyla.securityContext.capabilities.sysAdmin }}
+                - SYS_ADMIN           # Required for Go application trace context propagation
+                {{- end }}
+              drop:
+                - ALL
+            {{- end }}
+          env:
+            # Configure Beyla to monitor the web service
+            - name: BEYLA_CONFIG_PATH
+              value: "/config/beyla-config.yml"
+            - name: BEYLA_KUBE_METADATA_ENABLE
+              value: "true"
+            {{- if .Values.beyla.otel.endpoint }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.beyla.otel.endpoint | quote }}
+            {{- end }}
+            {{- if .Values.beyla.otel.headers }}
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: {{ .Values.beyla.otel.headers | quote }}
+            {{- end }}
+            {{- if .Values.beyla.otel.protocol }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: {{ .Values.beyla.otel.protocol | quote }}
+            {{- end }}
+            - name: OTEL_SERVICE_NAME
+              value: "{{ include "web.name" . }}"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.namespace={{ .Release.Namespace }},service.instance.id={{ include "web.name" . }}"
+            {{- range $key, $value := .Values.beyla.extraEnvVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: beyla-config
+              mountPath: /config
+              readOnly: true
+            - name: var-run-beyla
+              mountPath: /var/run/beyla
+          resources:
+            {{- toYaml .Values.beyla.resources | nindent 12 }}
+        {{- end }}
+      {{- if .Values.beyla.enabled }}
+      volumes:
+        - name: beyla-config
+          configMap:
+            name: {{ include "helicone.fullname" . }}-beyla-config
+        - name: var-run-beyla
+          emptyDir: {}
+      {{- end }}
 {{- end }}
