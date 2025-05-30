@@ -1,0 +1,60 @@
+# Sentry Data Source Configuration for Grafana
+# This file can be used to provision the Sentry data source automatically
+#
+# To use this file:
+# 1. Replace the placeholder values with your actual Sentry configuration
+# 2. Copy this file to your Grafana provisioning datasources directory
+# 3. Restart Grafana or use the provisioning API
+
+apiVersion: 1
+
+datasources:
+  - name: Sentry
+    type: grafana-sentry-datasource
+    access: proxy
+    orgId: 1
+    version: 1
+    editable: true
+    jsonData:
+      # Your Sentry URL (leave as https://sentry.io for SaaS, or use your on-premise URL)
+      url: https://sentry.io
+      # Your Sentry organization slug (find this in your Sentry URL)
+      # Example: if your URL is https://sentry.io/organizations/my-company/
+      # then orgSlug would be "my-company"
+      orgSlug: YOUR_SENTRY_ORG_SLUG
+    secureJsonData:
+      # Your Sentry Auth Token (generate this from Sentry Developer Settings)
+      # Instructions:
+      # 1. Go to https://sentry.io/settings/{your-org-slug}/developer-settings/
+      # 2. Click "Create New Integration" -> "Internal Integration"
+      # 3. Give it a name like "Grafana"
+      # 4. Provide Read permissions for Project, Issue and Event, and Organization
+      # 5. Click Save Changes and copy the token
+      authToken: YOUR_SENTRY_AUTH_TOKEN
+
+---
+# Alternative configuration if you need multiple Sentry organizations
+# datasources:
+#   - name: Sentry Production
+#     type: grafana-sentry-datasource
+#     access: proxy
+#     orgId: 1
+#     version: 1
+#     editable: true
+#     jsonData:
+#       url: https://sentry.io
+#       orgSlug: your-production-org
+#     secureJsonData:
+#       authToken: your-production-token
+#
+#   - name: Sentry Staging
+#     type: grafana-sentry-datasource
+#     access: proxy
+#     orgId: 1
+#     version: 1
+#     editable: true
+#     jsonData:
+#       url: https://sentry.io
+#       orgSlug: your-staging-org
+#     secureJsonData:
+#       authToken: your-staging-token
