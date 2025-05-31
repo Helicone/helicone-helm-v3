@@ -1,10 +1,12 @@
+{{- if .Values.monitoring.grafana.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: helicone-application-dashboard
-  namespace: monitoring
+  name: {{ include "helicone.fullname" . }}-application-dashboard
+  namespace: {{ .Release.Namespace }}
   labels:
-    grafana_dashboard: "1" # This label tells Grafana to discover and import this dashboard
+    {{- include "helicone.labels" . | nindent 4 }}
+    grafana_dashboard: "1"
 data:
   helicone-application-dashboard.json: |
     {
@@ -27,9 +29,44 @@ data:
       "graphTooltip": 0,
       "id": null,
       "links": [],
+      "templating": {
+        "list": [
+          {
+            "name": "datasource",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {
+              "value": "${datasource}",
+              "text": "Prometheus"
+            },
+            "hide": 0,
+            "includeAll": false,
+            "label": "Prometheus Datasource",
+            "multi": false,
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false
+          },
+          {
+            "name": "namespace",
+            "type": "constant",
+            "query": "{{ .Release.Namespace }}",
+            "current": {
+              "value": "{{ .Release.Namespace }}",
+              "text": "{{ .Release.Namespace }}"
+            },
+            "hide": 2,
+            "includeAll": false,
+            "multi": false,
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false
+          }
+        ]
+      },
       "panels": [
         {
-          "datasource": "Prometheus",
+          "datasource": "${datasource}",
           "description": "Number of running Helicone pods",
           "fieldConfig": {
             "defaults": {
@@ -70,9 +107,7 @@ data:
             "justifyMode": "auto",
             "orientation": "auto",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": false
             },
@@ -81,7 +116,7 @@ data:
           "pluginVersion": "8.5.0",
           "targets": [
             {
-              "expr": "count(kube_pod_info{namespace=\"default\", pod=~\"helicone-.*\", phase=\"Running\"})",
+              "expr": "count(kube_pod_info{namespace=\"$namespace\", pod=~\"helicone-.*\", phase=\"Running\"})",
               "legendFormat": "Running Pods",
               "refId": "A"
             }
@@ -90,7 +125,7 @@ data:
           "type": "stat"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${datasource}",
           "description": "CPU usage across all Helicone components",
           "fieldConfig": {
             "defaults": {
@@ -162,8 +197,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"default\", pod=~\"helicone-.*\", container!=\"POD\", container!=\"\"}[5m])) by (pod) * 100",
-              "legendFormat": "{{pod}}",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"helicone-.*\", container!=\"POD\", container!=\"\"}[5m])) by (pod) * 100",
+              "legendFormat": "{{`{{pod}}`}}",
               "refId": "A"
             }
           ],
@@ -171,7 +206,7 @@ data:
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${datasource}",
           "description": "Memory usage across all Helicone components",
           "fieldConfig": {
             "defaults": {
@@ -243,8 +278,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=\"default\", pod=~\"helicone-.*\", container!=\"POD\", container!=\"\"}) by (pod)",
-              "legendFormat": "{{pod}}",
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"helicone-.*\", container!=\"POD\", container!=\"\"}) by (pod)",
+              "legendFormat": "{{`{{pod}}`}}",
               "refId": "A"
             }
           ],
@@ -252,7 +287,7 @@ data:
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${datasource}",
           "description": "Pod restart count for Helicone components",
           "fieldConfig": {
             "defaults": {
@@ -296,7 +331,7 @@ data:
           "pluginVersion": "8.5.0",
           "targets": [
             {
-              "expr": "kube_pod_container_status_restarts_total{namespace=\"default\", pod=~\"helicone-.*\"}",
+              "expr": "kube_pod_container_status_restarts_total{namespace=\"$namespace\", pod=~\"helicone-.*\"}",
               "format": "table",
               "instant": true,
               "refId": "A"
@@ -329,7 +364,7 @@ data:
           "type": "table"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${datasource}",
           "description": "Network I/O for Helicone pods",
           "fieldConfig": {
             "defaults": {
@@ -401,13 +436,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"default\", pod=~\"helicone-.*\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}} - Receive",
+              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"$namespace\", pod=~\"helicone-.*\"}[5m])) by (pod)",
+              "legendFormat": "{{`{{pod}}`}} - Receive",
               "refId": "A"
             },
             {
-              "expr": "sum(rate(container_network_transmit_bytes_total{namespace=\"default\", pod=~\"helicone-.*\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}} - Transmit",
+              "expr": "sum(rate(container_network_transmit_bytes_total{namespace=\"$namespace\", pod=~\"helicone-.*\"}[5m])) by (pod)",
+              "legendFormat": "{{`{{pod}}`}} - Transmit",
               "refId": "B"
             }
           ],
@@ -415,7 +450,7 @@ data:
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${datasource}",
           "description": "Disk I/O for Helicone pods",
           "fieldConfig": {
             "defaults": {
@@ -487,13 +522,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_fs_reads_bytes_total{namespace=\"default\", pod=~\"helicone-.*\", device!~\"tmpfs\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}} - Read",
+              "expr": "sum(rate(container_fs_reads_bytes_total{namespace=\"$namespace\", pod=~\"helicone-.*\", device!~\"tmpfs\"}[5m])) by (pod)",
+              "legendFormat": "{{`{{pod}}`}} - Read",
               "refId": "A"
             },
             {
-              "expr": "sum(rate(container_fs_writes_bytes_total{namespace=\"default\", pod=~\"helicone-.*\", device!~\"tmpfs\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}} - Write",
+              "expr": "sum(rate(container_fs_writes_bytes_total{namespace=\"$namespace\", pod=~\"helicone-.*\", device!~\"tmpfs\"}[5m])) by (pod)",
+              "legendFormat": "{{`{{pod}}`}} - Write",
               "refId": "B"
             }
           ],
@@ -504,21 +539,16 @@ data:
       "refresh": "30s",
       "schemaVersion": 36,
       "style": "dark",
-      "tags": [
-        "helicone",
-        "application",
-        "kubernetes"
-      ],
-      "templating": {
-        "list": []
-      },
+      "tags": ["helicone", "application", "kubernetes"],
       "time": {
-        "from": "now-6h",
+        "from": "now-1h",
         "to": "now"
       },
       "timepicker": {},
       "timezone": "",
       "title": "Helicone Application Dashboard",
-      "uid": "helicone-app-dashboard",
-      "version": 0
+      "uid": "helicone-app-monitoring",
+      "version": 1,
+      "weekStart": ""
     }
+{{- end }} 

@@ -1,0 +1,13 @@
+{{- if .Values.monitoring.namespaceOverride }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.monitoring.namespaceOverride }}
+  labels:
+    name: {{ .Values.monitoring.namespaceOverride }}
+    {{- include "helicone.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+{{- end }} 

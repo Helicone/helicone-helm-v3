@@ -28,7 +28,7 @@ spec:
             - -c
             - |
               echo "Waiting for PostgreSQL to be ready..."
-              until pg_isready -h helicone-postgresql -p 5432 -U postgres; do
+              until pg_isready -h helicone-db -p 5432 -U postgres; do
                 echo "PostgreSQL is not ready yet. Waiting..."
                 sleep 2
               done
@@ -74,7 +74,7 @@ spec:
           {{- end }}
           env:
             - name: FLYWAY_URL
-              value: jdbc:postgresql://helicone-postgresql:5432/helicone_test
+              value: jdbc:postgresql://helicone-db:5432/helicone_test
             - name: FLYWAY_USER
               value: postgres
             - name: FLYWAY_PASSWORD

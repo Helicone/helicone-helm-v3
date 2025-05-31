@@ -306,3 +306,240 @@ beyla:
   extraEnvVars:
     BEYLA_PRINT_TRACES: "true"
     BEYLA_PROMETHEUS_PORT: "9090"
+
+# Kube-Prometheus-Stack Configuration
+monitoring:
+  # Deploy monitoring components to a separate namespace
+  namespaceOverride: "monitoring"
+
+  # Prometheus Operator
+  prometheusOperator:
+    enabled: true
+    # Deploy operator to monitoring namespace
+    namespaces:
+      releaseNamespace: true
+      additional:
+        - monitoring
+    # Resource limits for the operator
+    resources:
+      limits:
+        cpu: 200m
+        memory: 200Mi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+
+  # Prometheus Configuration
+  prometheus:
+    enabled: true
+    prometheusSpec:
+      # Retention period for metrics
+      retention: 30d
+      retentionSize: "10GB"
+
+      # Resource allocation for Prometheus
+      resources:
+        requests:
+          cpu: 500m
+          memory: 2Gi
+        limits:
+          cpu: 2000m
+          memory: 8Gi
+
+      # Storage configuration
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: "gp2-immediate"
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 50Gi
+
+      # Service monitors to discover across all namespaces
+      serviceMonitorSelector: {}
+      serviceMonitorNamespaceSelector: {}
+      podMonitorSelector: {}
+      podMonitorNamespaceSelector: {}
+
+      # Enable cross-namespace monitoring
+      ruleSelector: {}
+      ruleNamespaceSelector: {}
+
+      # Enable admin API (useful for metric deletion)
+      enableAdminAPI: true
+
+  # Grafana Configuration
+  grafana:
+    enabled: true
+
+    # Deploy to monitoring namespace
+    namespaceOverride: "monitoring"
+
+    # Admin credentials
+    adminPassword: "admin" # Change this in production!
+
+    # Persistence for Grafana
+    persistence:
+      enabled: true
+      storageClassName: "gp2-immediate"
+      size: 10Gi
+      accessModes:
+        - ReadWriteOnce
+
+    # Resource allocation
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+    # Grafana configuration
+    grafana.ini:
+      server:
+        root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"
+        serve_from_sub_path: true
+      auth:
+        disable_login_form: false
+      users:
+        auto_assign_org_role: Editor
+      dashboards:
+        default_home_dashboard_path: /var/lib/grafana/dashboards/default/kubernetes-cluster-monitoring.json
+
+    # Sidecar for dashboard provisioning
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        # Search for dashboards across all namespaces
+        searchNamespace: ALL
+        provider:
+          allowUiUpdates: true
+      datasources:
+        enabled: true
+        defaultDatasourceEnabled: true
+        # Search for datasources across all namespaces
+        searchNamespace: ALL
+
+    # Service configuration
+    service:
+      type: ClusterIP # Using ClusterIP since you have ingress
+      port: 80
+      targetPort: 3000
+
+    # Ingress configuration for Grafana - deploy in monitoring namespace
+    ingress:
+      enabled: true
+      ingressClassName: "nginx"
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+      hosts:
+        - heliconetest.com
+      path: /grafana(/|$)(.*)
+      tls:
+        - secretName: helicone-grafana-tls
+          hosts:
+            - heliconetest.com
+
+  # AlertManager Configuration
+  alertmanager:
+    enabled: true
+
+    # Deploy to monitoring namespace
+    namespaceOverride: "monitoring"
+
+    alertmanagerSpec:
+      storage:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: "gp2-immediate"
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 10Gi
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+
+    # Basic alert routing configuration
+    config:
+      global:
+        resolve_timeout: 5m
+      route:
+        group_by: ["alertname", "cluster", "service"]
+        group_wait: 10s
+        group_interval: 10s
+        repeat_interval: 12h
+        receiver: "null"
+        routes:
+          - match:
+              alertname: Watchdog
+            receiver: "null"
+      receivers:
+        - name: "null"
+
+  # Node Exporter for node metrics
+  nodeExporter:
+    enabled: true
+
+  # Kube State Metrics for Kubernetes object metrics
+  kubeStateMetrics:
+    enabled: true
+
+  # Enable pre-configured ServiceMonitors
+  kubeApiServer:
+    enabled: true
+  kubeControllerManager:
+    enabled: true
+  kubeScheduler:
+    enabled: true
+  kubeEtcd:
+    enabled: true
+  kubelet:
+    enabled: true
+  kubeProxy:
+    enabled: true
+
+  # Additional Prometheus rules
+  additionalPrometheusRulesMap:
+    custom-rules:
+      groups:
+        - name: kubernetes-apps
+          interval: 15s
+          rules:
+            - alert: PodCrashLooping
+              expr: |
+                rate(kube_pod_container_status_restarts_total[5m]) > 0
+              for: 5m
+              labels:
+                severity: critical
+              annotations:
+                summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+                description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been restarting frequently"
+
+            - alert: HighMemoryUsage
+              expr: |
+                (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: "High memory usage on {{ $labels.instance }}"
+                description: "Memory usage is above 90% on {{ $labels.instance }}"
+
+            - alert: HighCPUUsage
+              expr: |
+                100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: "High CPU usage on {{ $labels.instance }}"
+                description: "CPU usage is above 80% on {{ $labels.instance }}"

@@ -1,0 +1,348 @@
+{{- if and .Values.monitoring.grafana.enabled .Values.beyla.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "helicone.fullname" . }}-beyla-http-dashboard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    grafana_dashboard: "1"
+data:
+  beyla-http-dashboard.json: |
+    {
+      "id": null,
+      "uid": null,
+      "title": "Beyla HTTP/S Observability - Helicone Services",
+      "tags": ["beyla", "http", "helicone", "observability"],
+      "style": "dark",
+      "timezone": "browser",
+      "schemaVersion": 41,
+      "version": 0,
+      "refresh": "5s",
+      "time": {
+        "from": "now-15m",
+        "to": "now"
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "datasource",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {
+              "value": "${datasource}",
+              "text": "Prometheus"
+            },
+            "hide": 0,
+            "includeAll": false,
+            "label": "Prometheus Datasource",
+            "multi": false,
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false
+          },
+          {
+            "name": "service",
+            "type": "query",
+            "datasource": "${datasource}",
+            "query": "label_values(http_server_request_duration_seconds, service_name)",
+            "current": {
+              "value": "All",
+              "text": "All"
+            },
+            "includeAll": true,
+            "allValue": ".*",
+            "refresh": 1
+          },
+          {
+            "name": "namespace",
+            "type": "query",
+            "datasource": "${datasource}",
+            "query": "label_values(http_server_request_duration_seconds, k8s_namespace_name)",
+            "current": {
+              "value": ".*",
+              "text": "All"
+            },
+            "includeAll": true,
+            "allValue": ".*",
+            "refresh": 1
+          }
+        ]
+      },
+      "annotations": {
+        "list": []
+      },
+      "panels": [
+        {
+          "id": 1,
+          "datasource": "${datasource}",
+          "title": "HTTP Request Rate",
+          "type": "stat",
+          "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m]))",
+              "legendFormat": "Requests/sec"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "steps": [
+                  { "value": 0, "color": "green" },
+                  { "value": 10, "color": "yellow" },
+                  { "value": 50, "color": "red" }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 2,
+          "datasource": "${datasource}",
+          "title": "Average Response Time",
+          "type": "stat",
+          "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+          "targets": [
+            {
+              "expr": "avg(rate(http_server_request_duration_seconds_sum{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m]) / rate(http_server_request_duration_seconds_count{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m]))",
+              "legendFormat": "Avg Duration"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "steps": [
+                  { "value": 0, "color": "green" },
+                  { "value": 0.5, "color": "yellow" },
+                  { "value": 2, "color": "red" }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 3,
+          "datasource": "${datasource}",
+          "title": "Error Rate",
+          "type": "stat",
+          "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\",http_response_status_code=~\"[45].*\"}[5m])) / sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m])) * 100",
+              "legendFormat": "Error %"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "steps": [
+                  { "value": 0, "color": "green" },
+                  { "value": 1, "color": "yellow" },
+                  { "value": 5, "color": "red" }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 4,
+          "datasource": "${datasource}",
+          "title": "Active Services",
+          "type": "stat",
+          "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+          "targets": [
+            {
+              "expr": "count(count by (service_name) (http_server_request_duration_seconds{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}))",
+              "legendFormat": "Services"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "steps": [{ "value": 0, "color": "blue" }]
+              }
+            }
+          }
+        },
+        {
+          "id": 5,
+          "datasource": "${datasource}",
+          "title": "HTTP Request Rate by Service",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "fillOpacity": 0.1
+              }
+            }
+          }
+        },
+        {
+          "id": 6,
+          "datasource": "${datasource}",
+          "title": "Response Time by Service",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (service_name, le) (rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m])))",
+              "legendFormat": "{{`{{service_name}}`}} - p95"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum by (service_name, le) (rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m])))",
+              "legendFormat": "{{`{{service_name}}`}} - p50"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "fillOpacity": 0.1
+              }
+            }
+          }
+        },
+        {
+          "id": 7,
+          "datasource": "${datasource}",
+          "title": "HTTP Status Codes",
+          "type": "piechart",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+          "targets": [
+            {
+              "expr": "sum by (http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m]))",
+              "legendFormat": "{{`{{http_response_status_code}}`}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": {
+                "hideFrom": {
+                  "tooltip": false,
+                  "legend": false,
+                  "vis": false
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": 8,
+          "datasource": "${datasource}",
+          "title": "Top HTTP Routes",
+          "type": "table",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+          "targets": [
+            {
+              "expr": "topk(10, sum by (http_route, service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m])))",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true, "__name__": true },
+                "renameByName": {
+                  "Value": "Requests/sec",
+                  "service_name": "Service",
+                  "http_route": "Route"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "datasource": "${datasource}",
+          "title": "Request Body Size Distribution",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 22 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_body_size_bytes_bucket{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m])))",
+              "legendFormat": "p95"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m])))",
+              "legendFormat": "p50"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": { "unit": "bytes" }
+          }
+        },
+        {
+          "id": 10,
+          "datasource": "${datasource}",
+          "title": "Response Body Size Distribution",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 22 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_response_body_size_bytes_bucket{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m])))",
+              "legendFormat": "p95"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_response_body_size_bytes_bucket{service_name=~\"$service\",k8s_namespace_name=~\"$namespace\"}[5m])))",
+              "legendFormat": "p50"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": { "unit": "bytes" }
+          }
+        },
+        {
+          "id": 11,
+          "datasource": "${datasource}",
+          "title": "Beyla Build Info",
+          "type": "table",
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 22 },
+          "targets": [
+            {
+              "expr": "beyla_build_info",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "Value": true,
+                  "job": true,
+                  "instance": true
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+{{- end }} 

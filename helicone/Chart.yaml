@@ -7,9 +7,13 @@ appVersion: "1.6.0"
 
 dependencies:
   - name: postgresql
-    version: 17.4.0
+    version: 12.10.0
     repository: oci://registry-1.docker.io/bitnamicharts
     alias: db
+  - name: kube-prometheus-stack
+    version: 65.1.1
+    repository: https://prometheus-community.github.io/helm-charts
+    alias: monitoring
   - name: common
     repository: oci://registry-1.docker.io/bitnamicharts
     tags:
