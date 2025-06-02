@@ -1,0 +1,80 @@
+{{- if and .Values.argocd.enabled .Values.argocd.createProject }}
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ .Values.argocd.project | default "helicone" }}
+  namespace: {{ .Values.argocd.namespace | default "argocd" }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: "Helicone Project for GitOps deployment"
+  
+  # Source repositories that applications in this project can pull from
+  sourceRepos:
+    {{- if .Values.argocd.source.repoURL }}
+    - {{ .Values.argocd.source.repoURL }}
+    {{- end }}
+    - "*" # Allow all repositories (restrict in production)
+    
+  # Destination clusters and namespaces that applications may deploy into
+  destinations:
+    - namespace: {{ .Values.argocd.destination.namespace | default .Release.Namespace }}
+      server: {{ .Values.argocd.destination.server | default "https://kubernetes.default.svc" }}
+    - namespace: "argocd"
+      server: {{ .Values.argocd.destination.server | default "https://kubernetes.default.svc" }}
+    - namespace: "monitoring"
+      server: {{ .Values.argocd.destination.server | default "https://kubernetes.default.svc" }}
+      
+  # Cluster-scoped resources which may be deployed
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: ""
+      kind: PersistentVolume
+    - group: "rbac.authorization.k8s.io"
+      kind: ClusterRole
+    - group: "rbac.authorization.k8s.io"
+      kind: ClusterRoleBinding
+    - group: "apiextensions.k8s.io"
+      kind: CustomResourceDefinition
+    - group: "cert-manager.io"
+      kind: ClusterIssuer
+    - group: "admissionregistration.k8s.io"
+      kind: ValidatingAdmissionWebhook
+    - group: "admissionregistration.k8s.io"
+      kind: MutatingAdmissionWebhook
+    - group: "scheduling.k8s.io"
+      kind: PriorityClass
+    - group: "storage.k8s.io"
+      kind: StorageClass
+    - group: "autoscaling.k8s.io"
+      kind: VerticalPodAutoscaler
+      
+  # Namespace-scoped resources which may be deployed
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+      
+  # Roles provide fine-grained access control
+  roles:
+    - name: admin
+      description: "Admin access to Helicone project"
+      policies:
+        - p, proj:{{ .Values.argocd.project | default "helicone" }}:admin, applications, *, {{ .Values.argocd.project | default "helicone" }}/*, allow
+        - p, proj:{{ .Values.argocd.project | default "helicone" }}:admin, repositories, *, *, allow
+        - p, proj:{{ .Values.argocd.project | default "helicone" }}:admin, clusters, get, *, allow
+      groups:
+        - helicone:admin
+    - name: developer
+      description: "Developer access to Helicone project"
+      policies:
+        - p, proj:{{ .Values.argocd.project | default "helicone" }}:developer, applications, get, {{ .Values.argocd.project | default "helicone" }}/*, allow
+        - p, proj:{{ .Values.argocd.project | default "helicone" }}:developer, applications, sync, {{ .Values.argocd.project | default "helicone" }}/*, allow
+        - p, proj:{{ .Values.argocd.project | default "helicone" }}:developer, repositories, get, *, allow
+      groups:
+        - helicone:developer
+{{- end }} 
