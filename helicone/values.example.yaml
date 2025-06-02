@@ -408,8 +408,8 @@ monitoring:
     # Grafana configuration
     grafana.ini:
       server:
-        root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"
-        serve_from_sub_path: true
+        root_url: "https://grafana.heliconetest.com"
+        serve_from_sub_path: false
       auth:
         disable_login_form: false
       users:
@@ -442,11 +442,10 @@ monitoring:
     ingress:
       enabled: true
       ingressClassName: "nginx"
-      annotations:
-        nginx.ingress.kubernetes.io/rewrite-target: /$2
+      annotations: {}
       hosts:
-        - heliconetest.com
-      path: /grafana(/|$)(.*)
+        - grafana.heliconetest.com
+      path: /
 
   # AlertManager Configuration
   alertmanager:
