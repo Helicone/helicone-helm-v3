@@ -20,6 +20,25 @@ spec:
       shareProcessNamespace: true
       serviceAccountName: {{ include "helicone.fullname" . }}-beyla
       {{- end }}
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:15-alpine
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              until pg_isready -h helicone-core-postgresql -p 5432 -U postgres; do
+                echo "PostgreSQL is not ready yet. Waiting..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-secrets
+                  key: postgres-password
       containers:
         - name: {{ include "jawn.name" $ }}
           image: "{{ .Values.helicone.jawn.image.repository }}:{{ .Values.helicone.jawn.image.tag }}"
@@ -37,6 +56,8 @@ spec:
             {{- include "helicone.env.s3BucketName" . | nindent 12 }}
             {{- include "helicone.env.s3Endpoint" . | nindent 12 }}
             {{- include "helicone.env.betterAuthSecret" . | nindent 12 }}
+            {{- include "helicone.env.betterAuthUrl" . | nindent 12 }}
+            {{- include "helicone.env.betterAuthTrustedOrigins" . | nindent 12 }}
             {{- include "helicone.env.stripeSecretKey" . | nindent 12 }}
             {{- include "helicone.env.azureApiKey" . | nindent 12 }}
             {{- include "helicone.env.azureApiVersion" . | nindent 12 }}

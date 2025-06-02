@@ -1,0 +1,26 @@
+apiVersion: v2
+name: helicone-argocd
+description: Helicone ArgoCD GitOps Setup
+type: application
+version: 0.1.0
+appVersion: "2.12.0"
+
+dependencies:
+  - name: argo-cd
+    version: "7.3.11"
+    repository: "https://argoproj.github.io/argo-helm"
+    condition: argocd.enabled
+
+keywords:
+  - helicone
+  - argocd
+  - gitops
+  - cicd
+
+maintainers:
+  - name: Helicone Team
+    email: engineering@helicone.ai
+
+home: https://helicone.ai
+sources:
+  - https://github.com/Helicone/helicone 
