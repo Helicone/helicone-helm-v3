@@ -107,4 +107,15 @@ output "cluster_autoscaler_role_arn" {
 output "kubectl_config" {
   description = "kubectl config command to update local kubeconfig"
   value       = "aws eks update-kubeconfig --region ${var.region} --name ${aws_eks_cluster.eks_cluster.name}"
+}
+
+# ACM Certificate outputs
+output "certificate_arn" {
+  description = "ARN of the ACM certificate for heliconetest.com"
+  value       = aws_acm_certificate_validation.helicone_cert.certificate_arn
+}
+
+output "certificate_domain_name" {
+  description = "Domain name of the ACM certificate"
+  value       = aws_acm_certificate.helicone_cert.domain_name
 } 

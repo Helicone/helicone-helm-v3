@@ -32,12 +32,7 @@ helicone:
     ingress:
       enabled: true
       className: "nginx"
-      annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-prod
-      tls:
-        - secretName: helicone-tls
-          hosts:
-            - heliconetest.com
+      annotations: {}
       hosts:
         - host: heliconetest.com
           paths:
@@ -142,9 +137,21 @@ helicone:
     extraEnvVars: []
     publicUrl: "https://heliconetest.com/jawn"
     ingress:
-      enabled: false
-      ingressClassName: ""
-      annotations: {}
+      enabled: true
+      className: "nginx"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+        nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+      hosts:
+        - host: heliconetest.com
+          paths:
+            - path: /jawn(/|$)(.*)
+              pathType: ImplementationSpecific
+              backend:
+                service:
+                  name: helicone-jawn
+                  port:
+                    number: 8585
     resources:
       requests:
         cpu: 50m
@@ -230,32 +237,34 @@ mailhog:
       memory: "256Mi"
       cpu: "200m"
 
-extraObjects:
-  - apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: helicone-services-ingress
-      annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-prod
-        nginx.ingress.kubernetes.io/rewrite-target: /$2
-        nginx.ingress.kubernetes.io/proxy-body-size: "100m"
-    spec:
-      ingressClassName: nginx
-      rules:
-        - host: heliconetest.com
-          http:
-            paths:
-              - backend:
-                  service:
-                    name: helicone-jawn
-                    port:
-                      number: 8585
-                path: /jawn(/|$)(.*)
-                pathType: ImplementationSpecific
-      tls:
-        - hosts:
-            - heliconetest.com
-          secretName: helicone-tls
+# Comment out the extraObjects ingress since we're now using proper jawn ingress
+# extraObjects:
+#   - apiVersion: networking.k8s.io/v1
+#     kind: Ingress
+#     metadata:
+#       name: helicone-services-ingress
+#       annotations:
+#         cert-manager.io/cluster-issuer: letsencrypt-prod
+#         nginx.ingress.kubernetes.io/rewrite-target: /$2
+#         nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+#     spec:
+#       ingressClassName: nginx
+#       rules:
+#         - host: heliconetest.com
+#           http:
+#             paths:
+#               - backend:
+#                   service:
+#                     name: helicone-jawn
+#                     port:
+#                       number: 8585
+#                 path: /jawn(/|$)(.*)
+#                 pathType: ImplementationSpecific
+#       tls:
+#         - hosts:
+#             - heliconetest.com
+#           secretName: helicone-tls
+
 clusterAutoscaler:
   enabled: true
   image:
@@ -434,15 +443,10 @@ monitoring:
       enabled: true
       ingressClassName: "nginx"
       annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-prod
         nginx.ingress.kubernetes.io/rewrite-target: /$2
       hosts:
         - heliconetest.com
       path: /grafana(/|$)(.*)
-      tls:
-        - secretName: helicone-grafana-tls
-          hosts:
-            - heliconetest.com
 
   # AlertManager Configuration
   alertmanager:
@@ -543,3 +547,6 @@ monitoring:
               annotations:
                 summary: "High CPU usage on {{ $labels.instance }}"
                 description: "CPU usage is above 80% on {{ $labels.instance }}"
+
+argocd:
+  enabled: false
