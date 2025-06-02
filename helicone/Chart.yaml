@@ -19,8 +19,3 @@ dependencies:
     repository: https://argoproj.github.io/argo-helm
     alias: argocd
     condition: argocd.enabled
-  - name: common
-    repository: oci://registry-1.docker.io/bitnamicharts
-    tags:
-      - bitnami-common
-    version: 2.x.x
