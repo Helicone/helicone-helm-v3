@@ -1,0 +1,26 @@
+apiVersion: v2
+name: helicone-core
+description: Helicone Core Application - Web, Jawn, ClickHouse, MinIO, PostgreSQL
+type: application
+version: 0.1.0
+appVersion: "2025.05.23"
+
+dependencies:
+  - name: postgresql
+    version: "15.5.20"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+
+keywords:
+  - helicone
+  - llm
+  - monitoring
+  - observability
+
+maintainers:
+  - name: Helicone Team
+    email: engineering@helicone.ai
+
+home: https://helicone.ai
+sources:
+  - https://github.com/Helicone/helicone 

@@ -1,0 +1,38 @@
+apiVersion: 1.1
+
+storage:
+  name: helicone
+  type: local # default
+  path: .hcstate # default
+
+releases:
+  helicone-core:
+    chart: ./charts/helicone-core
+    chartVersion: 0.1.0
+    namespace: default
+    createNamespace: true
+    valueFiles:
+      - ./charts/helicone-core/values.yaml
+  helicone-infrastructure:
+    chart: ./charts/helicone-infrastructure
+    chartVersion: 0.1.0
+    namespace: default
+    createNamespace: true
+    valueFiles:
+      - ./charts/helicone-infrastructure/values.yaml
+  helicone-monitoring:
+    chart: ./charts/helicone-monitoring
+    chartVersion: 0.1.0
+    namespace: monitoring
+    createNamespace: true
+    valueFiles:
+      - ./charts/helicone-monitoring/values.yaml
+  helicone-argocd:
+    chart: ./charts/helicone-argocd
+    chartVersion: 0.1.0
+    namespace: argocd
+    createNamespace: true
+    valueFiles:
+      - ./charts/helicone-argocd/values.yaml
+repositories:
+  bitnami: https://charts.bitnami.com/bitnami

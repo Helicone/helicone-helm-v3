@@ -48,6 +48,20 @@ resource "aws_route53_record" "helicone_grafana" {
   }
 }
 
+# Create A record for argocd.heliconetest.com pointing to the load balancer
+resource "aws_route53_record" "helicone_argocd" {
+  zone_id         = data.aws_route53_zone.helicone.zone_id
+  name            = "argocd.heliconetest.com"
+  type            = "A"
+  allow_overwrite = true
+
+  alias {
+    name                   = data.kubernetes_service.ingress_nginx.status.0.load_balancer.0.ingress.0.hostname
+    zone_id                = local.elb_zone_id
+    evaluate_target_health = true
+  }
+}
+
 # Local value for ELB zone ID (us-west-2) - Application Load Balancer
 locals {
   elb_zone_id = "Z1H1FL5HABSF5"  # This is the canonical hosted zone ID for Application Load Balancers in us-west-2
