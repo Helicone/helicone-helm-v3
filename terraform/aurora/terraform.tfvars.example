@@ -1,0 +1,77 @@
+# Example terraform.tfvars file for Aurora PostgreSQL module
+# Copy this file to terraform.tfvars and update with your actual values
+
+# ========================================
+# OPTION 1: Use outputs from EKS module
+# ========================================
+# If you want to use the VPC and subnets from your existing EKS cluster,
+# you can reference the EKS module outputs. Create a main.tf file that calls both modules:
+
+# module "aurora_postgresql" {
+#   source = "./db"
+#   
+#   vpc_id     = module.eks.vpc_id
+#   subnet_ids = module.eks.private_subnet_ids
+#   
+#   allowed_security_group_ids = [module.eks.cluster_security_group_id]
+#   
+#   # ... other variables
+# }
+
+# ========================================
+# OPTION 2: Specify values directly
+# ========================================
+# Required Variables - Replace with your actual values
+vpc_id = "vpc-12345678"  # Replace with your VPC ID from EKS output
+subnet_ids = [
+  "subnet-12345678",     # Replace with your private subnet IDs from EKS
+  "subnet-87654321",     # At least 2 subnets in different AZs required
+  "subnet-11223344"      # Optional third subnet for additional redundancy
+]
+
+# Security - Allow access from specific security groups or CIDR blocks
+allowed_security_group_ids = [
+  "sg-12345678"          # Security group for your EKS nodes or applications
+]
+# OR use CIDR blocks instead
+# allowed_cidr_blocks = ["10.0.0.0/8"]
+
+# ========================================
+# Optional Configuration Overrides
+# ========================================
+cluster_identifier = "helicone-aurora-cluster"
+database_name      = "helicone"
+master_username    = "helicone_admin"
+
+# Instance Configuration
+instance_class = "db.r6g.large"    # Adjust based on your needs
+instance_count = 2                  # Number of Aurora instances
+
+# Environment and Tagging
+environment = "production"
+tags = {
+  Project     = "helicone"
+  Team        = "platform"
+  Environment = "production"
+}
+
+# Backup Configuration
+backup_retention_period = 7
+preferred_backup_window = "03:00-04:00"
+preferred_maintenance_window = "sun:04:00-sun:05:00"
+
+# Monitoring (optional - defaults to enabled)
+enable_monitoring = true
+performance_insights_enabled = true
+
+# Security (optional - defaults to secure settings)
+deletion_protection = true
+skip_final_snapshot = false
+
+# ========================================
+# To get your actual VPC and subnet IDs:
+# ========================================
+# cd ../eks
+# terraform output vpc_id
+# terraform output private_subnet_ids
+# terraform output cluster_security_group_id 
