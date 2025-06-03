@@ -71,7 +71,7 @@ Alternatively, you can install components individually:
    # Install core Helicone application components
    helm upgrade --install helicone-core ./helicone-core -f values.yaml
 
-   # Install infrastructure services (PostgreSQL, Redis, ClickHouse, etc.)
+   # Install infrastructure services (autoscaling, [Beyla](https://grafana.com/docs/beyla/latest/))
    helm upgrade --install helicone-infrastructure ./helicone-infrastructure -f values.yaml
 
    # Install monitoring stack (Grafana, Prometheus)
