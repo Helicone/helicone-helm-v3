@@ -167,6 +167,32 @@ documentation in [`grafana-observability/README.md`](./grafana-observability/REA
 
 ## Deploy Helicone
 
+### Option 1: Using Helm Compose (Recommended)
+
+You can now deploy all Helicone components with a single command using the provided
+`helm-compose.yaml` configuration:
+
+```bash
+helm compose up
+```
+
+This will deploy the complete Helicone stack including:
+
+- **helicone-core** - Main application components (web, jawn, worker, etc.)
+- **helicone-infrastructure** - Infrastructure services (PostgreSQL, Redis, ClickHouse, etc.)
+- **helicone-monitoring** - Monitoring stack (Grafana, Prometheus)
+- **helicone-argocd** - ArgoCD for GitOps workflows
+
+To tear down all components:
+
+```bash
+helm compose down
+```
+
+### Option 2: Manual Helm Installation
+
+Alternatively, you can install components individually:
+
 1. Install necessary helm dependencies:
 
    ```bash
