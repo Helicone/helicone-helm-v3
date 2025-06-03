@@ -4,23 +4,26 @@
 #
 ################################################################################
 global:
-  # Postgresql helm chart expects this format
+  # Aurora PostgreSQL connection details
   postgresql:
     auth:
-      database: helicone_test
-      username: postgres
-      postgresPassword: "your-super-secret-and-long-postgres-password"
+      database: helicone
+      username: helicone_admin
+      existingSecret: "aurora-postgres-credentials"
+      secretKeys:
+        adminPasswordKey: "password"
 
 postgresql:
-  enabled: true
-  auth:
-    database: helicone_test
-    username: postgres
-    postgresPassword: "your-super-secret-and-long-postgres-password"
-  primary:
-    persistence:
-      size: 5Gi
-      storageClass: "gp2-immediate"
+  # Disable the PostgreSQL container - we're using Aurora instead
+  enabled: false
+
+# Aurora connection configuration
+aurora:
+  host: "helicone-aurora-cluster.cluster-cr0pbknv3xbp.us-west-2.rds.amazonaws.com"
+  port: 5432
+  database: "helicone"
+  username: "helicone_admin"
+  # Password will be pulled from Kubernetes secret created from AWS Secrets Manager
 
 helicone:
   web:
@@ -193,11 +196,11 @@ helicone:
     anthropicProxyPort: "8789"
     gatewayApiPort: "8790"
     jawnPort: "8585"
-    jawnPublicUrl: "http://localhost:8585"
+    jawnPublicUrl: "https://heliconetest.com/jawn"
     kongHttpPort: "8000"
     kongHttpsPort: "8443"
     pgrstDbSchemas: "public,storage,graphql_public"
-    siteUrl: "http://localhost:3000"
+    siteUrl: "https://heliconetest.com"
     additionalRedirectUrls: ""
     jwtExpiry: "3600"
     disableSignup: "false"

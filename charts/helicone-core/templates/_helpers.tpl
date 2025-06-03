@@ -130,34 +130,67 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
 
 
 {{/* ------------------------------------------------------------------ */}}
-{{/* Generic Postgres env helpers                                      */}}
+{{/* PostgreSQL connection helpers - Updated for Aurora                */}}
 {{/* ------------------------------------------------------------------ */}}
 {{- define "helicone.env.dbHost" -}}
 - name: DB_HOST
+{{- if .Values.postgresql.enabled }}
   value: {{ printf "%s-postgresql" .Release.Name | quote }}
+{{- else }}
+  valueFrom:
+    secretKeyRef:
+      name: aurora-postgres-credentials
+      key: host
+{{- end }}
 {{- end -}}
 
 {{- define "helicone.env.dbPort" -}}
 - name: DB_PORT
+{{- if .Values.postgresql.enabled }}
   value: "5432"
+{{- else }}
+  valueFrom:
+    secretKeyRef:
+      name: aurora-postgres-credentials
+      key: port
+{{- end }}
 {{- end -}}
 
 {{- define "helicone.env.dbName" -}}
 - name: DB_NAME
+{{- if .Values.postgresql.enabled }}
   value: {{ .Values.global.postgresql.auth.database | quote }}
+{{- else }}
+  valueFrom:
+    secretKeyRef:
+      name: aurora-postgres-credentials
+      key: database
+{{- end }}
 {{- end -}}
 
 {{- define "helicone.env.dbUser" -}}
 - name: DB_USER
+{{- if .Values.postgresql.enabled }}
   value: {{ .Values.global.postgresql.auth.username | quote }}
+{{- else }}
+  valueFrom:
+    secretKeyRef:
+      name: aurora-postgres-credentials
+      key: username
+{{- end }}
 {{- end -}}
 
 {{- define "helicone.env.dbPassword" -}}
 - name: DB_PASSWORD
   valueFrom:
     secretKeyRef:
+{{- if .Values.postgresql.enabled }}
       name: helicone-secrets
       key: postgres-password
+{{- else }}
+      name: aurora-postgres-credentials
+      key: password
+{{- end }}
 {{- end -}}
 
 {{- define "clickhouse.name" -}}
@@ -290,7 +323,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
 
 {{- define "helicone.env.supabaseDatabaseUrl" -}}
 - name: SUPABASE_DATABASE_URL
-  value: "postgres://postgres:$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%20search_path%3Dpublic,extensions"
+  value: "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%20search_path%3Dpublic,extensions"
 {{- end }}
 
 {{- define "helicone.env.enableCronJob" -}}

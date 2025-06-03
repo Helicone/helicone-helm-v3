@@ -21,6 +21,7 @@ spec:
       serviceAccountName: {{ include "helicone.fullname" . }}-beyla
       {{- end }}
       initContainers:
+{{- if .Values.postgresql.enabled }}
         - name: wait-for-postgres
           image: postgres:15-alpine
           command:
@@ -39,6 +40,25 @@ spec:
                 secretKeyRef:
                   name: helicone-secrets
                   key: postgres-password
+{{- else }}
+        - name: wait-for-aurora
+          image: postgres:15-alpine
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Aurora PostgreSQL to be ready..."
+              until pg_isready -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER); do
+                echo "Aurora PostgreSQL is not ready yet. Waiting..."
+                sleep 2
+              done
+              echo "Aurora PostgreSQL is ready!"
+          env:
+{{ include "helicone.env.dbHost" . | indent 12 }}
+{{ include "helicone.env.dbPort" . | indent 12 }}
+{{ include "helicone.env.dbUser" . | indent 12 }}
+{{ include "helicone.env.dbPassword" . | indent 12 }}
+{{- end }}
         {{- if .Values.helicone.minio.enabled }}
         - name: wait-for-minio
           image: minio/mc:latest
@@ -73,6 +93,7 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           env:
+{{- if .Values.postgresql.enabled }}
             - name: FLYWAY_URL
               value: jdbc:postgresql://helicone-core-postgresql:5432/helicone_test
             - name: FLYWAY_USER
@@ -82,6 +103,17 @@ spec:
                 secretKeyRef:
                   name: helicone-secrets
                   key: postgres-password
+{{- else }}
+            - name: FLYWAY_URL
+              value: "jdbc:postgresql://{{ .Values.aurora.host }}:{{ .Values.aurora.port }}/{{ .Values.aurora.database }}"
+            - name: FLYWAY_USER
+              value: "{{ .Values.aurora.username }}"
+            - name: FLYWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aurora-postgres-credentials
+                  key: password
+{{- end }}
       containers:
         - name: web
           image: "{{ .Values.helicone.web.image.repository }}:{{ .Values.helicone.web.image.tag }}"

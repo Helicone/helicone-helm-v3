@@ -21,6 +21,7 @@ spec:
       serviceAccountName: {{ include "helicone.fullname" . }}-beyla
       {{- end }}
       initContainers:
+{{- if .Values.postgresql.enabled }}
         - name: wait-for-postgres
           image: postgres:15-alpine
           command:
@@ -39,6 +40,25 @@ spec:
                 secretKeyRef:
                   name: helicone-secrets
                   key: postgres-password
+{{- else }}
+        - name: wait-for-aurora
+          image: postgres:15-alpine
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Aurora PostgreSQL to be ready..."
+              until pg_isready -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER); do
+                echo "Aurora PostgreSQL is not ready yet. Waiting..."
+                sleep 2
+              done
+              echo "Aurora PostgreSQL is ready!"
+          env:
+{{ include "helicone.env.dbHost" . | indent 12 }}
+{{ include "helicone.env.dbPort" . | indent 12 }}
+{{ include "helicone.env.dbUser" . | indent 12 }}
+{{ include "helicone.env.dbPassword" . | indent 12 }}
+{{- end }}
       containers:
         - name: {{ include "jawn.name" $ }}
           image: "{{ .Values.helicone.jawn.image.repository }}:{{ .Values.helicone.jawn.image.tag }}"
