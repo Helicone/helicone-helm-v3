@@ -197,5 +197,5 @@ To set up an Aurora postgresql database using Terraform, follow these steps:
    terraform apply
    ```
 
-5. After the Aurora cluster is created, you can retrieve the endpoint and credentials from the
-   Terraform output.
+After the aurora resource is created, make sure to set enabled to false for postgresql. This will
+allow the aurora cluster to be used in its place.
