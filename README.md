@@ -11,12 +11,15 @@ and an EKS resources to run the Helicone project on.
 
 ### Prerequisites
 
-1. **[AWS CLI](https://aws.amazon.com/cli/)** - Install and configure with appropriate permissions
-2. **[kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)** - For Kubernetes
+1. Install **[AWS CLI](https://aws.amazon.com/cli/)** - Install and configure with appropriate
+   permissions
+2. Install **[kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)** - For Kubernetes
    operations
-3. **[Helm](https://helm.sh/docs/intro/install/)** - For chart deployment
-4. **[Terraform](https://developer.hashicorp.com/terraform/install)** - For infrastructure as code
-   deployment
+3. Install **[Helm](https://helm.sh/docs/intro/install/)** - For chart deployment
+4. Install **[Terraform](https://developer.hashicorp.com/terraform/install)** - For infrastructure
+   as code deployment
+5. Copy all values.example.yaml files to values.yaml for each of the charts in `charts/` and
+   customize as needed for your configuration.
 
 ## Cluster Creation on EKS with Terraform
 
