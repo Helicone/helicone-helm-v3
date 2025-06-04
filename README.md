@@ -5,7 +5,7 @@ This project is licensed under Apache 2.0 with The Commons Clause.
 ## Overview
 
 This Helm chart deploys the complete Helicone stack on Kubernetes. Terraform creates AWS S3, Aurora,
-and an EKS resources to run the Helicone project on.
+and EKS resources to run the Helicone project on.
 
 ## AWS Setup Guide
 
