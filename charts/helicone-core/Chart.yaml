@@ -4,6 +4,7 @@ description: Helicone Core Application - Web, Jawn, ClickHouse, MinIO, PostgreSQ
 type: application
 version: 0.1.0
 appVersion: "2025.05.23"
+icon: https://helicone.ai/static/logo.png
 
 dependencies:
   - name: postgresql
