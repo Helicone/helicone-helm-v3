@@ -343,5 +343,50 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
 
 {{- define "helicone.env.betterAuthUrl" -}}
 - name: BETTER_AUTH_URL
-  value: "https://heliconetest.com"
+  value: {{ .Values.helicone.config.siteUrl | quote }}
+{{- end }}
+
+{{- define "helicone.env.helixProxyHeliconeApiKey" -}}
+- name: PROXY__HELICONE__API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: helicone-helix-secrets
+      key: proxy_helicone_api_key
+{{- end }}
+
+{{- define "helicone.env.helixOpenaiApiKey" -}}
+- name: OPENAI_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: helicone-helix-secrets
+      key: openai_api_key
+{{- end }}
+
+{{- define "helicone.env.helixAnthropicApiKey" -}}
+- name: ANTHROPIC_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: helicone-helix-secrets
+      key: anthropic_api_key
+{{- end }}
+
+{{- define "helicone.env.helixGeminiApiKey" -}}
+- name: GEMINI_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: helicone-helix-secrets
+      key: gemini_api_key
+{{- end }}
+
+{{- define "helicone.env.helixHeliconeApiKey" -}}
+- name: HELICONE_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: helicone-helix-secrets
+      key: helicone_api_key
+{{- end }}
+
+{{- define "helicone.helix.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "helicone.name" . }}-helix
+app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}

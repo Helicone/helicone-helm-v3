@@ -1,0 +1,20 @@
+routers:
+  default:
+    load-balance:
+      chat:
+        strategy: latency
+        targets:
+          - openai
+auth:
+  require-auth: false
+
+# routers:
+#   default:
+#     load-balance:
+#       chat:
+#         strategy: weighted
+#         targets:
+#         - provider: anthropic
+#           weight: '0.95'
+#         - provider: openai
+#           weight: '0.05'

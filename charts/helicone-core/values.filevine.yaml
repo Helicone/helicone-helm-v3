@@ -43,7 +43,7 @@ helicone:
       className: "nginx"
       annotations: {}
       hosts:
-        - host: heliconetest.com
+        - host: filevine.helicone.ai
           paths:
             - path: /
               pathType: Prefix
@@ -105,7 +105,7 @@ helicone:
       size: 10Gi
 
   minio:
-    enabled: true
+    enabled: false
     image:
       repository: minio/minio
       pullPolicy: IfNotPresent
@@ -144,7 +144,7 @@ helicone:
       type: ClusterIP
       port: 8585
     extraEnvVars: []
-    publicUrl: "https://heliconetest.com/jawn"
+    publicUrl: "https://filevine.helicone.ai/jawn"
     ingress:
       enabled: true
       className: "nginx"
@@ -152,7 +152,7 @@ helicone:
         nginx.ingress.kubernetes.io/rewrite-target: /$2
         nginx.ingress.kubernetes.io/proxy-body-size: "100m"
       hosts:
-        - host: heliconetest.com
+        - host: filevine.helicone.ai
           paths:
             - path: /jawn(/|$)(.*)
               pathType: ImplementationSpecific
@@ -196,11 +196,11 @@ helicone:
     anthropicProxyPort: "8789"
     gatewayApiPort: "8790"
     jawnPort: "8585"
-    jawnPublicUrl: "https://heliconetest.com/jawn"
+    jawnPublicUrl: "https://filevine.helicone.ai/jawn"
     kongHttpPort: "8000"
     kongHttpsPort: "8443"
     pgrstDbSchemas: "public,storage,graphql_public"
-    siteUrl: "https://heliconetest.com"
+    siteUrl: "https://filevine.helicone.ai"
     additionalRedirectUrls: ""
     jwtExpiry: "3600"
     disableSignup: "false"

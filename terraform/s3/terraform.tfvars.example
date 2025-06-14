@@ -1,0 +1,1 @@
+cors_allowed_origins = ["https://heliconetest.com", "https://filevine.helicone-test.com", "https://filevine.helicone.ai", "https://helicone.ai"]
