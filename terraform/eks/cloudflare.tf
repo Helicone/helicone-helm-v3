@@ -113,6 +113,9 @@ resource "cloudflare_record" "helicone_ai_cert_validation" {
 }
 
 # Root domain A records for helicone.ai pointing to load balancer IPs
+# TODO: Delete the A record from the Cloudflare dashboard then apply via Terraform.
+  # Currently, this was manually created within the Cloudflare dashboard. For this configuration to work, the creation of the A record should be deleted from the Cloudflare dashboard then applied via Terraform.
+  # This will create a minute of downtime for the root domain, but will allow the A record to be created and managed via Terraform.
 resource "cloudflare_record" "helicone_ai_root" {
   count = var.create_helicone_ai_root_domain_record ? length(data.dns_a_record_set.ingress_lb.addrs) : 0
   
