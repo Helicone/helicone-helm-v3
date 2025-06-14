@@ -18,7 +18,9 @@
         "editor.formatOnSave": true
     },
     "files.associations": {
-        "*.tpl": "yaml"
+        "*.tpl": "helm",
+        "**/templates/**/*.yaml": "helm",
+        "**/templates/**/*.yml": "helm"
     },
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#ab307e",
@@ -39,5 +41,23 @@
         "titleBar.inactiveBackground": "#83256199",
         "titleBar.inactiveForeground": "#e7e7e799"
     },
-    "peacock.color": "#832561"
+    "peacock.color": "#832561",
+    "[ignore]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
+    "yaml.schemas": {
+        "https://raw.githubusercontent.com/helm/helm/main/pkg/chartutil/schema.json": [
+            "Chart.yaml",
+            "values.yaml",
+            "values.yml"
+        ]
+    },
+    "yaml.validate": false,
+    "[helm]": {
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": true
+        }
+    }
 }
