@@ -2,6 +2,7 @@ terraform {
   required_version = ">= 1.3.0"
 
   cloud { 
+    # TODO Move to the helicone-eks organization
     organization = "helicone" 
 
     workspaces { 
@@ -24,6 +25,10 @@ terraform {
     }
     tls = {
       source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
       version = "~> 4.0"
     }
   }

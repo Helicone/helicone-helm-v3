@@ -19,3 +19,4 @@ override.tf.json
 # Helm values files
 values.yaml
 .hcstate
+secrets.yaml

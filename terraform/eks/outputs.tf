@@ -118,4 +118,78 @@ output "certificate_arn" {
 output "certificate_domain_name" {
   description = "Domain name of the ACM certificate"
   value       = aws_acm_certificate.helicone_cert.domain_name
+}
+
+# ACM Certificate outputs for helicone-test.com
+output "certificate_test_arn" {
+  description = "ARN of the ACM certificate for helicone-test.com"
+  value       = var.enable_helicone_test_domain ? aws_acm_certificate.helicone_test_cert[0].arn : null
+}
+
+output "certificate_test_domain_name" {
+  description = "Domain name of the ACM certificate for helicone-test.com"
+  value       = var.enable_helicone_test_domain ? aws_acm_certificate.helicone_test_cert[0].domain_name : null
+}
+
+output "certificate_test_validation_options" {
+  description = "Certificate validation options for helicone-test.com (to be added to Cloudflare)"
+  value       = var.enable_helicone_test_domain ? aws_acm_certificate.helicone_test_cert[0].domain_validation_options : null
+  sensitive   = false
+}
+
+# Cloudflare DNS record outputs
+output "cloudflare_app_record" {
+  description = "Cloudflare DNS record for the application subdomain"
+  value = var.enable_helicone_test_domain ? {
+    name     = cloudflare_record.helicone_app[0].name
+    content  = cloudflare_record.helicone_app[0].content
+    hostname = cloudflare_record.helicone_app[0].hostname
+  } : null
+}
+
+output "cloudflare_zone_id" {
+  description = "Cloudflare zone ID for helicone-test.com"
+  value       = var.enable_helicone_test_domain ? data.cloudflare_zone.helicone_test[0].id : null
+}
+
+output "application_url" {
+  description = "Full URL for the application"
+  value       = var.enable_helicone_test_domain ? "https://${var.cloudflare_subdomain}.${var.cloudflare_zone_name}" : null
+}
+
+# ACM Certificate outputs for helicone.ai
+output "certificate_helicone_ai_arn" {
+  description = "ARN of the ACM certificate for helicone.ai"
+  value       = aws_acm_certificate.helicone_ai_cert.arn
+}
+
+output "certificate_helicone_ai_domain_name" {
+  description = "Domain name of the ACM certificate for helicone.ai"
+  value       = aws_acm_certificate.helicone_ai_cert.domain_name
+}
+
+output "certificate_helicone_ai_validation_options" {
+  description = "Certificate validation options for helicone.ai (to be added to Cloudflare)"
+  value       = aws_acm_certificate.helicone_ai_cert.domain_validation_options
+  sensitive   = false
+}
+
+# Cloudflare DNS record outputs for helicone.ai
+output "cloudflare_helicone_ai_app_record" {
+  description = "Cloudflare DNS record for the helicone.ai application subdomain"
+  value = {
+    name     = cloudflare_record.helicone_ai_app.name
+    content  = cloudflare_record.helicone_ai_app.content
+    hostname = cloudflare_record.helicone_ai_app.hostname
+  }
+}
+
+output "cloudflare_helicone_ai_zone_id" {
+  description = "Cloudflare zone ID for helicone.ai"
+  value       = data.cloudflare_zone.helicone_ai.id
+}
+
+output "helicone_ai_application_url" {
+  description = "Full URL for the helicone.ai application"
+  value       = "https://${var.cloudflare_helicone_ai_subdomain}.${var.cloudflare_helicone_ai_zone_name}"
 } 

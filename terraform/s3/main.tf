@@ -4,7 +4,7 @@ terraform {
     organization = "helicone" 
 
     workspaces { 
-      name = "helicone" 
+      name = "helicone-s3" 
     } 
   }
 
