@@ -8,6 +8,7 @@ Chart.lock
 
 # Git
 .git/
+.gitignore
 
 # IDE
 .vscode/

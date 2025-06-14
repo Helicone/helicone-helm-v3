@@ -18,5 +18,5 @@ override.tf.json
 
 # Helm values files
 values.yaml
+values.filevine.yaml
 .hcstate
-secrets.yaml
