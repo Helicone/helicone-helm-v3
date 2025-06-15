@@ -34,13 +34,13 @@ spec:
               value: "minioadmin"
             - name: PROXY__MINIO__SECRET_KEY
               value: "minioadmin"
-            {{ include "helicone.env.helixProxyHeliconeApiKey" . }}
-            {{ include "helicone.env.helixOpenaiApiKey" . }}
-            {{ include "helicone.env.helixAnthropicApiKey" . }}
-            {{ include "helicone.env.helixGeminiApiKey" . }}
+            {{- include "helicone.env.helixProxyHeliconeApiKey" . | nindent 12 }}
+            {{- include "helicone.env.helixOpenaiApiKey" . | nindent 12 }}
+            {{- include "helicone.env.helixAnthropicApiKey" . | nindent 12 }}
+            {{- include "helicone.env.helixGeminiApiKey" . | nindent 12 }}
             - name: OTEL_METRIC_EXPORT_INTERVAL
               value: "5000"
-            {{ include "helicone.env.helixHeliconeApiKey" . }}
+            {{- include "helicone.env.helixHeliconeApiKey" . | nindent 12 }}
       volumes:
         - name: config
           configMap:
