@@ -45,7 +45,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- define "helicone.env.clickhouseHost" -}}
 - name: CLICKHOUSE_HOST
   value: "http://{{ include "clickhouse.name" . }}:8123"
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.clickhouseUser" -}}
 - name: CLICKHOUSE_USER
@@ -53,7 +53,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
     secretKeyRef:
       name: {{ include "clickhouse.name" . }}-secrets
       key: user
-{{- end -}}
+{{- end }}
 
 {{- define "s3.name" -}}
   {{ include "helicone.name" . }}-s3
@@ -83,7 +83,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
       name: helicone-secrets
       key: access_key
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.s3SecretKey" -}}
 - name: S3_SECRET_KEY
@@ -98,7 +98,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
       name: helicone-secrets
       key: secret_key
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.s3Endpoint" -}}
 - name: S3_ENDPOINT
@@ -110,7 +110,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
       name: helicone-secrets
       key: endpoint
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.s3BucketName" -}}
 - name: S3_BUCKET_NAME
@@ -122,7 +122,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
       name: helicone-secrets
       key: bucket_name
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.dbHost" -}}
 - name: DB_HOST
@@ -134,7 +134,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
       name: aurora-postgres-credentials
       key: host
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.dbPort" -}}
 - name: DB_PORT
@@ -146,7 +146,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
       name: aurora-postgres-credentials
       key: port
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.dbName" -}}
 - name: DB_NAME
@@ -158,7 +158,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
       name: aurora-postgres-credentials
       key: database
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.dbUser" -}}
 - name: DB_USER
@@ -170,7 +170,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
       name: aurora-postgres-credentials
       key: username
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.dbPassword" -}}
 - name: DB_PASSWORD
@@ -183,7 +183,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
       name: aurora-postgres-credentials
       key: password
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "clickhouse.name" -}}
 {{ include "helicone.name" . }}-clickhouse
