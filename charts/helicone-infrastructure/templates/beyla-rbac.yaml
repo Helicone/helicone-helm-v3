@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "helicone.fullname" . }}-beyla
+  name: {{ include "helicone.name" . }}-beyla
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
@@ -11,7 +11,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "helicone.fullname" . }}-beyla
+  name: {{ include "helicone.name" . }}-beyla
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
     component: beyla
@@ -26,16 +26,16 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "helicone.fullname" . }}-beyla
+  name: {{ include "helicone.name" . }}-beyla
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
     component: beyla
 subjects:
   - kind: ServiceAccount
-    name: {{ include "helicone.fullname" . }}-beyla
+    name: {{ include "helicone.name" . }}-beyla
     namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "helicone.fullname" . }}-beyla
+  name: {{ include "helicone.name" . }}-beyla
 {{- end }} 
