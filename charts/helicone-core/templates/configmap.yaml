@@ -16,9 +16,6 @@ data:
   GATEWAY_API_PORT: {{ .Values.helicone.config.gatewayApiPort | quote }}
   JAWN_PORT: {{ .Values.helicone.config.jawnPort | quote }}
   JAWN_PUBLIC_URL: {{ .Values.helicone.config.jawnPublicUrl | quote }}
-  POSTGRES_HOST: {{ .Values.helicone.config.postgresHost | quote }}
-  POSTGRES_DB: {{ .Values.helicone.config.postgresDb | quote }}
-  POSTGRES_PORT: {{ .Values.helicone.config.postgresPort | quote }}
   KONG_HTTP_PORT: {{ .Values.helicone.config.kongHttpPort | quote }}
   KONG_HTTPS_PORT: {{ .Values.helicone.config.kongHttpsPort | quote }}
   PGRST_DB_SCHEMAS: {{ .Values.helicone.config.pgrstDbSchemas | quote }}
@@ -27,7 +24,7 @@ data:
   JWT_EXPIRY: {{ .Values.helicone.config.jwtExpiry | quote }}
   DISABLE_SIGNUP: {{ .Values.helicone.config.disableSignup | quote }}
   API_EXTERNAL_URL: {{ .Values.helicone.config.apiExternalUrl | quote }}
-  MAILER_URLPATHS_CONFIRMATION: {{ .Values.helicone.config.mailerUrlpathsConfirmation | quote }}
+  MAILER_URLPATHS_CONFIRMATION: {{ .Values.helicone.config.mailerUrlpathsConfirmation | quote }}  # TODO Have it be part of the web configmap, and group into mailer template in helpers.tpl
   MAILER_URLPATHS_INVITE: {{ .Values.helicone.config.mailerUrlpathsInvite | quote }}
   MAILER_URLPATHS_RECOVERY: {{ .Values.helicone.config.mailerUrlpathsRecovery | quote }}
   MAILER_URLPATHS_EMAIL_CHANGE: {{ .Values.helicone.config.mailerUrlpathsEmailChange | quote }}
