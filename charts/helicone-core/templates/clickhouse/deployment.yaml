@@ -5,6 +5,7 @@ metadata:
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
 spec:
+  serviceName: {{ include "clickhouse.name" . }}
   replicas: {{ .Values.helicone.clickhouse.replicaCount }}
   selector:
     matchLabels:
@@ -15,7 +16,7 @@ spec:
         {{- include "clickhouse.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: {{ include "clickhouse.name" $ }}
+        - name: {{ include "clickhouse.name" . }}
           image: "{{ .Values.helicone.clickhouse.image.repository }}:{{ .Values.helicone.clickhouse.image.tag }}"
           imagePullPolicy: {{ .Values.helicone.clickhouse.image.pullPolicy }}
           env:
@@ -40,8 +41,14 @@ spec:
               port: http
             periodSeconds: 10
             failureThreshold: 10
-      volumes:
-        - name: db
-          persistentVolumeClaim:
-            claimName: {{ include "clickhouse.name" . }}
+  volumeClaimTemplates:
+    - metadata:
+        name: db
+      spec:
+        accessModes: 
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.helicone.clickhouse.persistence.size }}
+        storageClassName: {{ .Values.helicone.clickhouse.persistence.storageClass }}
 
