@@ -1,36 +1,20 @@
-{{/*
-Expand the name of the chart.
-*/}}
-
 {{- define "helicone.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
-
-TODO, make sure this is the ONLY fullname named template in this chart for consistencies sake
-*/}}
-{{- define "helicone.fullname" -}}
-{{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- $name := default .Chart.Name }}
 {{- if contains $name .Release.Name }}
 {{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- else }}
 {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 {{- end }}
-{{- end }}
+
+# TODO Place the correct environment variables in the correct location. This requires refactoring the other charts as well.
+# - Move to other helpers.tpl files and refactor accordingly.
 
 {{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "helicone.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+  {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -42,7 +26,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Common labels
+Labels
 */}}
 {{- define "helicone.labels" -}}
 helm.sh/chart: {{ include "helicone.chart" . }}
@@ -50,13 +34,14 @@ helm.sh/chart: {{ include "helicone.chart" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
+# TODO This should probably be grouped with the selector label template or some other template.
 
-{{- define "helicone.env.datadogEnabled" -}}
-- name: DATADOG_ENABLED
-  value: "false"
-{{- end -}}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
 
+{{/*
+  Environment variables and secrets
+*/}}
 {{- define "helicone.env.clickhouseHost" -}}
 - name: CLICKHOUSE_HOST
   value: "http://{{ include "clickhouse.name" . }}:8123"
@@ -71,9 +56,20 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
 {{- end -}}
 
 {{- define "s3.name" -}}
-{{ include "helicone.name" . }}-s3
+  {{ include "helicone.name" . }}-s3
 {{- end }}
 
+
+# TODO Make this configurable
+{{- define "helicone.env.betterAuthTrustedOrigins" -}}
+- name: BETTER_AUTH_TRUSTED_ORIGINS
+  value: "https://heliconetest.com,http://heliconetest.com"
+{{- end }}
+
+{{/*
+  Minio and S3 logic
+*/}}
+# TODO This conditional logic will incur tech debt which needs to be refactored.
 {{- define "helicone.env.s3AccessKey" -}}
 - name: S3_ACCESS_KEY
 {{- if eq .Values.helicone.minio.enabled true }}
@@ -128,10 +124,6 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
 {{- end }}
 {{- end -}}
 
-
-{{/* ------------------------------------------------------------------ */}}
-{{/* PostgreSQL connection helpers - Updated for Aurora                */}}
-{{/* ------------------------------------------------------------------ */}}
 {{- define "helicone.env.dbHost" -}}
 - name: DB_HOST
 {{- if .Values.postgresql.enabled }}
@@ -205,26 +197,6 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
 {{ include "helicone.name" . }}-redis
 {{- end }}
 
-{{- define "helicone.worker.env" -}}
-{{ include "helicone.env.dbHost" . }}
-{{ include "helicone.env.dbPort" . }}
-{{ include "helicone.env.dbName" . }}
-{{ include "helicone.env.dbUser" . }}
-{{ include "helicone.env.dbPassword" . }}
-{{ include "helicone.env.clickhouseUser" . }}
-{{ include "helicone.env.clickhouseHost" . }}
-{{ include "helicone.env.s3AccessKey" . }}
-{{ include "helicone.env.s3SecretKey" . }}
-{{ include "helicone.env.s3BucketName" . }}
-{{ include "helicone.env.s3Endpoint" . }}
-{{ include "helicone.env.datadogEnabled" . }}
-{{- end }}
-
-{{- define "helicone.env.betterAuthTrustedOrigins" -}}
-- name: BETTER_AUTH_TRUSTED_ORIGINS
-  value: "https://heliconetest.com,http://heliconetest.com"
-{{- end }}
-
 {{- define "helicone.env.betterAuthSecret" -}}
 - name: BETTER_AUTH_SECRET
   valueFrom:
@@ -256,6 +228,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
   value: "helicone-mailhog"
 {{- end }}
 
+# TODO Move these into the same template such that they can be grouped together (define and include).
 {{- define "helicone.env.smtpPort" -}}
 - name: SMTP_PORT
   value: "1025"
@@ -308,19 +281,22 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
 
 {{- define "helicone.env.openaiApiKey" -}}
 - name: OPENAI_API_KEY
-  value: "sk-"
+  value: {{ .Values.helicone.config.openaiApiKey | default "sk-" | quote }}
 {{- end }}
 
 {{- define "helicone.env.enablePromptSecurity" -}}
 - name: ENABLE_PROMPT_SECURITY
-  value: "false"
+  value: {{ .Values.helicone.config.enablePromptSecurity | default false | quote }}
 {{- end }}
 
+
+# TODO This is a temporary solution to get the supabase url working. It will incur tech debt if we don't refactor to support other types of connection strings that don't end with postgresql.
 {{- define "helicone.env.supabaseUrl" -}}
 - name: SUPABASE_URL
   value: "http://{{ printf "%s-postgresql" .Release.Name }}:5432"
 {{- end }}
 
+# TODO This is tech debt as a result of jawn still having the 
 {{- define "helicone.env.supabaseDatabaseUrl" -}}
 - name: SUPABASE_DATABASE_URL
   value: "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%20search_path%3Dpublic,extensions"
@@ -331,11 +307,13 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
   value: "true"
 {{- end }}
 
+# TODO This is a temporary solution to get the supabase database url working. It will incur tech debt if we don't refactor to support other types of connection strings.
 {{- define "helicone.env.databaseUrl" -}}
 - name: DATABASE_URL
   value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%20search_path%3Dpublic,extensions"
 {{- end }}
 
+# TODO Not sure why this is needed within any of the deployments.
 {{- define "helicone.env.env" -}}
 - name: ENV
   value: "development"
@@ -343,7 +321,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
 
 {{- define "helicone.env.betterAuthUrl" -}}
 - name: BETTER_AUTH_URL
-  value: {{ .Values.helicone.config.siteUrl | quote }}
+  value: {{ .Values.helicone.config.siteUrl | default "https://heliconetest.com" | quote }}
 {{- end }}
 
 {{- define "helicone.env.helixProxyHeliconeApiKey" -}}
@@ -354,6 +332,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
       key: proxy_helicone_api_key
 {{- end }}
 
+# TODO It doesn't make sense for the API keys of the LLMs to be defined separately for helix.
 {{- define "helicone.env.helixOpenaiApiKey" -}}
 - name: OPENAI_API_KEY
   valueFrom:
@@ -384,9 +363,4 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
     secretKeyRef:
       name: helicone-helix-secrets
       key: helicone_api_key
-{{- end }}
-
-{{- define "helicone.helix.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "helicone.name" . }}-helix
-app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
