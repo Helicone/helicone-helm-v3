@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "helicone.fullname" . }}-beyla-http-dashboard
+  name: {{ include "helicone.name" . }}-beyla-http-dashboard
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "helicone.labels" . | nindent 4 }}

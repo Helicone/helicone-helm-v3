@@ -18,7 +18,7 @@ spec:
       {{- if .Values.beyla.enabled }}
       # Required for Beyla sidecar to access the main container's processes
       shareProcessNamespace: true
-      serviceAccountName: {{ include "helicone.fullname" . }}-beyla
+      serviceAccountName: {{ include "helicone.name" . }}-beyla
       {{- end }}
       initContainers:
 {{- if .Values.postgresql.enabled }}
@@ -228,7 +228,7 @@ spec:
       volumes:
         - name: beyla-config
           configMap:
-            name: {{ include "helicone.fullname" . }}-beyla-config
+            name: {{ include "helicone.name" . }}-beyla-config
         - name: var-run-beyla
           emptyDir: {}
       {{- end }}
