@@ -5,10 +5,7 @@ metadata:
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
 data:
-  {{- range $path, $bytes := .Files.Glob "config/*.yaml" }}
-  {{ base $path }}: |-
-{{ $bytes | toString | indent 4 }}
-  {{- end }}
+  # TODO Disaggregate this config, since not all of them are in common across the respective charts
   VERCEL_ENV: {{ .Values.helicone.config.vercelEnv | quote }}
   CLICKHOUSE_HOST: {{ .Values.helicone.config.clickhouseHost | quote }}
   CLICKHOUSE_PORT: {{ .Values.helicone.config.clickhousePort | quote }}
