@@ -13,7 +13,7 @@ If release name contains chart name it will be used as a full name.
 
 TODO, make sure this is the ONLY fullname named template in this chart for consistencies sake
 */}}
-{{- define "helicone.fullname" -}}
+{{- define "helicone.name" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -170,21 +170,6 @@ app.kubernetes.io/managed-by: {{ .Release.Service }} {{- end }}
 
 {{- define "redis.name" -}}
 {{ include "helicone.name" . }}-redis
-{{- end }}
-
-{{- define "helicone.worker.env" -}}
-{{ include "helicone.env.dbHost" . }}
-{{ include "helicone.env.dbPort" . }}
-{{ include "helicone.env.dbName" . }}
-{{ include "helicone.env.dbUser" . }}
-{{ include "helicone.env.dbPassword" . }}
-{{ include "helicone.env.clickhouseUser" . }}
-{{ include "helicone.env.clickhouseHost" . }}
-{{ include "helicone.env.s3AccessKey" . }}
-{{ include "helicone.env.s3SecretKey" . }}
-{{ include "helicone.env.s3BucketName" . }}
-{{ include "helicone.env.s3Endpoint" . }}
-{{ include "helicone.env.datadogEnabled" . }}
 {{- end }}
 
 {{- define "helicone.env.betterAuthSecret" -}}

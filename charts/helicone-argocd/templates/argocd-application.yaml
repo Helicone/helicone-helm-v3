@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ include "helicone.fullname" . }}
+  name: {{ include "helicone.name" . }}
   namespace: {{ .Values.argocd.namespace | default "argocd" }}
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
