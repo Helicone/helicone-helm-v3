@@ -1,0 +1,11 @@
+{{- if and .Values.helicone.helix.enabled .Values.helicone.helix.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: helicone-helix-config
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    {{- .Values.helicone.helix.config | toYaml | nindent 4 }}
+{{- end }}
