@@ -2,7 +2,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
-  name: {{ include "helicone.fullname" . }}-beyla
+  name: {{ include "helicone.name" . }}-beyla
   namespace: {{ .Values.monitoring.namespaceOverride | default "monitoring" }}
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
