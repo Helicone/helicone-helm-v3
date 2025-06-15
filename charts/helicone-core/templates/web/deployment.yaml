@@ -123,8 +123,31 @@ spec:
               containerPort: {{ .Values.helicone.web.service.port }}
               protocol: TCP
           env:
-            {{- include "helicone.web.env" . | nindent 12 }}
-            {{- include "helicone.web.clickhouseEnv" . | nindent 12 }}
+            {{ include "helicone.env.dbHost" . | nindent 12 }}
+            {{ include "helicone.env.dbPort" . | nindent 12 }}
+            {{ include "helicone.env.dbName" . | nindent 12 }}
+            {{ include "helicone.env.dbUser" . | nindent 12 }}
+            {{ include "helicone.env.dbPassword" . | nindent 12 }}
+            {{ include "helicone.env.s3AccessKey" . | nindent 12 }}
+            {{ include "helicone.env.s3SecretKey" . | nindent 12 }}
+            {{ include "helicone.env.s3BucketName" . | nindent 12 }}
+            {{ include "helicone.env.s3Endpoint" . | nindent 12 }}
+            - name: NEXT_PUBLIC_HELICONE_JAWN_SERVICE
+              value: {{ .Values.helicone.jawn.publicUrl | quote }}
+            - name: NEXT_PUBLIC_API_BASE_PATH
+              value: "/api2"
+            - name: NEXT_PUBLIC_BASE_PATH
+              value: "/api2/v1"
+            - name: DB_DRIVER
+              value: "postgres"
+            - name: DB_SSL
+              value: "disable"
+            - name: DATABASE_URL
+              value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL)&options=-c%20search_path%3Dpublic,extensions"
+            - name: NEXT_PUBLIC_IS_ON_PREM
+              value: "true"
+            {{ include "helicone.env.clickhouseHost" . | nindent 12 }}
+            {{ include "helicone.env.clickhouseUser" . | nindent 12 }}
             {{- include "helicone.env.clickhouseHostDocker" . | nindent 12 }}
             {{- include "helicone.env.clickhousePort" . | nindent 12 }}
             {{- include "helicone.env.smtpHost" . | nindent 12 }}
