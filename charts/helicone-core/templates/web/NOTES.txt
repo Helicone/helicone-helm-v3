@@ -1,0 +1,1 @@
+This template represents the frontend (web application) of Helicone.

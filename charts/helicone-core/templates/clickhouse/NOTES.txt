@@ -1,0 +1,1 @@
+This template represents the clickhouse deployment. It is required by web and jawn.

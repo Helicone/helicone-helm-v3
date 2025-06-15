@@ -1,0 +1,1 @@
+This template represents the mock mailing SMTP provider
