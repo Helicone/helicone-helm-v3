@@ -85,8 +85,7 @@ helicone:
         repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/migrations
         pullPolicy: IfNotPresent
         tag: "v2025-06-02"
-      resources: {}
-    
+      resources: {}    
     router:
       enabled: true
 
