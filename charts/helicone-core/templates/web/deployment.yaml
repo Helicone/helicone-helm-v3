@@ -123,15 +123,7 @@ spec:
               containerPort: {{ .Values.helicone.web.service.port }}
               protocol: TCP
           env:
-            {{ include "helicone.env.dbHost" . | nindent 12 }}
-            {{ include "helicone.env.dbPort" . | nindent 12 }}
-            {{ include "helicone.env.dbName" . | nindent 12 }}
-            {{ include "helicone.env.dbUser" . | nindent 12 }}
-            {{ include "helicone.env.dbPassword" . | nindent 12 }}
-            {{ include "helicone.env.s3AccessKey" . | nindent 12 }}
-            {{ include "helicone.env.s3SecretKey" . | nindent 12 }}
-            {{ include "helicone.env.s3BucketName" . | nindent 12 }}
-            {{ include "helicone.env.s3Endpoint" . | nindent 12 }}
+{{ include "helicone.web.env" . | indent 12 }}
             - name: NEXT_PUBLIC_HELICONE_JAWN_SERVICE
               value: {{ .Values.helicone.jawn.publicUrl | quote }}
             - name: NEXT_PUBLIC_API_BASE_PATH
@@ -146,21 +138,6 @@ spec:
               value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL)&options=-c%20search_path%3Dpublic,extensions"
             - name: NEXT_PUBLIC_IS_ON_PREM
               value: "true"
-            {{ include "helicone.env.clickhouseHost" . | nindent 12 }}
-            {{ include "helicone.env.clickhouseUser" . | nindent 12 }}
-            {{- include "helicone.env.clickhouseHostDocker" . | nindent 12 }}
-            {{- include "helicone.env.clickhousePort" . | nindent 12 }}
-            {{- include "helicone.env.smtpHost" . | nindent 12 }}
-            {{- include "helicone.env.smtpPort" . | nindent 12 }}
-            {{- include "helicone.env.smtpSecure" . | nindent 12 }}
-            {{- include "helicone.env.nodeEnv" . | nindent 12 }}
-            {{- include "helicone.env.vercelEnv" . | nindent 12 }}
-            {{- include "helicone.env.nextPublicBetterAuth" . | nindent 12 }}
-            {{- include "helicone.env.s3ForcePathStyle" . | nindent 12 }}
-            {{- include "helicone.env.betterAuthSecret" . | nindent 12 }}
-            {{- include "helicone.env.betterAuthUrl" . | nindent 12 }}
-            {{- include "helicone.env.betterAuthTrustedOrigins" . | nindent 12 }}
-            {{- include "helicone.env.stripeSecretKey" . | nindent 12 }}
             {{- with .Values.helicone.web.extraEnvVars }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -213,6 +190,7 @@ spec:
                 - ALL
             {{- end }}
           env:
+            # TODO Move these to _helpers.tpl, and make them configurable (also, they should be a part of the beyla chart)
             # Configure Beyla to monitor the web service
             - name: BEYLA_CONFIG_PATH
               value: "/config/beyla-config.yml"
