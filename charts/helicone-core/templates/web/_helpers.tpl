@@ -9,3 +9,42 @@ Selector labels
 app.kubernetes.io/name: {{ include "web.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+# TODO Break this down further into smaller templates.
+{{- define "helicone.web.env" -}}
+{{ include "helicone.env.clickhouseHost" . }}
+{{ include "helicone.env.clickhouseUser" . }}
+{{ include "helicone.env.dbHost" . }}
+{{ include "helicone.env.dbPort" . }}
+{{ include "helicone.env.dbUser" . }}
+{{ include "helicone.env.dbPassword" . }}
+{{ include "helicone.env.dbName" . }}
+{{ include "helicone.env.s3AccessKey" . }}
+{{ include "helicone.env.s3SecretKey" . }}
+{{ include "helicone.env.s3BucketName" . }}
+{{ include "helicone.env.s3Endpoint" . }}
+{{ include "helicone.env.betterAuthSecret" . }}
+{{ include "helicone.env.betterAuthUrl" . }}
+{{ include "helicone.env.betterAuthTrustedOrigins" . }}
+{{ include "helicone.env.stripeSecretKey" . }}
+{{ include "helicone.env.azureApiKey" . }}
+{{ include "helicone.env.azureApiVersion" . }}
+{{ include "helicone.env.azureDeploymentName" . }}
+{{ include "helicone.env.azureBaseUrl" . }}
+{{ include "helicone.env.openaiApiKey" . }}
+{{ include "helicone.env.enablePromptSecurity" . }}
+{{ include "helicone.env.supabaseUrl" . }}
+{{ include "helicone.env.supabaseDatabaseUrl" . }}
+{{ include "helicone.env.enableCronJob" . }}
+{{ include "helicone.env.databaseUrl" . }}
+{{ include "helicone.env.env" . }}
+{{ include "helicone.env.nextPublicBetterAuth" . }}
+{{ include "helicone.env.clickhouseHostDocker" . }}
+{{ include "helicone.env.clickhousePort" . }}
+{{ include "helicone.env.smtpHost" . }}
+{{ include "helicone.env.smtpPort" . }}
+{{ include "helicone.env.smtpSecure" . }}
+{{ include "helicone.env.nodeEnv" . }}
+{{ include "helicone.env.vercelEnv" . }}
+{{ include "helicone.env.s3ForcePathStyle" . }}
+{{- end }}
