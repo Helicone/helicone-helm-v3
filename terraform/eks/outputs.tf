@@ -109,57 +109,8 @@ output "kubectl_config" {
   value       = "aws eks update-kubeconfig --region ${var.region} --name ${aws_eks_cluster.eks_cluster.name}"
 }
 
-# ACM Certificate outputs
-output "certificate_arn" {
-  description = "ARN of the ACM certificate for heliconetest.com"
-  value       = aws_acm_certificate_validation.helicone_cert.certificate_arn
-}
-
-output "certificate_domain_name" {
-  description = "Domain name of the ACM certificate"
-  value       = aws_acm_certificate.helicone_cert.domain_name
-}
-
-# ACM Certificate outputs for helicone-test.com
-output "certificate_helicone_test_arn" {
-  description = "ARN of the ACM certificate for helicone-test.com"
-  value       = var.enable_helicone_test_domain ? aws_acm_certificate.helicone_test_cert[0].arn : null
-}
-
-output "certificate_helicone_test_domain_name" {
-  description = "Domain name of the ACM certificate for helicone-test.com"
-  value       = var.enable_helicone_test_domain ? aws_acm_certificate.helicone_test_cert[0].domain_name : null
-}
-
-output "certificate_helicone_test_validation_options" {
-  description = "Certificate validation options for helicone-test.com (to be added to Cloudflare)"
-  value       = var.enable_helicone_test_domain ? aws_acm_certificate.helicone_test_cert[0].domain_validation_options : null
-  sensitive   = false
-}
-
-
-
-# ACM Certificate outputs for helicone.ai
-output "certificate_helicone_ai_arn" {
-  description = "ARN of the ACM certificate for helicone.ai"
-  value       = aws_acm_certificate.helicone_ai_cert.arn
-}
-
-output "certificate_helicone_ai_domain_name" {
-  description = "Domain name of the ACM certificate for helicone.ai"
-  value       = aws_acm_certificate.helicone_ai_cert.domain_name
-}
-
-output "certificate_helicone_ai_validation_options" {
-  description = "Certificate validation options for helicone.ai (to be added to Cloudflare)"
-  value       = aws_acm_certificate.helicone_ai_cert.domain_validation_options
-  sensitive   = false
-}
-
-
-
-# Load balancer hostname for Cloudflare DNS records
+# Load balancer hostname for other modules (Route53/ACM and Cloudflare)
 output "load_balancer_hostname" {
-  description = "Load balancer hostname for Cloudflare DNS records"
+  description = "Load balancer hostname from the ingress controller"
   value       = try(data.kubernetes_service.ingress_nginx.status.0.load_balancer.0.ingress.0.hostname, null)
 } 

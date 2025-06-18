@@ -97,28 +97,26 @@ tags = {
 }
 ```
 
-### DNS Configuration
+### Related Modules
 
-This EKS module creates ACM certificates for your domains, but DNS management is handled separately.
+This EKS module provides the core Kubernetes infrastructure. For complete application setup:
 
-**For DNS Configuration:**
+**DNS and SSL Certificates:**
 
-- See the [Cloudflare Terraform module](../cloudflare/README.md) for managing DNS records
-- The EKS module outputs the load balancer hostname and certificate validation options
-- The Cloudflare module reads these outputs via Terraform remote state
+- See the [Route53/ACM module](../route53-acm/README.md) for managing SSL certificates and Route53
+  DNS records
+- The route53-acm module reads the EKS load balancer hostname via Terraform remote state
 
-**ACM Certificates Created:**
+**External DNS Management:**
 
-- `*.heliconetest.com` (default domain)
-- `*.helicone-test.com` (optional, enable with `enable_helicone_test_domain = true`)
-- `*.helicone.ai` (automatically created)
+- See the [Cloudflare module](../cloudflare/README.md) for managing external DNS records
+- The Cloudflare module reads certificate validation options from the route53-acm module
 
-**To enable additional certificates:**
+**Deployment Order:**
 
-```hcl
-# Enable helicone-test.com ACM certificate
-enable_helicone_test_domain = true
-```
+1. Deploy this EKS module first
+2. Deploy the route53-acm module for SSL and internal DNS
+3. Deploy the Cloudflare module for external DNS (optional)
 
 ## Features
 
