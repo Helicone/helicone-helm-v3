@@ -94,6 +94,7 @@ spec:
           {{- end }}
           env:
 {{- if .Values.postgresql.enabled }}
+            # TODO Define all of these within helpers templates
             - name: FLYWAY_URL
               value: jdbc:postgresql://helicone-core-postgresql:5432/helicone_test
             - name: FLYWAY_USER
@@ -123,21 +124,6 @@ spec:
               containerPort: {{ .Values.helicone.web.service.port }}
               protocol: TCP
           env:
-{{ include "helicone.web.env" . | indent 12 }}
-            - name: NEXT_PUBLIC_HELICONE_JAWN_SERVICE
-              value: {{ .Values.helicone.jawn.publicUrl | quote }}
-            - name: NEXT_PUBLIC_API_BASE_PATH
-              value: "/api2"
-            - name: NEXT_PUBLIC_BASE_PATH
-              value: "/api2/v1"
-            - name: DB_DRIVER
-              value: "postgres"
-            - name: DB_SSL
-              value: "disable"
-            - name: DATABASE_URL
-              value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL)&options=-c%20search_path%3Dpublic,extensions"
-            - name: NEXT_PUBLIC_IS_ON_PREM
-              value: "true"
             {{- with .Values.helicone.web.extraEnvVars }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -191,6 +177,7 @@ spec:
             {{- end }}
           env:
             # TODO Move these to _helpers.tpl, and make them configurable (also, they should be a part of the beyla chart)
+            # TODO Kill beyla, since it adds too much complexity.
             # Configure Beyla to monitor the web service
             - name: BEYLA_CONFIG_PATH
               value: "/config/beyla-config.yml"
