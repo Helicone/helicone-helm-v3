@@ -165,9 +165,4 @@ variable "ebs_csi_driver_version" {
   default     = "v1.30.0-eksbuild.1"  # Latest stable version
 }
 
-# Domain Configuration (for ACM certificates only)
-variable "enable_helicone_test_domain" {
-  description = "Whether to create ACM certificate for helicone-test.com domain"
-  type        = bool
-  default     = false
-} 
+ 

@@ -34,6 +34,18 @@ data "terraform_remote_state" "eks" {
   }
 }
 
+# Data source to get Route53/ACM state outputs from Terraform Cloud
+data "terraform_remote_state" "route53_acm" {
+  backend = "remote"
+  
+  config = {
+    organization = "helicone"
+    workspaces = {
+      name = "helicone-route53-acm"  # This matches the route53-acm workspace name
+    }
+  }
+}
+
 # Locals for better error handling
 locals {
   # Check if we have valid EKS outputs
@@ -77,8 +89,8 @@ resource "cloudflare_dns_record" "helicone_ai_app" {
 
 # Certificate validation records for helicone.ai ACM certificate
 resource "cloudflare_dns_record" "helicone_ai_cert_validation" {
-  for_each = local.helicone_ai_zone_found && data.terraform_remote_state.eks.outputs.certificate_helicone_ai_validation_options != null ? {
-    for dvo in data.terraform_remote_state.eks.outputs.certificate_helicone_ai_validation_options : dvo.domain_name => {
+  for_each = local.helicone_ai_zone_found && data.terraform_remote_state.route53_acm.outputs.certificate_helicone_ai_validation_options != null ? {
+    for dvo in data.terraform_remote_state.route53_acm.outputs.certificate_helicone_ai_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
@@ -126,8 +138,8 @@ resource "cloudflare_dns_record" "helicone_test_app" {
 
 # Certificate validation records for helicone-test.com ACM certificate
 resource "cloudflare_dns_record" "helicone_test_cert_validation" {
-  for_each = var.enable_helicone_test_domain && local.helicone_test_zone_found && data.terraform_remote_state.eks.outputs.certificate_helicone_test_validation_options != null ? {
-    for dvo in data.terraform_remote_state.eks.outputs.certificate_helicone_test_validation_options : dvo.domain_name => {
+  for_each = var.enable_helicone_test_domain && local.helicone_test_zone_found && data.terraform_remote_state.route53_acm.outputs.certificate_helicone_test_validation_options != null ? {
+    for dvo in data.terraform_remote_state.route53_acm.outputs.certificate_helicone_test_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type

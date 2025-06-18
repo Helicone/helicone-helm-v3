@@ -21,11 +21,70 @@ and EKS resources to run the Helicone project on.
 5. Copy all values.example.yaml files to values.yaml for each of the charts in `charts/` and
    customize as needed for your configuration.
 
-## Cluster Creation on EKS with Terraform
+## Infrastructure Deployment with Terraform
 
-1. Set up [Terraform](https://developer.hashicorp.com/terraform/install)
-2. Go to terraform/eks, then `terraform init`, followed by `terrform validate` followed by
-   `terraform apply`
+The Terraform configuration is organized into separate modules for better maintainability and
+separation of concerns:
+
+### Module Structure
+
+- **`terraform/eks/`** - Core EKS cluster infrastructure (cluster, nodes, networking)
+- **`terraform/route53-acm/`** - SSL certificates and Route53 DNS management
+- **`terraform/cloudflare/`** - External DNS management via Cloudflare (optional)
+- **`terraform/s3/`** - S3 storage buckets (optional)
+- **`terraform/aurora/`** - Aurora PostgreSQL database (optional)
+
+### Deployment Order
+
+Deploy the modules in this specific order due to dependencies:
+
+1. **Deploy EKS Infrastructure** (required)
+
+   ```bash
+   cd terraform/eks
+   terraform init
+   terraform validate
+   terraform apply
+   ```
+
+2. **Deploy Route53/ACM Module** (required for SSL and DNS)
+
+   ```bash
+   cd terraform/route53-acm
+   terraform init
+   terraform validate
+   terraform apply
+   ```
+
+3. **Deploy Cloudflare Module** (optional - for external domains)
+   ```bash
+   cd terraform/cloudflare
+   terraform init
+   terraform validate
+   terraform apply
+   ```
+
+### Module Dependencies
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│                 │    │                  │    │                 │
+│   EKS Module    │───▶│ Route53/ACM      │───▶│ Cloudflare      │
+│                 │    │ Module           │    │ Module          │
+│                 │    │                  │    │ (Optional)      │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+        │                        │                        │
+        │                        │                        │
+        ▼                        ▼                        ▼
+  Load Balancer           ACM Certificates         External DNS
+  Hostname               Route53 DNS Records       Management
+```
+
+- **EKS Module**: Provides load balancer hostname for DNS records
+- **Route53/ACM Module**: Provides certificate validation options for Cloudflare
+- **Cloudflare Module**: Manages external DNS records using outputs from both modules
+
+See individual module README files for detailed configuration options.
 
 ## Deploy Helm Charts
 
