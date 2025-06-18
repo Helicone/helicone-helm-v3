@@ -27,9 +27,9 @@ terraform {
       source  = "hashicorp/tls"
       version = "~> 4.0"
     }
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
-    }
+    # cloudflare = {
+    #   source  = "cloudflare/cloudflare"
+    #   version = "~> 4.0"
+    # }
   }
 } 

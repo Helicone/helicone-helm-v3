@@ -11,23 +11,9 @@ node_desired_size    = 2
 node_min_size        = 1
 node_max_size        = 3
 
-# Cloudflare Configuration
-# Get your API token from: https://dash.cloudflare.com/profile/api-tokens
-# Required permissions: Zone:Read, DNS:Edit for helicone-test.com zone
-cloudflare_api_token = "your-cloudflare-api-token-here"
-cloudflare_zone_name = "helicone-test.com"
-cloudflare_subdomain = "filevine"
-
-# Optional: Set to true if you want helicone-test.com to also point to your app
-create_root_domain_record = false
-
-# Cloudflare Configuration for helicone.ai
-# Required permissions: Zone:Read, DNS:Edit for helicone.ai zone
-cloudflare_helicone_ai_zone_name = "helicone.ai"
-cloudflare_helicone_ai_subdomain = "filevine"
-
-# Optional: Set to true if you want helicone.ai root domain to also point to your app
-create_helicone_ai_root_domain_record = false
+# Domain Configuration (for ACM certificates only)
+# Enable helicone-test.com domain ACM certificate (set to false to disable)
+enable_helicone_test_domain = true
 
 # Common tags
 tags = {
