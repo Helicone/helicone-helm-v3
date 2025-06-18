@@ -97,52 +97,28 @@ tags = {
 }
 ```
 
-### Cloudflare DNS Configuration
+### DNS Configuration
 
-This configuration manages DNS records in Cloudflare for both your custom domains. To enable this:
+This EKS module creates ACM certificates for your domains, but DNS management is handled separately.
 
-1. **Get a Cloudflare API Token**:
-   - Go to [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
-   - Create a token with permissions:
-     - `Zone:Read` for both domain zones
-     - `DNS:Edit` for both domain zones
+**For DNS Configuration:**
 
-2. **Configure your domains**:
-   ```hcl
-   # Required: Your Cloudflare API token (same for both domains)
-   cloudflare_api_token = "your-api-token-here"
-   
-   # helicone-test.com domain configuration
-   cloudflare_zone_name = "helicone-test.com"
-   cloudflare_subdomain = "filevine"
-   create_root_domain_record = false
-   
-   # helicone.ai domain configuration
-   cloudflare_helicone_ai_zone_name = "helicone.ai"
-   cloudflare_helicone_ai_subdomain = "filevine"
-   create_helicone_ai_root_domain_record = false
-   ```
+- See the [Cloudflare Terraform module](../cloudflare/README.md) for managing DNS records
+- The EKS module outputs the load balancer hostname and certificate validation options
+- The Cloudflare module reads these outputs via Terraform remote state
 
-3. **What gets created**:
-   
-   **For helicone-test.com:**
-   - CNAME record: `filevine.helicone-test.com` → AWS Load Balancer
-   - ACM certificate for `*.helicone-test.com`
-   - Certificate validation records (automatic)
-   - Optional root domain CNAME
-   
-   **For helicone.ai:**
-   - CNAME record: `filevine.helicone.ai` → AWS Load Balancer
-   - ACM certificate for `*.helicone.ai`
-   - Certificate validation records (automatic)
-   - Optional root domain CNAME
+**ACM Certificates Created:**
 
-4. **Benefits**:
-   - Fully automated DNS management for both domains
-   - Automatic SSL certificate validation
-   - Infrastructure as code for DNS records
-   - No manual steps in Cloudflare dashboard
-   - Support for multiple domains pointing to the same infrastructure
+- `*.heliconetest.com` (default domain)
+- `*.helicone-test.com` (optional, enable with `enable_helicone_test_domain = true`)
+- `*.helicone.ai` (automatically created)
+
+**To enable additional certificates:**
+
+```hcl
+# Enable helicone-test.com ACM certificate
+enable_helicone_test_domain = true
+```
 
 ## Features
 

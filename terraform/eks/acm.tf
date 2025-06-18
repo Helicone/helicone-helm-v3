@@ -72,27 +72,30 @@ resource "aws_acm_certificate_validation" "helicone_cert" {
   }
 }
 
+# TODO Move these certs to the cloudflare module
 # Certificate validation for helicone-test.com (automatic validation with Cloudflare)
-resource "aws_acm_certificate_validation" "helicone_test_cert" {
-  count                   = var.enable_helicone_test_domain ? 1 : 0
-  certificate_arn         = aws_acm_certificate.helicone_test_cert[0].arn
-  validation_record_fqdns = var.enable_helicone_test_domain ? [for record in cloudflare_record.cert_validation : record.hostname] : []
+# NOTE: Commented out to avoid circular dependency - validation handled by Cloudflare module
+# resource "aws_acm_certificate_validation" "helicone_test_cert" {
+#   count                   = var.enable_helicone_test_domain ? 1 : 0
+#   certificate_arn         = aws_acm_certificate.helicone_test_cert[0].arn
+#   validation_record_fqdns = var.enable_helicone_test_domain ? [for record in cloudflare_record.cert_validation : record.hostname] : []
   
-  timeouts {
-    create = "10m"
-  }
+#   timeouts {
+#     create = "10m"
+#   }
   
-  depends_on = [cloudflare_record.cert_validation]
-}
+#   depends_on = [cloudflare_record.cert_validation]
+# }
 
 # Certificate validation for helicone.ai (automatic validation with Cloudflare)
-resource "aws_acm_certificate_validation" "helicone_ai_cert" {
-  certificate_arn         = aws_acm_certificate.helicone_ai_cert.arn
-  validation_record_fqdns = [for record in cloudflare_record.helicone_ai_cert_validation : record.hostname]
+# NOTE: Commented out to avoid circular dependency - validation handled by Cloudflare module
+# resource "aws_acm_certificate_validation" "helicone_ai_cert" {
+#   certificate_arn         = aws_acm_certificate.helicone_ai_cert.arn
+#   validation_record_fqdns = [for record in cloudflare_record.helicone_ai_cert_validation : record.hostname]
   
-  timeouts {
-    create = "10m"
-  }
+#   timeouts {
+#     create = "10m"
+#   }
   
-  depends_on = [cloudflare_record.helicone_ai_cert_validation]
-} 
+#   depends_on = [cloudflare_record.helicone_ai_cert_validation]
+# } 
