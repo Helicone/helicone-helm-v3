@@ -113,4 +113,10 @@ output "kubectl_config" {
 output "load_balancer_hostname" {
   description = "Load balancer hostname from the ingress controller"
   value       = try(data.kubernetes_service.ingress_nginx.status.0.load_balancer.0.ingress.0.hostname, null)
+}
+
+# Load balancer zone ID for Route53 configuration
+output "load_balancer_zone_id" {
+  description = "Load balancer zone ID from the ingress controller"
+  value       = try(data.aws_lb.ingress_nginx[0].zone_id, null)
 } 

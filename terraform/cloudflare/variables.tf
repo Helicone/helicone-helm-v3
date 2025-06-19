@@ -4,28 +4,10 @@ variable "cloudflare_api_token" {
   sensitive   = true
 }
 
-variable "enable_helicone_test_domain" {
-  description = "Whether to create resources for helicone-test.com domain"
-  type        = bool
-  default     = false
-}
-
-variable "cloudflare_zone_name" {
-  description = "Cloudflare zone name (domain)"
-  type        = string
-  default     = "helicone-test.com"
-}
-
 variable "cloudflare_subdomain" {
   description = "Subdomain for the application"
   type        = string
   default     = "filevine"
-}
-
-variable "create_root_domain_record" {
-  description = "Whether to create a DNS record for the root domain (helicone-test.com)"
-  type        = bool
-  default     = false
 }
 
 # Cloudflare Configuration for helicone.ai
