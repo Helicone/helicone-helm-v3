@@ -21,7 +21,7 @@ spec:
       serviceAccountName: {{ include "helicone.name" . }}-beyla
       {{- end }}
       initContainers:
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.global.postgresql.enabled }}
         - name: wait-for-postgres
           image: postgres:15-alpine
           command:
@@ -29,12 +29,15 @@ spec:
             - -c
             - |
               echo "Waiting for PostgreSQL to be ready..."
-              until pg_isready -h helicone-core-postgresql -p 5432 -U postgres; do
+              until pg_isready -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER); do
                 echo "PostgreSQL is not ready yet. Waiting..."
                 sleep 2
               done
               echo "PostgreSQL is ready!"
           env:
+            {{- include "helicone.env.dbHost" . | nindent 12 }}
+            {{- include "helicone.env.dbPort" . | nindent 12 }}
+            {{- include "helicone.env.dbUser" . | nindent 12 }}
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
@@ -72,6 +75,17 @@ spec:
                 sleep 2
               done
               echo "MinIO is ready!"
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-secrets
+                  key: minio-root-user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-secrets
+                  key: minio-root-password
         {{- end }}
         - name: wait-for-clickhouse
           image: curlimages/curl:latest
@@ -93,18 +107,12 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           env:
-{{- if .Values.postgresql.enabled }}
-            # TODO Define all of these within helpers templates
-            - name: FLYWAY_URL
-              value: jdbc:postgresql://helicone-core-postgresql:5432/helicone_test
-            - name: FLYWAY_USER
-              value: postgres
-            - name: FLYWAY_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: helicone-secrets
-                  key: postgres-password
+{{- if .Values.global.postgresql.enabled }}
+            {{- include "helicone.env.flywayUrl" . | nindent 12 }}
+            {{- include "helicone.env.flywayUser" . | nindent 12 }}
+            {{- include "helicone.env.flywayPassword" . | nindent 12 }}
 {{- else }}
+            # TODO Move these to _helpers.tpl, and make them configurable
             - name: FLYWAY_URL
               value: "jdbc:postgresql://{{ .Values.aurora.host }}:{{ .Values.aurora.port }}/{{ .Values.aurora.database }}"
             - name: FLYWAY_USER
@@ -124,6 +132,7 @@ spec:
               containerPort: {{ .Values.helicone.web.service.port }}
               protocol: TCP
           env:
+            {{- include "helicone.web.env" . | nindent 12 }}
             {{- with .Values.helicone.web.extraEnvVars }}
               {{- toYaml . | nindent 12 }}
             {{- end }}

@@ -124,7 +124,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 
 {{- define "helicone.env.dbHost" -}}
 - name: DB_HOST
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.global.postgresql.enabled }}
   value: {{ .Values.helicone.config.dbHost | default (printf "%s-postgresql" .Release.Name) | quote }}
 {{- else }}
   valueFrom:
@@ -136,7 +136,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 
 {{- define "helicone.env.dbPort" -}}
 - name: DB_PORT
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.global.postgresql.enabled }}
   value: {{ .Values.helicone.config.dbPort | default "5432" | quote }}
 {{- else }}
   valueFrom:
@@ -148,7 +148,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 
 {{- define "helicone.env.dbName" -}}
 - name: DB_NAME
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.global.postgresql.enabled }}
   value: {{ .Values.helicone.config.dbName | default .Values.global.postgresql.auth.database | quote }}
 {{- else }}
   valueFrom:
@@ -160,7 +160,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 
 {{- define "helicone.env.dbUser" -}}
 - name: DB_USER
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.global.postgresql.enabled }}
   value: {{ .Values.global.postgresql.auth.username | quote }}
 {{- else }}
   valueFrom:
@@ -174,7 +174,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 - name: DB_PASSWORD
   valueFrom:
     secretKeyRef:
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.global.postgresql.enabled }}
       name: helicone-secrets
       key: postgres-password
 {{- else }}
@@ -320,6 +320,12 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
   value: {{ .Values.helicone.config.siteUrl | default "https://heliconetest.com" | quote }}
 {{- end }}
 
+# TODO Move these definitions to the web chart (and refactor accordingly).
+{{- define "helicone.env.siteUrl" -}}
+- name: SITE_URL
+  value: {{ .Values.helicone.config.siteUrl | default "https://heliconetest.com" | quote }}
+{{- end }}
+
 {{- define "helicone.env.helixProxyHeliconeApiKey" -}}
 - name: PROXY__HELICONE__API_KEY
   valueFrom:
@@ -359,4 +365,60 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
     secretKeyRef:
       name: helicone-helix-secrets
       key: helicone_api_key
+{{- end }}
+
+{{- define "helicone.env.flywayUrl" -}}
+- name: FLYWAY_URL
+  value: {{ .Values.helicone.config.flywayUrl | default "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%20search_path%3Dpublic,extensions" | quote }}
+{{- end }}
+
+{{- define "helicone.env.flywayUser" -}}
+- name: FLYWAY_USER
+  value: {{ .Values.helicone.config.flywayUser | default "postgres" | quote }}
+{{- end }}
+
+{{- define "helicone.env.flywayPassword" -}}
+- name: FLYWAY_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: helicone-secrets
+      key: postgres-password
+{{- end }}
+
+{{/*
+Web deployment specific environment variables
+*/}}
+{{- define "helicone.env.nextPublicHeliconeJawnService" -}}
+- name: NEXT_PUBLIC_HELICONE_JAWN_SERVICE
+  value: {{ .Values.helicone.jawn.publicUrl | quote }}
+{{- end }}
+
+{{- define "helicone.env.nextPublicApiBasePath" -}}
+- name: NEXT_PUBLIC_API_BASE_PATH
+  value: "/api2"
+{{- end }}
+
+{{- define "helicone.env.nextPublicBasePath" -}}
+- name: NEXT_PUBLIC_BASE_PATH
+  value: "/api2/v1"
+{{- end }}
+
+{{- define "helicone.env.dbDriver" -}}
+- name: DB_DRIVER
+  value: "postgres"
+{{- end }}
+
+{{- define "helicone.env.dbSsl" -}}
+- name: DB_SSL
+  value: "disable"
+{{- end }}
+
+{{- define "helicone.env.databaseUrlComposed" -}}
+- name: DATABASE_URL
+  value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL)&options=-c%20search_path%3Dpublic,extensions"
+{{- end }}
+
+{{- define "helicone.env.nextPublicIsOnPrem" -}}
+- name: NEXT_PUBLIC_IS_ON_PREM
+  value: "true"
 {{- end }}
