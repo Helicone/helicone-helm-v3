@@ -4,39 +4,3 @@ metadata:
   name: helicone-config
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
-data:
-  # TODO Disaggregate this config, since not all of them are in common across the respective charts
-  VERCEL_ENV: {{ .Values.helicone.config.vercelEnv | quote }}
-  CLICKHOUSE_HOST: {{ .Values.helicone.config.clickhouseHost | quote }}
-  CLICKHOUSE_PORT: {{ .Values.helicone.config.clickhousePort | quote }}
-  CLICKHOUSE_USER: {{ .Values.helicone.config.clickhouseUser | quote }}
-  OPENAI_PROXY_PORT: {{ .Values.helicone.config.openaiProxyPort | quote }}
-  HELICONE_API_PORT: {{ .Values.helicone.config.heliconeApiPort | quote }}
-  ANTHROPIC_PROXY_PORT: {{ .Values.helicone.config.anthropicProxyPort | quote }}
-  GATEWAY_API_PORT: {{ .Values.helicone.config.gatewayApiPort | quote }}
-  JAWN_PORT: {{ .Values.helicone.config.jawnPort | quote }}
-  JAWN_PUBLIC_URL: {{ .Values.helicone.config.jawnPublicUrl | quote }}
-  POSTGRES_HOST: {{ .Values.helicone.config.postgresHost | quote }}
-  POSTGRES_DB: {{ .Values.helicone.config.postgresDb | quote }}
-  POSTGRES_PORT: {{ .Values.helicone.config.postgresPort | quote }}
-  KONG_HTTP_PORT: {{ .Values.helicone.config.kongHttpPort | quote }}
-  KONG_HTTPS_PORT: {{ .Values.helicone.config.kongHttpsPort | quote }}
-  PGRST_DB_SCHEMAS: {{ .Values.helicone.config.pgrstDbSchemas | quote }}
-  SITE_URL: {{ .Values.helicone.config.siteUrl | quote }}
-  ADDITIONAL_REDIRECT_URLS: {{ .Values.helicone.config.additionalRedirectUrls | quote }}
-  JWT_EXPIRY: {{ .Values.helicone.config.jwtExpiry | quote }}
-  DISABLE_SIGNUP: {{ .Values.helicone.config.disableSignup | quote }}
-  API_EXTERNAL_URL: {{ .Values.helicone.config.apiExternalUrl | quote }}
-  MAILER_URLPATHS_CONFIRMATION: {{ .Values.helicone.config.mailerUrlpathsConfirmation | quote }}
-  MAILER_URLPATHS_INVITE: {{ .Values.helicone.config.mailerUrlpathsInvite | quote }}
-  MAILER_URLPATHS_RECOVERY: {{ .Values.helicone.config.mailerUrlpathsRecovery | quote }}
-  MAILER_URLPATHS_EMAIL_CHANGE: {{ .Values.helicone.config.mailerUrlpathsEmailChange | quote }}
-  ENABLE_EMAIL_SIGNUP: {{ .Values.helicone.config.enableEmailSignup | quote }}
-  ENABLE_EMAIL_AUTOCONFIRM: {{ .Values.helicone.config.enableEmailAutoconfirm | quote }}
-  ENABLE_PHONE_SIGNUP: {{ .Values.helicone.config.enablePhoneSignup | quote }}
-  ENABLE_PHONE_AUTOCONFIRM: {{ .Values.helicone.config.enablePhoneAutoconfirm | quote }}
-  STUDIO_DEFAULT_ORGANIZATION: {{ .Values.helicone.config.studioDefaultOrganization | quote }}
-  STUDIO_DEFAULT_PROJECT: {{ .Values.helicone.config.studioDefaultProject | quote }}
-  STUDIO_PORT: {{ .Values.helicone.config.studioPort | quote }}
-  IMGPROXY_ENABLE_WEBP_DETECTION: {{ .Values.helicone.config.imgproxyEnableWebpDetection | quote }}
-  FUNCTIONS_VERIFY_JWT: {{ .Values.helicone.config.functionsVerifyJwt | quote }}

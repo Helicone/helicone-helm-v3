@@ -21,11 +21,71 @@ and EKS resources to run the Helicone project on.
 5. Copy all values.example.yaml files to values.yaml for each of the charts in `charts/` and
    customize as needed for your configuration.
 
-## Cluster Creation on EKS with Terraform
+## Infrastructure Deployment with Terraform
 
-1. Set up [Terraform](https://developer.hashicorp.com/terraform/install)
-2. Go to terraform/eks, then `terraform init`, followed by `terrform validate` followed by
-   `terraform apply`
+The Terraform configuration is organized into separate modules for better maintainability and
+separation of concerns:
+
+### Module Structure
+
+- **`terraform/eks/`** - Core EKS cluster infrastructure (cluster, nodes, networking)
+- **`terraform/route53-acm/`** - SSL certificates and Route53 DNS management
+- **`terraform/cloudflare/`** - External DNS management via Cloudflare (optional)
+- **`terraform/s3/`** - S3 storage buckets (optional)
+- **`terraform/aurora/`** - Aurora PostgreSQL database (optional)
+
+### Deployment Order
+
+Deploy the modules in this specific order due to dependencies:
+
+1. **Deploy EKS Infrastructure** (required)
+
+   ```bash
+   cd terraform/eks
+   terraform init
+   terraform validate
+   terraform apply
+   ```
+
+2. **Deploy Route53/ACM Module** (required for SSL and DNS)
+
+   ```bash
+   cd terraform/route53-acm
+   terraform init
+   terraform validate
+   terraform apply
+   ```
+
+3. **Deploy Cloudflare Module** (optional - for external domains)
+
+   ```bash
+   cd terraform/cloudflare
+   terraform init
+   terraform validate
+   terraform apply
+   ```
+
+### Module Dependencies
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│                 │    │                  │    │                 │
+│   EKS Module    │───▶│ Route53/ACM      │───▶│ Cloudflare      │
+│                 │    │ Module           │    │ Module          │
+│                 │    │                  │    │ (Optional)      │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+        │                        │                        │
+        │                        │                        │
+        ▼                        ▼                        ▼
+  Load Balancer           ACM Certificates         External DNS
+  Hostname               Route53 DNS Records       Management
+```
+
+- **EKS Module**: Provides load balancer hostname for DNS records
+- **Route53/ACM Module**: Provides certificate validation options for Cloudflare
+- **Cloudflare Module**: Manages external DNS records using outputs from both modules
+
+See individual module README files for detailed configuration options.
 
 ## Deploy Helm Charts
 
@@ -112,6 +172,62 @@ Alternatively, you can install components individually:
    ```bash
    kubectl get pods
    ```
+
+## Exposing Helicone Services with a Load Balancer (Ingress)
+
+To make the Helicone web and jawn services accessible via your custom domains (e.g.,
+`heliconetest.com`), you need to set up an Ingress controller with a LoadBalancer in your Kubernetes
+cluster. This is required for routing external traffic to your services using the domains configured
+in your `values.yaml`.
+
+### 1. Install the NGINX Ingress Controller with a LoadBalancer
+
+You only need to do this once per cluster. Run the following commands:
+
+```bash
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --set controller.service.type=LoadBalancer
+```
+
+This will install the NGINX Ingress controller and expose it via a cloud LoadBalancer. The Ingress
+controller is responsible for routing external HTTP/HTTPS traffic to your Helicone services based on
+the Ingress resources defined in your Helm chart.
+
+### 2. Get the LoadBalancer's External IP or Hostname
+
+After a few minutes, retrieve the external IP or hostname assigned to the Ingress controller:
+
+```bash
+kubectl get svc -n default
+```
+
+### 3. Configure DNS
+
+Update your DNS provider (e.g., Route53, Cloudflare) to point your domain (e.g., `heliconetest.com`)
+to the LoadBalancer's external IP or hostname. This ensures that traffic to your domain is routed to
+your Kubernetes cluster.
+
+- For an IP address, create an A record.
+- For a hostname, create a CNAME record.
+
+### 4. TLS/HTTPS (Optional but Recommended)
+
+If you want to enable HTTPS, you can use [cert-manager](https://cert-manager.io/) to automatically
+provision TLS certificates. Install cert-manager with:
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+```
+
+Make sure your Ingress resources reference the correct TLS secret and cluster issuer as shown in
+your `values.yaml`.
+
+### 5. Deploy Helicone Helm Charts
+
+Once the Ingress controller is set up and DNS is configured, deploy your Helicone Helm charts as
+described below. Your web and jawn services will be accessible at the domains you configured.
 
 ## Accessing Deployed Services
 

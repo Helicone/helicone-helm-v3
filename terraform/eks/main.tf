@@ -205,4 +205,17 @@ resource "aws_iam_openid_connect_provider" "eks" {
   tags = merge(var.tags, {
     Name = "${var.cluster_name}-oidc-provider"
   })
+}
+
+# Get the load balancer from Kubernetes (for other modules like route53-acm and cloudflare)
+data "kubernetes_service" "ingress_nginx" {
+  metadata {
+    name      = "ingress-nginx-controller"
+    namespace = "ingress-nginx"
+  }
+
+  depends_on = [
+    aws_eks_cluster.eks_cluster,
+    aws_eks_node_group.eks_nodes
+  ]
 } 

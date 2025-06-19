@@ -3,21 +3,21 @@
 #                            HELICONE CORE
 #
 ################################################################################
-
-# TODO Make sure it is possible to enable aurora postgres or the common postgres chart, all within the same helm chart
 global:
   postgresql:
+    enabled: true
     auth:
-      database: helicone
-      username: helicone_admin
-      postgresPassword: ""  # Default for development
-      existingSecret: "aurora-postgres-credentials"
-      secretKeys:
-        adminPasswordKey: "password"
+      database: helicone_test
+      username: postgres
+      postgresPassword: "your-super-secret-and-long-postgres-password"
+    primary:
+      persistence:
+        size: 5Gi
+        storageClass: "gp2-immediate"
 
-# Aurora connection configuration
-# TODO Move aurora to a separate chart
+# - Aurora connection configuration
 aurora:
+  enabled: false
   host: "helicone-aurora-cluster.cluster-cr0pbknv3xbp.us-west-2.rds.amazonaws.com"
   port: 5432
   database: "helicone"
@@ -30,7 +30,7 @@ helicone:
     image:
       repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/web
       pullPolicy: IfNotPresent
-      tag: "v2025-06-13"
+      tag: "v2025-06-17"
     replicaCount: 1
     service:
       annotations: {}
@@ -40,17 +40,17 @@ helicone:
     ingress:
       enabled: true
       className: "nginx"
-      annotations: {}
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
       hosts:
-        - host: heliconetest.com
+        - host: filevine.helicone.ai
           paths:
             - path: /
               pathType: Prefix
-              backend:
-                service:
-                  name: helicone-web
-                  port:
-                    number: 3000
+      tls:
+        - hosts:
+            - filevine.helicone.ai
+          secretName: heliconetest-tls
     resources:
       requests:
         cpu: 100m
@@ -84,8 +84,8 @@ helicone:
       image:
         repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/migrations
         pullPolicy: IfNotPresent
-        tag: "v2025-06-02"
-      resources: {}    
+        tag: "v2025-06-17"
+      resources: {}
     router:
       enabled: true
 
@@ -94,12 +94,21 @@ helicone:
     image:
       repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/helix
       pullPolicy: IfNotPresent
-      tag: "v2025-06-13"
+      tag: "v2025-06-17"
     replicaCount: 1
     service:
       annotations: {}
       type: ClusterIP
       port: 5678
+    ingress:
+      enabled: false
+      className: "nginx"
+      annotations: {}
+      hosts:
+        - host: filevine.helicone.ai/helix
+          paths:
+            - path: /
+              pathType: Prefix
       tls: []
     resources:
       requests:
@@ -109,7 +118,7 @@ helicone:
         cpu: 250m
         memory: 512Mi
     extraEnvVars:
-      - name: PROXY__SERVER__ADDRESS  # TODO Make sure that extraEnvVars is the correct place to set the PROXY__SERVER__ADDRESS.
+      - name: PROXY__SERVER__ADDRESS
         value: "0.0.0.0"
     config:
       routers:
@@ -180,30 +189,30 @@ helicone:
     image:
       repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/jawn
       pullPolicy: IfNotPresent
-      tag: "v2025-06-13"
+      tag: "v2025-06-17"
     replicaCount: 1
     service:
       annotations: {}
       type: ClusterIP
       port: 8585
     extraEnvVars: []
-    publicUrl: "https://heliconetest.com/jawn"
+    publicUrl: "https://filevine.helicone.ai/jawn"
     ingress:
       enabled: true
       className: "nginx"
       annotations:
         nginx.ingress.kubernetes.io/rewrite-target: /$2
         nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
       hosts:
-        - host: heliconetest.com
+        - host: filevine.helicone.ai
           paths:
             - path: /jawn(/|$)(.*)
               pathType: ImplementationSpecific
-              backend:
-                service:
-                  name: helicone-jawn
-                  port:
-                    number: 8585
+      tls:
+        - hosts:
+            - filevine.helicone.ai
+          secretName: heliconetest-tls
     resources:
       requests:
         cpu: 50m
@@ -230,11 +239,11 @@ helicone:
   # TODO Disaggregate this config, since not all of them are in common across the respective charts
   config:
     vercelEnv: "development"
-    clickhouseHost: "helicone-core-clickhouse"  # TODO Make sure that these actually propogate to the correct secret service.
+    clickhouseHost: "http://helicone-core-clickhouse:8123"
     clickhousePort: "8123"
     clickhouseUser: "default"
     s3BucketName: "helm-request-response-storage"
-    s3Endpoint: "https://s3.us-west-2.amazonaws.com"
+    s3Endpoint: "http://helicone-core-minio:9000"
     openaiProxyPort: "8787"
     heliconeApiPort: "8788"
     heliconeApiKey: ""  # TODO In the future, you shouldn't set this (should be configured from the web UI, and thereby shouldn't be a secret). This is necessary for now to get helix working.
@@ -244,11 +253,12 @@ helicone:
     anthropicProxyPort: "8789"
     gatewayApiPort: "8790"  # TODO Make sure that these ports are configurable.
     jawnPort: "8585"
-    jawnPublicUrl: "https://heliconetest.com/jawn"
+    jawnPublicUrl: "https://filevine.helicone.ai/jawn"
     kongHttpPort: "8000"
     kongHttpsPort: "8443"
     pgrstDbSchemas: "public,storage,graphql_public"
-    siteUrl: "https://heliconetest.com"
+    siteUrl: "https://filevine.helicone.ai"
+    betterAuthTrustedOrigins: "https://filevine.helicone.ai,http://filevine.helicone.ai"
     additionalRedirectUrls: ""
     jwtExpiry: "3600"
     disableSignup: "false"
@@ -278,8 +288,6 @@ helicone:
     
     # Authentication & Auth secrets
     betterAuthSecret: ""
-    betterAuthUrl: "https://heliconetest.com"
-    betterAuthTrustedOrigins: "https://heliconetest.com,http://heliconetest.com"
     
     # Payment processing
     stripeSecretKey: ""
@@ -291,7 +299,7 @@ helicone:
     s3SecretKey: ""
     
     # Database secrets
-    postgresPassword: ""
+    postgresPassword: "" 
     
     # ClickHouse secrets
     clickhouseUser: "default"
@@ -299,9 +307,9 @@ helicone:
     
     # External API keys (development defaults)
     azureApiKey: ""
-    azureApiVersion: "2023-05-15"
-    azureDeploymentName: "gpt-35-turbo"
-    azureBaseUrl: "https://your-resource.openai.azure.com/"
+    azureApiVersion: ""
+    azureDeploymentName: ""
+    azureBaseUrl: ""
     openaiApiKey: ""
     
     # Monitoring & observability
@@ -310,8 +318,6 @@ helicone:
     # Feature flags and configuration
     enablePromptSecurity: "false"
     enableCronJob: "true"
-    
-    # Environment configuration
     nodeEnv: "development"
     vercelEnv: "development"
     env: "development"
