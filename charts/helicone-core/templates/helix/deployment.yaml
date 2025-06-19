@@ -23,33 +23,62 @@ spec:
             - name: http
               containerPort: 5678
               protocol: TCP
-          command: ["/usr/local/bin/llm-proxy", "-c", "/app/config/demo.yaml"]
+          {{- if .Values.helicone.helix.config }}
+          command: ["/usr/local/bin/llm-proxy", "-c", "/app/config/config.yaml"] # TODO The issue with this approach is that you cannot have more than one config file.
           volumeMounts:
             - name: config
               mountPath: /app/config
+              readOnly: true
+          {{- end }}
           env:
-            - name: PROXY__SERVER__ADDRESS
-              value: "0.0.0.0"
+            # TODO Move to _helpers.tpl, with sensible defaults. Commenting this out for now to get stuff working.
             - name: PROXY__MINIO__ACCESS_KEY
-              value: "minioadmin"
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-minio-secrets
+                  key: root_user
             - name: PROXY__MINIO__SECRET_KEY
-              value: "minioadmin"
-            {{- include "helicone.env.helixProxyHeliconeApiKey" . | nindent 12 }}
-            {{- include "helicone.env.helixOpenaiApiKey" . | nindent 12 }}
-            {{- include "helicone.env.helixAnthropicApiKey" . | nindent 12 }}
-            {{- include "helicone.env.helixGeminiApiKey" . | nindent 12 }}
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-minio-secrets
+                  key: root_password
+            - name: PROXY__HELICONE__API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-helix-secrets
+                  key: helicone_api_key
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-helix-secrets
+                  key: openai_api_key
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-helix-secrets
+                  key: anthropic_api_key
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-helix-secrets
+                  key: gemini_api_key
             - name: OTEL_METRIC_EXPORT_INTERVAL
-              value: "5000"
-            {{- include "helicone.env.helixHeliconeApiKey" . | nindent 12 }}
+              value: "5000"  # TODO Make this configurable.
+            # {{- include "helicone.env.helixHeliconeApiKey" . | nindent 12 }}  # TODO Move the rest to _helpers.tpl like so.
+            {{- with .Values.helicone.helix.extraEnvVars }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+      {{- if .Values.helicone.helix.config }}
       volumes:
         - name: config
           configMap:
-            name: helicone-config
-    #   {{- if .Values.beyla.enabled }}
+            name: helicone-helix-config
+      {{- end }}
+    #   {{- if .Values.beyla.enabled }}  # TODO Not sure if Beyla should be enabled here
     #   volumes:
     #     - name: beyla-config
     #       configMap:
-    #         name: {{ include "helicone.fullname" . }}-beyla-config
+    #         name: {{ include "helicone.name" . }}-beyla-config
     #     - name: var-run-beyla
     #       emptyDir: {}
     #   {{- end }}
