@@ -42,12 +42,7 @@ spec:
                 secretKeyRef:
                   name: helicone-minio-secrets
                   key: root_password
-            - name: PROXY_HELICONE_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: helicone-helix-secrets
-                  key: helicone_api_key  # TODO Make sure that the "proxy" helicone api key is the same as the "helicone" api key. Otherwise, separate these.
-            - name: HELICONE_API_KEY  # TODO Note that this apparently is only for "local testing" (# for the `test` cargo package, local development)
+            - name: PROXY__HELICONE__API_KEY
               valueFrom:
                 secretKeyRef:
                   name: helicone-helix-secrets
