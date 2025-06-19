@@ -34,7 +34,6 @@ helm.sh/chart: {{ include "helicone.chart" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
-# TODO This should probably be grouped with the selector label template or some other template.
 
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
@@ -44,26 +43,25 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 */}}
 {{- define "helicone.env.clickhouseHost" -}}
 - name: CLICKHOUSE_HOST
-  value: "http://{{ include "clickhouse.name" . }}:8123"
-{{- end -}}
+  value: {{ .Values.helicone.config.clickhouseHost | default (printf "http://%s:8123" (include "clickhouse.name" .)) | quote }}
+{{- end }}
 
 {{- define "helicone.env.clickhouseUser" -}}
 - name: CLICKHOUSE_USER
   valueFrom:
     secretKeyRef:
-      name: {{ include "clickhouse.name" . }}-secrets
-      key: user
-{{- end -}}
+      name: {{ .Values.helicone.config.clickhouseSecretsName | default (printf "%s-secrets" (include "clickhouse.name" .)) | quote }}
+      key: {{ .Values.helicone.config.clickhouseUserKey | default "user" | quote }}
+{{- end }}
 
 {{- define "s3.name" -}}
   {{ include "helicone.name" . }}-s3
 {{- end }}
 
 
-# TODO Make this configurable
 {{- define "helicone.env.betterAuthTrustedOrigins" -}}
 - name: BETTER_AUTH_TRUSTED_ORIGINS
-  value: "https://heliconetest.com,http://heliconetest.com"
+  value: {{ .Values.helicone.config.betterAuthTrustedOrigins | default "https://heliconetest.com,http://heliconetest.com" | quote }}
 {{- end }}
 
 {{/*
@@ -72,97 +70,97 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 # TODO This conditional logic will incur tech debt which needs to be refactored.
 {{- define "helicone.env.s3AccessKey" -}}
 - name: S3_ACCESS_KEY
-{{- if eq .Values.helicone.minio.enabled true }}
+{{- if .Values.helicone.minio.enabled }}
   valueFrom:
     secretKeyRef:
-      name: helicone-minio-secrets
-      key: root_user
+      name: {{ .Values.helicone.config.minioSecretsName | default "helicone-minio-secrets" | quote }}
+      key: {{ .Values.helicone.config.minioAccessKeyKey | default "root_user" | quote }}
 {{- else }}
   valueFrom:
     secretKeyRef:
-      name: helicone-secrets
-      key: access_key
+      name: {{ .Values.helicone.config.s3SecretsName | default "helicone-secrets" | quote }}
+      key: {{ .Values.helicone.config.s3AccessKeyKey | default "access_key" | quote }}
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.s3SecretKey" -}}
 - name: S3_SECRET_KEY
-{{- if eq .Values.helicone.minio.enabled true }}
+{{- if .Values.helicone.minio.enabled }}
   valueFrom:
     secretKeyRef:
-      name: helicone-minio-secrets
-      key: root_password
+      name: {{ .Values.helicone.config.minioSecretsName | default "helicone-minio-secrets" | quote }}
+      key: {{ .Values.helicone.config.minioSecretKeyKey | default "root_password" | quote }}
 {{- else }}
   valueFrom:
     secretKeyRef:
-      name: helicone-secrets
-      key: secret_key
+      name: {{ .Values.helicone.config.s3SecretsName | default "helicone-secrets" | quote }}
+      key: {{ .Values.helicone.config.s3SecretKeyKey | default "secret_key" | quote }}
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.s3Endpoint" -}}
 - name: S3_ENDPOINT
-{{- if eq .Values.helicone.minio.enabled true }}
-  value: "http://{{ include "minio.name" . }}:{{ .Values.helicone.minio.service.port }}"
+{{- if .Values.helicone.minio.enabled }}
+  value: {{ .Values.helicone.config.s3Endpoint | default (printf "http://%s:%s" (include "minio.name" .) (.Values.helicone.minio.service.port | toString)) | quote }}
 {{- else }}
   valueFrom:
     secretKeyRef:
-      name: helicone-secrets
-      key: endpoint
+      name: {{ .Values.helicone.config.s3SecretsName | default "helicone-secrets" | quote }}
+      key: {{ .Values.helicone.config.s3EndpointKey | default "endpoint" | quote }}
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.s3BucketName" -}}
 - name: S3_BUCKET_NAME
-{{- if eq .Values.helicone.minio.enabled true }}
-  value: {{ index .Values.helicone.minio.setup.buckets 0 | quote }}
+{{- if .Values.helicone.minio.enabled }}
+  value: {{ .Values.helicone.config.s3BucketName | default (index .Values.helicone.minio.setup.buckets 0) | quote }}
 {{- else }}
   valueFrom:
     secretKeyRef:
-      name: helicone-secrets
-      key: bucket_name
+      name: {{ .Values.helicone.config.s3SecretsName | default "helicone-secrets" | quote }}
+      key: {{ .Values.helicone.config.s3BucketNameKey | default "bucket_name" | quote }}
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.dbHost" -}}
 - name: DB_HOST
-{{- if .Values.postgresql.enabled }}
-  value: {{ printf "%s-postgresql" .Release.Name | quote }}
+{{- if .Values.global.postgresql.enabled }}
+  value: {{ .Values.helicone.config.dbHost | default (printf "%s-postgresql" .Release.Name) | quote }}
 {{- else }}
   valueFrom:
     secretKeyRef:
-      name: aurora-postgres-credentials
-      key: host
+      name: {{ .Values.helicone.config.dbSecretsName | default "aurora-postgres-credentials" | quote }}
+      key: {{ .Values.helicone.config.dbHostKey | default "host" | quote }}
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.dbPort" -}}
 - name: DB_PORT
-{{- if .Values.postgresql.enabled }}
-  value: "5432"
+{{- if .Values.global.postgresql.enabled }}
+  value: {{ .Values.helicone.config.dbPort | default "5432" | quote }}
 {{- else }}
   valueFrom:
     secretKeyRef:
-      name: aurora-postgres-credentials
-      key: port
+      name: {{ .Values.helicone.config.dbSecretsName | default "aurora-postgres-credentials" | quote }}
+      key: {{ .Values.helicone.config.dbPortKey | default "port" | quote }}
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.dbName" -}}
 - name: DB_NAME
-{{- if .Values.postgresql.enabled }}
-  value: {{ .Values.global.postgresql.auth.database | quote }}
+{{- if .Values.global.postgresql.enabled }}
+  value: {{ .Values.helicone.config.dbName | default .Values.global.postgresql.auth.database | quote }}
 {{- else }}
   valueFrom:
     secretKeyRef:
       name: aurora-postgres-credentials
       key: database
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.dbUser" -}}
 - name: DB_USER
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.global.postgresql.enabled }}
   value: {{ .Values.global.postgresql.auth.username | quote }}
 {{- else }}
   valueFrom:
@@ -170,20 +168,20 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
       name: aurora-postgres-credentials
       key: username
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "helicone.env.dbPassword" -}}
 - name: DB_PASSWORD
   valueFrom:
     secretKeyRef:
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.global.postgresql.enabled }}
       name: helicone-secrets
       key: postgres-password
 {{- else }}
       name: aurora-postgres-credentials
       key: password
 {{- end }}
-{{- end -}}
+{{- end }}
 
 {{- define "clickhouse.name" -}}
 {{ include "helicone.name" . }}-clickhouse
@@ -231,52 +229,52 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 # TODO Move these into the same template such that they can be grouped together (define and include).
 {{- define "helicone.env.smtpPort" -}}
 - name: SMTP_PORT
-  value: "1025"
+  value: {{ .Values.helicone.config.smtpPort | default "1025" | quote }}
 {{- end }}
 
 {{- define "helicone.env.smtpSecure" -}}
 - name: SMTP_SECURE
-  value: "false"
+  value: {{ .Values.helicone.config.smtpSecure | default "false" | quote }}
 {{- end }}
 
 {{- define "helicone.env.nodeEnv" -}}
 - name: NODE_ENV
-  value: "development"
+  value: {{ .Values.helicone.config.nodeEnv | default "development" | quote }}
 {{- end }}
 
 {{- define "helicone.env.vercelEnv" -}}
 - name: VERCEL_ENV
-  value: "development"
+  value: {{ .Values.helicone.config.vercelEnv | default "development" | quote }}
 {{- end }}
 
 {{- define "helicone.env.nextPublicBetterAuth" -}}
 - name: NEXT_PUBLIC_BETTER_AUTH
-  value: "true"
+  value: {{ .Values.helicone.config.nextPublicBetterAuth | default "true" | quote }}
 {{- end }}
 
 {{- define "helicone.env.s3ForcePathStyle" -}}
 - name: S3_FORCE_PATH_STYLE
-  value: "true"
+  value: {{ .Values.helicone.config.s3ForcePathStyle | default "true" | quote }}
 {{- end }}
 
 {{- define "helicone.env.azureApiKey" -}}
 - name: AZURE_API_KEY
-  value: "anything"
+  value: {{ .Values.helicone.config.azureApiKey | default "anything" | quote }}
 {{- end }}
 
 {{- define "helicone.env.azureApiVersion" -}}
 - name: AZURE_API_VERSION
-  value: "anything"
+  value: {{ .Values.helicone.config.azureApiVersion | default "anything" | quote }}
 {{- end }}
 
 {{- define "helicone.env.azureDeploymentName" -}}
 - name: AZURE_DEPLOYMENT_NAME
-  value: "anything"
+  value: {{ .Values.helicone.config.azureDeploymentName | default "anything" | quote }}
 {{- end }}
 
 {{- define "helicone.env.azureBaseUrl" -}}
 - name: AZURE_BASE_URL
-  value: "anything"
+  value: {{ .Values.helicone.config.azureBaseUrl | default "anything" | quote }}
 {{- end }}
 
 {{- define "helicone.env.openaiApiKey" -}}
@@ -286,41 +284,45 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 
 {{- define "helicone.env.enablePromptSecurity" -}}
 - name: ENABLE_PROMPT_SECURITY
-  value: {{ .Values.helicone.config.enablePromptSecurity | default false | quote }}
+  value: {{ .Values.helicone.config.enablePromptSecurity | default "false" | quote }}
 {{- end }}
 
 
-# TODO This is a temporary solution to get the supabase url working. It will incur tech debt if we don't refactor to support other types of connection strings that don't end with postgresql.
 {{- define "helicone.env.supabaseUrl" -}}
 - name: SUPABASE_URL
-  value: "http://{{ printf "%s-postgresql" .Release.Name }}:5432"
+  value: {{ .Values.helicone.config.supabaseUrl | default "http://helicone-postgresql:5432" | quote }}
 {{- end }}
 
-# TODO This is tech debt as a result of jawn still having the 
+{{- define "helicone.env.databaseUrl" -}}
+- name: DATABASE_URL
+  value: {{ .Values.helicone.config.databaseUrl | default "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%20search_path%3Dpublic,extensions" | quote }}
+{{- end }}
+
+# TODO This is tech debt as a result of Jawn still having the Supabase database url in the config.
 {{- define "helicone.env.supabaseDatabaseUrl" -}}
 - name: SUPABASE_DATABASE_URL
-  value: "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%20search_path%3Dpublic,extensions"
+  value: {{ .Values.helicone.config.supabaseDatabaseUrl | default "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%20search_path%3Dpublic,extensions" | quote }}
 {{- end }}
 
 {{- define "helicone.env.enableCronJob" -}}
 - name: ENABLE_CRON_JOB
-  value: "true"
+  value: {{ .Values.helicone.config.enableCronJob | default "true" | quote }}
 {{- end }}
 
-# TODO This is a temporary solution to get the supabase database url working. It will incur tech debt if we don't refactor to support other types of connection strings.
-{{- define "helicone.env.databaseUrl" -}}
-- name: DATABASE_URL
-  value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%20search_path%3Dpublic,extensions"
-{{- end }}
 
-# TODO Not sure why this is needed within any of the deployments.
 {{- define "helicone.env.env" -}}
 - name: ENV
-  value: "development"
+  value: {{ .Values.helicone.config.env | default "development" | quote }}
 {{- end }}
 
 {{- define "helicone.env.betterAuthUrl" -}}
 - name: BETTER_AUTH_URL
+  value: {{ .Values.helicone.config.siteUrl | default "https://heliconetest.com" | quote }}
+{{- end }}
+
+# TODO Move these definitions to the web chart (and refactor accordingly).
+{{- define "helicone.env.siteUrl" -}}
+- name: SITE_URL
   value: {{ .Values.helicone.config.siteUrl | default "https://heliconetest.com" | quote }}
 {{- end }}
 
@@ -363,4 +365,60 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
     secretKeyRef:
       name: helicone-helix-secrets
       key: helicone_api_key
+{{- end }}
+
+{{- define "helicone.env.flywayUrl" -}}
+- name: FLYWAY_URL
+  value: {{ .Values.helicone.config.flywayUrl | default "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%20search_path%3Dpublic,extensions" | quote }}
+{{- end }}
+
+{{- define "helicone.env.flywayUser" -}}
+- name: FLYWAY_USER
+  value: {{ .Values.helicone.config.flywayUser | default "postgres" | quote }}
+{{- end }}
+
+{{- define "helicone.env.flywayPassword" -}}
+- name: FLYWAY_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: helicone-secrets
+      key: postgres-password
+{{- end }}
+
+{{/*
+Web deployment specific environment variables
+*/}}
+{{- define "helicone.env.nextPublicHeliconeJawnService" -}}
+- name: NEXT_PUBLIC_HELICONE_JAWN_SERVICE
+  value: {{ .Values.helicone.jawn.publicUrl | quote }}
+{{- end }}
+
+{{- define "helicone.env.nextPublicApiBasePath" -}}
+- name: NEXT_PUBLIC_API_BASE_PATH
+  value: "/api2"
+{{- end }}
+
+{{- define "helicone.env.nextPublicBasePath" -}}
+- name: NEXT_PUBLIC_BASE_PATH
+  value: "/api2/v1"
+{{- end }}
+
+{{- define "helicone.env.dbDriver" -}}
+- name: DB_DRIVER
+  value: "postgres"
+{{- end }}
+
+{{- define "helicone.env.dbSsl" -}}
+- name: DB_SSL
+  value: "disable"
+{{- end }}
+
+{{- define "helicone.env.databaseUrlComposed" -}}
+- name: DATABASE_URL
+  value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL)&options=-c%20search_path%3Dpublic,extensions"
+{{- end }}
+
+{{- define "helicone.env.nextPublicIsOnPrem" -}}
+- name: NEXT_PUBLIC_IS_ON_PREM
+  value: "true"
 {{- end }}

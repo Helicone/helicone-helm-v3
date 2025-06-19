@@ -97,52 +97,26 @@ tags = {
 }
 ```
 
-### Cloudflare DNS Configuration
+### Related Modules
 
-This configuration manages DNS records in Cloudflare for both your custom domains. To enable this:
+This EKS module provides the core Kubernetes infrastructure. For complete application setup:
 
-1. **Get a Cloudflare API Token**:
-   - Go to [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
-   - Create a token with permissions:
-     - `Zone:Read` for both domain zones
-     - `DNS:Edit` for both domain zones
+**DNS and SSL Certificates:**
 
-2. **Configure your domains**:
-   ```hcl
-   # Required: Your Cloudflare API token (same for both domains)
-   cloudflare_api_token = "your-api-token-here"
-   
-   # helicone-test.com domain configuration
-   cloudflare_zone_name = "helicone-test.com"
-   cloudflare_subdomain = "filevine"
-   create_root_domain_record = false
-   
-   # helicone.ai domain configuration
-   cloudflare_helicone_ai_zone_name = "helicone.ai"
-   cloudflare_helicone_ai_subdomain = "filevine"
-   create_helicone_ai_root_domain_record = false
-   ```
+- See the [Route53/ACM module](../route53-acm/README.md) for managing SSL certificates and Route53
+  DNS records
+- The route53-acm module reads the EKS load balancer hostname via Terraform remote state
 
-3. **What gets created**:
-   
-   **For helicone-test.com:**
-   - CNAME record: `filevine.helicone-test.com` → AWS Load Balancer
-   - ACM certificate for `*.helicone-test.com`
-   - Certificate validation records (automatic)
-   - Optional root domain CNAME
-   
-   **For helicone.ai:**
-   - CNAME record: `filevine.helicone.ai` → AWS Load Balancer
-   - ACM certificate for `*.helicone.ai`
-   - Certificate validation records (automatic)
-   - Optional root domain CNAME
+**External DNS Management:**
 
-4. **Benefits**:
-   - Fully automated DNS management for both domains
-   - Automatic SSL certificate validation
-   - Infrastructure as code for DNS records
-   - No manual steps in Cloudflare dashboard
-   - Support for multiple domains pointing to the same infrastructure
+- See the [Cloudflare module](../cloudflare/README.md) for managing external DNS records
+- The Cloudflare module reads certificate validation options from the route53-acm module
+
+**Deployment Order:**
+
+1. Deploy this EKS module first
+2. Deploy the route53-acm module for SSL and internal DNS
+3. Deploy the Cloudflare module for external DNS (optional)
 
 ## Features
 

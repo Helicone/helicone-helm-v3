@@ -21,7 +21,7 @@ spec:
       serviceAccountName: {{ include "helicone.name" . }}-beyla
       {{- end }}
       initContainers:
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.global.postgresql.enabled }}
         - name: wait-for-postgres
           image: postgres:15-alpine
           command:
@@ -29,12 +29,15 @@ spec:
             - -c
             - |
               echo "Waiting for PostgreSQL to be ready..."
-              until pg_isready -h helicone-core-postgresql -p 5432 -U postgres; do
+              until pg_isready -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER); do
                 echo "PostgreSQL is not ready yet. Waiting..."
                 sleep 2
               done
               echo "PostgreSQL is ready!"
           env:
+            {{- include "helicone.env.dbHost" . | nindent 12 }}
+            {{- include "helicone.env.dbPort" . | nindent 12 }}
+            {{- include "helicone.env.dbUser" . | nindent 12 }}
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
@@ -54,47 +57,22 @@ spec:
               done
               echo "Aurora PostgreSQL is ready!"
           env:
-{{ include "helicone.env.dbHost" . | indent 12 }}
-{{ include "helicone.env.dbPort" . | indent 12 }}
-{{ include "helicone.env.dbUser" . | indent 12 }}
-{{ include "helicone.env.dbPassword" . | indent 12 }}
+            # TODO These are likely not the correct values for Aurora.
+            {{- include "helicone.env.dbHost" . | nindent 12 }}
+            {{- include "helicone.env.dbPort" . | nindent 12 }}
+            {{- include "helicone.env.dbUser" . | nindent 12 }}
+            {{- include "helicone.env.dbPassword" . | nindent 12 }}
 {{- end }}
       containers:
         - name: {{ include "jawn.name" $ }}
           image: "{{ .Values.helicone.jawn.image.repository }}:{{ .Values.helicone.jawn.image.tag }}"
           imagePullPolicy: {{ .Values.helicone.jawn.image.pullPolicy }}
           env:
-            {{- include "helicone.env.clickhouseHost" . | nindent 12 }}
-            {{- include "helicone.env.clickhouseUser" . | nindent 12 }}
-            {{- include "helicone.env.dbHost" . | nindent 12 }}
-            {{- include "helicone.env.dbPort" . | nindent 12 }}
-            {{- include "helicone.env.dbUser" . | nindent 12 }}
-            {{- include "helicone.env.dbPassword" . | nindent 12 }}
-            {{- include "helicone.env.dbName" . | nindent 12 }}
-            {{- include "helicone.env.s3AccessKey" . | nindent 12 }}
-            {{- include "helicone.env.s3SecretKey" . | nindent 12 }}
-            {{- include "helicone.env.s3BucketName" . | nindent 12 }}
-            {{- include "helicone.env.s3Endpoint" . | nindent 12 }}
-            {{- include "helicone.env.betterAuthSecret" . | nindent 12 }}
-            {{- include "helicone.env.betterAuthUrl" . | nindent 12 }}
-            {{- include "helicone.env.betterAuthTrustedOrigins" . | nindent 12 }}
-            {{- include "helicone.env.stripeSecretKey" . | nindent 12 }}
-            {{- include "helicone.env.azureApiKey" . | nindent 12 }}
-            {{- include "helicone.env.azureApiVersion" . | nindent 12 }}
-            {{- include "helicone.env.azureDeploymentName" . | nindent 12 }}
-            {{- include "helicone.env.azureBaseUrl" . | nindent 12 }}
-            {{- include "helicone.env.openaiApiKey" . | nindent 12 }}
-            {{- include "helicone.env.enablePromptSecurity" . | nindent 12 }}
-            {{- include "helicone.env.supabaseUrl" . | nindent 12 }}
-            {{- include "helicone.env.supabaseDatabaseUrl" . | nindent 12 }}
-            {{- include "helicone.env.enableCronJob" . | nindent 12 }}
-            {{- include "helicone.env.databaseUrl" . | nindent 12 }}
-            {{- include "helicone.env.env" . | nindent 12 }}
-            {{- include "helicone.env.nextPublicBetterAuth" . | nindent 12 }}
+            {{- include "helicone.jawn.env" . | nindent 12 }}
             {{- with .Values.helicone.jawn.extraEnvVars }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
-          ports:  # TODO This is likely not used (check the other charts as well for this sort of behavior)
+          ports:
             - name: http
               containerPort: {{ .Values.helicone.jawn.service.port }}
               protocol: TCP
