@@ -1,0 +1,348 @@
+################################################################################
+#
+#                            HELICONE CORE
+#
+################################################################################
+
+global:
+  postgresql:
+    enabled: true
+    auth:
+      database: helicone_test
+      username: postgres
+      postgresPassword: "your-super-secret-and-long-postgres-password"
+    primary:
+      persistence:
+        size: 5Gi
+        storageClass: "gp2-immediate"
+
+# - Aurora connection configuration
+aurora:
+  enabled: false
+  host: "helicone-aurora-cluster.cluster-cr0pbknv3xbp.us-west-2.rds.amazonaws.com"
+  port: 5432
+  database: "helicone"
+  username: "helicone_admin"
+  # Password will be pulled from Kubernetes secret created from AWS Secrets Manager
+
+helicone:
+  web:
+    enabled: true
+    image:
+      repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/web
+      pullPolicy: IfNotPresent
+      tag: "v2025-06-17"
+    replicaCount: 1
+    service:
+      annotations: {}
+      type: ClusterIP
+      port: 3000
+    extraEnvVars: []
+    ingress:
+      enabled: true
+      className: "nginx"
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      hosts:
+        - host: filevine.helicone.ai
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - hosts:
+            - filevine.helicone.ai
+          secretName: heliconetest-tls
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    verticalPodAutoscaler:
+      enabled: false
+      updateMode: "Off"
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
+      maxUnavailable: null
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          percentPolicy: 50
+          periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          percentPolicy: 100
+          periodSeconds: 15
+    postgresMigrationRunner:
+      image:
+        repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/migrations
+        pullPolicy: IfNotPresent
+        tag: "v2025-06-17"
+      resources: {}
+    
+    router:
+      enabled: true
+
+  helix:
+    enabled: true
+    image:
+      repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/helix
+      pullPolicy: IfNotPresent
+      tag: "v2025-06-17"
+    replicaCount: 1
+    service:
+      annotations: {}
+      type: ClusterIP
+      port: 5678
+    ingress:
+      enabled: false
+      className: "nginx"
+      annotations: {}
+      hosts:
+        - host: filevine.helicone.ai/helix
+          paths:
+            - path: /
+              pathType: Prefix
+      tls: []
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 512Mi
+    extraEnvVars:
+      - name: PROXY__SERVER__ADDRESS
+        value: "0.0.0.0"
+    config:
+      routers:
+        default:
+          loadBalance:
+            chat:
+              strategy: "latency"
+              targets: ["openai", "anthropic"]
+      auth:
+        requireAuth: false
+    # API Keys (these should be set via secure secrets management)
+    secrets:
+      # Set these values using kubectl create secret or your preferred secrets management
+      # kubectl create secret generic helicone-helix-secrets \
+      #   --from-literal=proxy_helicone_api_key="your-key-here" \
+      #   --from-literal=openai_api_key="your-key-here" \
+      #   --from-literal=anthropic_api_key="your-key-here" \
+      #   --from-literal=gemini_api_key="your-key-here" \
+      #   --from-literal=helicone_api_key="your-key-here"
+      proxyHeliconeApiKey: ""  # TODO Not sure if this is the correct key to set
+      helixOpenaiApiKey: ""
+      helixAnthropicApiKey: ""
+      helixGeminiApiKey: ""
+      helixHeliconeApiKey: ""
+
+  clickhouse:
+    enabled: true
+    image:
+      repository: clickhouse/clickhouse-server
+      pullPolicy: IfNotPresent
+      tag: "23.4.2.11"
+    replicaCount: 1
+    service:
+      annotations: {}
+      type: ClusterIP
+      port: 8123
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+    persistence:
+      storageClass: "gp2-immediate"
+      size: 10Gi
+
+  # TODO Make it such that the s3 access key and secret key are the same environment variable such that it is hot-swappable with S3
+  # Note: If enabled is set to false, then S3 is used instead of MinIO
+  minio:
+    enabled: true
+    image:
+      repository: minio/minio
+      pullPolicy: IfNotPresent
+      tag: "RELEASE.2023-05-18T00-05-36Z"
+    replicaCount: 1
+    service:
+      annotations: {}
+      type: ClusterIP
+      port: 9000
+      consolePort: 9001
+    resources: {}
+    persistence:
+      storageClass: "gp2-immediate"
+      size: 20Gi
+    ingress:
+      enabled: false
+      ingressClassName: ""
+      annotations: {}
+    setup:
+      image:
+        repository: minio/mc
+        tag: "latest"
+        pullPolicy: IfNotPresent
+      buckets:
+        - "request-response-storage"
+
+  jawn:
+    enabled: true
+    image:
+      repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/jawn
+      pullPolicy: IfNotPresent
+      tag: "v2025-06-17"
+    replicaCount: 1
+    service:
+      annotations: {}
+      type: ClusterIP
+      port: 8585
+    extraEnvVars: []
+    publicUrl: "https://filevine.helicone.ai/jawn"
+    ingress:
+      enabled: true
+      className: "nginx"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+        nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      hosts:
+        - host: filevine.helicone.ai
+          paths:
+            - path: /jawn(/|$)(.*)
+              pathType: ImplementationSpecific
+      tls:
+        - hosts:
+            - filevine.helicone.ai
+          secretName: heliconetest-tls
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 512Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          percentPolicy: 50
+          periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          percentPolicy: 100
+          periodSeconds: 15
+
+  # TODO Disaggregate this config, since not all of them are in common across the respective charts
+  config:
+    vercelEnv: "development"
+    clickhouseHost: "http://helicone-core-clickhouse:8123"
+    clickhousePort: "8123"
+    clickhouseUser: "default"
+    s3BucketName: "helm-request-response-storage"
+    s3Endpoint: "http://helicone-core-minio:9000"
+    openaiProxyPort: "8787"
+    heliconeApiPort: "8788"
+    anthropicProxyPort: "8789"
+    gatewayApiPort: "8790"
+    jawnPort: "8585"
+    jawnPublicUrl: "https://filevine.helicone.ai/jawn"
+    kongHttpPort: "8000"
+    kongHttpsPort: "8443"
+    pgrstDbSchemas: "public,storage,graphql_public"
+    siteUrl: "https://filevine.helicone.ai"
+    betterAuthTrustedOrigins: "https://filevine.helicone.ai,http://filevine.helicone.ai"
+    additionalRedirectUrls: ""
+    jwtExpiry: "3600"
+    disableSignup: "false"
+    apiExternalUrl: "http://localhost:8000"
+    mailerUrlpathsConfirmation: "/auth/v1/verify"
+    mailerUrlpathsInvite: "/auth/v1/verify"
+    mailerUrlpathsRecovery: "/auth/v1/verify"
+    mailerUrlpathsEmailChange: "/auth/v1/verify"
+    enableEmailSignup: "true"
+    enableEmailAutoconfirm: "false"
+    enablePhoneSignup: "true"
+    enablePhoneAutoconfirm: "true"
+    studioDefaultOrganization: "Default Organization"
+    studioDefaultProject: "Default Project"
+    studioPort: "3000"
+    imgproxyEnableWebpDetection: "true"
+    functionsVerifyJwt: "false"
+    dockerSocketLocation: "/var/run/docker.sock"
+    googleProjectId: "GOOGLE_PROJECT_ID"
+    googleProjectNumber: "GOOGLE_PROJECT_NUMBER"
+    nodeEnv: "development"
+
+  # TODO Disaggregate and move to a secrets manager such that it is never a part of the helm chart
+  secrets:
+    # IMPORTANT: These are default development secrets
+    # For production, override these values or use external secret management
+    
+    # Authentication & Auth secrets
+    betterAuthSecret: ""
+    
+    # Payment processing
+    stripeSecretKey: ""
+    
+    # Storage (S3/MinIO)
+    minioRootUser: ""
+    minioRootPassword: ""
+    s3AccessKey: ""
+    s3SecretKey: ""
+    
+    # Database secrets
+    postgresPassword: "" 
+    
+    # ClickHouse secrets
+    clickhouseUser: "default"
+    clickhousePassword: ""
+    
+    # External API keys (development defaults)
+    azureApiKey: ""
+    azureApiVersion: ""
+    azureDeploymentName: ""
+    azureBaseUrl: ""
+    openaiApiKey: ""
+    
+    # Monitoring & observability
+    grafanaAdminPassword: ""
+    
+    # Feature flags and configuration
+    enablePromptSecurity: "false"
+    enableCronJob: "true"
+
+mailhog:
+  enabled: true
+  image:
+    repository: mailhog/mailhog
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+# Beyla configuration (disabled in core, managed by infrastructure chart)
+beyla:
+  enabled: false 
