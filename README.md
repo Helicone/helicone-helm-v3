@@ -4,10 +4,15 @@ This project is licensed under Apache 2.0 with The Commons Clause.
 
 ## Overview
 
-This Helm chart deploys the complete Helicone stack on Kubernetes. Terraform creates AWS S3, Aurora,
-and EKS resources to run the Helicone project on.
+This repository includes Helm charts for complete Helicone stack on Kubernetes. The following charts
+are included:
 
-## AWS Setup Guide
+- **helicone-core** - Main application components (web, jawn, worker, AI gateway, etc.)
+- **helicone-infrastructure** - Infrastructure services (eBPF)
+- **helicone-monitoring** - Monitoring stack (Grafana, Prometheus)
+- **helicone-argocd** - ArgoCD for GitOps workflows
+
+All Helicone services needed to get up and running are in the `helicone-core` Helm chart.
 
 ### Prerequisites
 
@@ -16,78 +21,15 @@ and EKS resources to run the Helicone project on.
 2. Install **[kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)** - For Kubernetes
    operations
 3. Install **[Helm](https://helm.sh/docs/intro/install/)** - For chart deployment
-4. Install **[Terraform](https://developer.hashicorp.com/terraform/install)** - For infrastructure
-   as code deployment
+4. Set up a cluster. To assist with the creation of this cluster, we have
+   **[Terraform](https://developer.hashicorp.com/terraform/install)** resources for AWS and
+   Cloudflare.
 5. Copy all values.example.yaml files to values.yaml for each of the charts in `charts/` and
    customize as needed for your configuration.
 
-## Infrastructure Deployment with Terraform
-
-The Terraform configuration is organized into separate modules for better maintainability and
-separation of concerns:
-
-### Module Structure
-
-- **`terraform/eks/`** - Core EKS cluster infrastructure (cluster, nodes, networking)
-- **`terraform/route53-acm/`** - SSL certificates and Route53 DNS management
-- **`terraform/cloudflare/`** - External DNS management via Cloudflare (optional)
-- **`terraform/s3/`** - S3 storage buckets (optional)
-- **`terraform/aurora/`** - Aurora PostgreSQL database (optional)
-
-### Deployment Order
-
-Deploy the modules in this specific order due to dependencies:
-
-1. **Deploy EKS Infrastructure** (required)
-
-   ```bash
-   cd terraform/eks
-   terraform init
-   terraform validate
-   terraform apply
-   ```
-
-2. **Deploy Route53/ACM Module** (required for SSL and DNS)
-
-   ```bash
-   cd terraform/route53-acm
-   terraform init
-   terraform validate
-   terraform apply
-   ```
-
-3. **Deploy Cloudflare Module** (optional - for external domains)
-
-   ```bash
-   cd terraform/cloudflare
-   terraform init
-   terraform validate
-   terraform apply
-   ```
-
-### Module Dependencies
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│                 │    │                  │    │                 │
-│   EKS Module    │───▶│ Route53/ACM      │───▶│ Cloudflare      │
-│                 │    │ Module           │    │ Module          │
-│                 │    │                  │    │ (Optional)      │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-        │                        │                        │
-        │                        │                        │
-        ▼                        ▼                        ▼
-  Load Balancer           ACM Certificates         External DNS
-  Hostname               Route53 DNS Records       Management
-```
-
-- **EKS Module**: Provides load balancer hostname for DNS records
-- **Route53/ACM Module**: Provides certificate validation options for Cloudflare
-- **Cloudflare Module**: Manages external DNS records using outputs from both modules
-
-See individual module README files for detailed configuration options.
-
 ## Deploy Helm Charts
+
+Assuming you have a cluster ready, follow one of these options to deploy the Helicone stack.
 
 ### Option 1: Using Helm Compose (Recommended)
 
@@ -97,13 +39,6 @@ You can now deploy all Helicone components with a single command using the provi
 ```bash
 helm compose up
 ```
-
-This will deploy the complete Helicone stack including:
-
-- **helicone-core** - Main application components (web, jawn, worker, etc.)
-- **helicone-infrastructure** - Infrastructure services (PostgreSQL, Redis, ClickHouse, etc.)
-- **helicone-monitoring** - Monitoring stack (Grafana, Prometheus)
-- **helicone-argocd** - ArgoCD for GitOps workflows
 
 To tear down all components:
 
@@ -149,9 +84,7 @@ Alternatively, you can install components individually:
 
 2. Use `values.example.yaml` as a starting point, and copy into `values.yaml`
 
-3. Copy `secrets.example.yaml` into `secrets.yaml`, and change the secrets according to your setup.
-
-4. Install/upgrade each Helm chart individually:
+3. Install/upgrade each Helm chart individually:
 
    ```bash
    # Install core Helicone application components
@@ -167,7 +100,7 @@ Alternatively, you can install components individually:
    helm upgrade --install helicone-argocd ./helicone-argocd -f values.yaml
    ```
 
-5. Verify the deployment:
+4. Verify the deployment:
 
    ```bash
    kubectl get pods
@@ -227,59 +160,42 @@ your `values.yaml`.
 ### 5. Deploy Helicone Helm Charts
 
 Once the Ingress controller is set up and DNS is configured, deploy your Helicone Helm charts as
-described below. Your web and jawn services will be accessible at the domains you configured.
+described below. By default, ingress is set up for web and jawn, which is thereafter accessible at
+the domains you configured.
 
-## Accessing Deployed Services
+## Infrastructure Deployment with Terraform
 
-### ArgoCD
+### Module Structure
 
-ArgoCD is deployed as part of the **helicone-argocd** component and provides GitOps capabilities for
-continuous deployment. It monitors your Git repositories and automatically synchronizes your
-Kubernetes cluster state with the desired state defined in your Git repos.
+- **`terraform/eks/`** - Core EKS cluster infrastructure (cluster, nodes, networking)
+- **`terraform/route53-acm/`** - SSL certificates and Route53 DNS management
+- **`terraform/cloudflare/`** - External DNS management via Cloudflare (optional)
+- **`terraform/s3/`** - S3 storage buckets (optional)
+- **`terraform/aurora/`** - Aurora PostgreSQL database (optional)
 
-#### Accessing ArgoCD UI
+### Deployment Order
 
-1. Port-forward to access the ArgoCD server:
+Deploy the modules in this specific order due to dependencies:
 
-   ```bash
-   kubectl port-forward svc/argocd-server -n argocd 8080:443
-   ```
-
-2. Access the ArgoCD UI at: `https://localhost:8080`
-
-3. Get the initial admin password:
+1. **Deploy EKS Infrastructure** (required)
 
    ```bash
-   kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+   cd terraform/eks
+   terraform init
+   terraform validate
+   terraform apply
    ```
 
-4. Login with username `admin` and the password retrieved above.
-
-### Grafana
-
-Grafana is deployed as part of the **helicone-monitoring** component and provides observability
-dashboards for monitoring your Helicone deployment. It works alongside Prometheus to collect and
-visualize metrics from all your services.
-
-#### Accessing Grafana UI
-
-1. Port-forward to access the Grafana server:
+2. **Deploy Route53/ACM Module** (required for SSL and DNS)
 
    ```bash
-   kubectl port-forward svc/grafana -n monitoring 3000:80
+   cd terraform/route53-acm
+   terraform init
+   terraform validate
+   terraform apply
    ```
 
-2. Access the Grafana UI at: `http://localhost:3000`
-
-3. Get the admin password (if using default configuration):
-
-   ```bash
-   kubectl get secret grafana -n monitoring -o jsonpath="{.data.admin-password}" | base64 -d
-   ```
-
-4. Login with username `admin` and the password retrieved above.
-
-5. Pre-configured dashboards for Helicone services should be available under the Dashboards section.
+Note: We also allow deploying the Cloudflare module as a DNS provider instead of Route53
 
 ## Configuring S3 (Optional)
 
@@ -316,7 +232,8 @@ URL's from the bucket. To do so in AWS, in the bucket settings, set the followin
 
 ## Aurora Setup via Terraform
 
-To set up an Aurora postgresql database using Terraform, follow these steps:
+AWS Aurora is supported as an alternative to a vanilla postgres deployment. To set up an Aurora
+postgresql database using Terraform, follow these steps:
 
 1. Navigate to the terraform/aurora directory:
 
@@ -344,3 +261,55 @@ To set up an Aurora postgresql database using Terraform, follow these steps:
 
 After the aurora resource is created, make sure to set enabled to false for postgresql. This will
 allow the aurora cluster to be used in its place.
+
+## Additional Services
+
+### Grafana
+
+Grafana is deployed as part of the **helicone-monitoring** component and provides observability
+dashboards for monitoring your Helicone deployment. It works alongside Prometheus to collect and
+visualize metrics from all your services.
+
+#### Accessing Grafana UI
+
+1. Port-forward to access the Grafana server:
+
+   ```bash
+   kubectl port-forward svc/grafana -n monitoring 3000:80
+   ```
+
+2. Access the Grafana UI at: `http://localhost:3000`
+
+3. Get the admin password (if using default configuration):
+
+   ```bash
+   kubectl get secret grafana -n monitoring -o jsonpath="{.data.admin-password}" | base64 -d
+   ```
+
+4. Login with username `admin` and the password retrieved above.
+
+5. Pre-configured dashboards for Helicone services should be available under the Dashboards section.
+
+### ArgoCD
+
+ArgoCD is deployed as part of the **helicone-argocd** component and provides GitOps capabilities for
+continuous deployment. It monitors your Git repositories and automatically synchronizes your
+Kubernetes cluster state with the desired state defined in your Git repos.
+
+#### Accessing ArgoCD UI
+
+1. Port-forward to access the ArgoCD server:
+
+   ```bash
+   kubectl port-forward svc/argocd-server -n argocd 8080:443
+   ```
+
+2. Access the ArgoCD UI at: `https://localhost:8080`
+
+3. Get the initial admin password:
+
+   ```bash
+   kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+   ```
+
+4. Login with username `admin` and the password retrieved above.
