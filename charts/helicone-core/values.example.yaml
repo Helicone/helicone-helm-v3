@@ -92,9 +92,9 @@ helicone:
   aigateway:
     enabled: true
     image:
-      repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/aigateway
+      repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/ai-gateway
       pullPolicy: IfNotPresent
-      tag: "v2025-06-17"
+      tag: "v2025-06-23"
     replicaCount: 1
     service:
       annotations: {}
