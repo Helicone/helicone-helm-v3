@@ -1,29 +1,29 @@
-{{- if .Values.helicone.helix.enabled }}
+{{- if .Values.helicone.aigateway.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: helicone-helix
+  name: helicone-aigateway
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "helicone.helix.selectorLabels" . | nindent 6 }}
+      {{- include "helicone.aigateway.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "helicone.helix.selectorLabels" . | nindent 8 }}
+        {{- include "helicone.aigateway.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: helicone-helix
-          image: "{{ .Values.helicone.helix.image.repository }}:{{ .Values.helicone.helix.image.tag }}"
-          imagePullPolicy: {{ .Values.helicone.helix.image.pullPolicy }}
+        - name: helicone-aigateway
+          image: "{{ .Values.helicone.aigateway.image.repository }}:{{ .Values.helicone.aigateway.image.tag }}"
+          imagePullPolicy: {{ .Values.helicone.aigateway.image.pullPolicy }}
           ports:
             - name: http
               containerPort: 5678
               protocol: TCP
-          {{- if .Values.helicone.helix.config }}
+          {{- if .Values.helicone.aigateway.config }}
           command: ["/usr/local/bin/llm-proxy", "-c", "/app/config/config.yaml"] # TODO The issue with this approach is that you cannot have more than one config file.
           volumeMounts:
             - name: config
@@ -45,34 +45,34 @@ spec:
             - name: PROXY__HELICONE__API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: helicone-helix-secrets
+                  name: helicone-aigateway-secrets
                   key: helicone_api_key
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: helicone-helix-secrets
+                  name: helicone-aigateway-secrets
                   key: openai_api_key
             - name: ANTHROPIC_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: helicone-helix-secrets
+                  name: helicone-aigateway-secrets
                   key: anthropic_api_key
             - name: GEMINI_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: helicone-helix-secrets
+                  name: helicone-aigateway-secrets
                   key: gemini_api_key
             - name: OTEL_METRIC_EXPORT_INTERVAL
               value: "5000"  # TODO Make this configurable.
-            # {{- include "helicone.env.helixHeliconeApiKey" . | nindent 12 }}  # TODO Move the rest to _helpers.tpl like so.
-            {{- with .Values.helicone.helix.extraEnvVars }}
+            # {{- include "helicone.env.aigatewayHeliconeApiKey" . | nindent 12 }}  # TODO Move the rest to _helpers.tpl like so.
+            {{- with .Values.helicone.aigateway.extraEnvVars }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
-      {{- if .Values.helicone.helix.config }}
+      {{- if .Values.helicone.aigateway.config }}
       volumes:
         - name: config
           configMap:
-            name: helicone-helix-config
+            name: helicone-aigateway-config
       {{- end }}
     #   {{- if .Values.beyla.enabled }}  # TODO Not sure if Beyla should be enabled here
     #   volumes:

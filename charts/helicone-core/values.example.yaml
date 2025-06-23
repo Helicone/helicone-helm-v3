@@ -89,10 +89,10 @@ helicone:
     router:
       enabled: true
 
-  helix:
+  aigateway:
     enabled: true
     image:
-      repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/helix
+      repository: 849596434884.dkr.ecr.us-east-2.amazonaws.com/helicone/aigateway
       pullPolicy: IfNotPresent
       tag: "v2025-06-17"
     replicaCount: 1
@@ -105,7 +105,7 @@ helicone:
       className: "nginx"
       annotations: {}
       hosts:
-        - host: filevine.helicone.ai/helix
+        - host: filevine.helicone.ai/aigateway
           paths:
             - path: /
               pathType: Prefix
@@ -246,7 +246,7 @@ helicone:
     s3Endpoint: "http://helicone-core-minio:9000"
     openaiProxyPort: "8787"
     heliconeApiPort: "8788"
-    heliconeApiKey: ""  # TODO In the future, you shouldn't set this (should be configured from the web UI, and thereby shouldn't be a secret). This is necessary for now to get helix working.
+    heliconeApiKey: ""  # TODO In the future, you shouldn't set this (should be configured from the web UI, and thereby shouldn't be a secret). This is necessary for now to get aigateway working.
     openaiApiKey: ""  # TODO Confirm that these are the correct keys. Remove after it is implemented within web.
     anthropicApiKey: ""
     geminiApiKey: ""

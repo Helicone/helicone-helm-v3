@@ -1,1 +1,0 @@
-This template represents the router deployment (code named Helix) which replaces workers

@@ -326,44 +326,44 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
   value: {{ .Values.helicone.config.siteUrl | default "https://heliconetest.com" | quote }}
 {{- end }}
 
-{{- define "helicone.env.helixProxyHeliconeApiKey" -}}
+{{- define "helicone.env.aigatewayProxyHeliconeApiKey" -}}
 - name: PROXY__HELICONE__API_KEY
   valueFrom:
     secretKeyRef:
-      name: helicone-helix-secrets
+      name: helicone-aigateway-secrets
       key: proxy_helicone_api_key
 {{- end }}
 
-# TODO It doesn't make sense for the API keys of the LLMs to be defined separately for helix.
-{{- define "helicone.env.helixOpenaiApiKey" -}}
+# TODO It doesn't make sense for the API keys of the LLMs to be defined separately for aigateway.
+{{- define "helicone.env.aigatewayOpenaiApiKey" -}}
 - name: OPENAI_API_KEY
   valueFrom:
     secretKeyRef:
-      name: helicone-helix-secrets
+      name: helicone-aigateway-secrets
       key: openai_api_key
 {{- end }}
 
-{{- define "helicone.env.helixAnthropicApiKey" -}}
+{{- define "helicone.env.aigatewayAnthropicApiKey" -}}
 - name: ANTHROPIC_API_KEY
   valueFrom:
     secretKeyRef:
-      name: helicone-helix-secrets
+      name: helicone-aigateway-secrets
       key: anthropic_api_key
 {{- end }}
 
-{{- define "helicone.env.helixGeminiApiKey" -}}
+{{- define "helicone.env.aigatewayGeminiApiKey" -}}
 - name: GEMINI_API_KEY
   valueFrom:
     secretKeyRef:
-      name: helicone-helix-secrets
+      name: helicone-aigateway-secrets
       key: gemini_api_key
 {{- end }}
 
-{{- define "helicone.env.helixHeliconeApiKey" -}}
+{{- define "helicone.env.aigatewayHeliconeApiKey" -}}
 - name: HELICONE_API_KEY
   valueFrom:
     secretKeyRef:
-      name: helicone-helix-secrets
+      name: helicone-aigateway-secrets
       key: helicone_api_key
 {{- end }}
 

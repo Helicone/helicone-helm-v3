@@ -1,0 +1,1 @@
+This template represents the router deployment (code named aigateway) which replaces workers
