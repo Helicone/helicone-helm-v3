@@ -22,7 +22,7 @@ All Helicone services needed to get up and running are in the `helicone-core` He
    operations
 3. Install **[Helm](https://helm.sh/docs/intro/install/)** - For chart deployment
 4. Set up a cluster. To assist with the creation of this cluster, we have
-   **[Terraform](https://developer.hashicorp.com/terraform/install)** resources for AWS and
+   **[Terraform](https://developer.hashicorp.com/terraform/install)** resources for EKS, Route53, and
    Cloudflare.
 5. Copy all values.example.yaml files to values.yaml for each of the charts in `charts/` and
    customize as needed for your configuration.
