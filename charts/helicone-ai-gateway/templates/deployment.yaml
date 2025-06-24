@@ -1,0 +1,49 @@
+{{- if .Values.helicone.aiGateway.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helicone-ai-gateway
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "helicone.ai-gateway.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "helicone.ai-gateway.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: helicone-ai-gateway
+          image: "{{ .Values.helicone.aiGateway.image.repository }}:{{ .Values.helicone.aiGateway.image.tag }}"
+          imagePullPolicy: {{ .Values.helicone.aiGateway.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          {{- if .Values.helicone.aiGateway.config }}
+          command: ["/usr/local/bin/ai-gateway", "-c", "/app/config/config.yaml"]
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+          {{- end }}
+          env:
+            # TODO Move to _helpers.tpl
+            - name: HELICONE_CONTROL_PLANE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: helicone-ai-gateway-secrets
+                  key: helicone_api_key
+            {{- with .Values.helicone.aiGateway.extraEnvVars }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+      {{- if .Values.helicone.aiGateway.config }}
+      volumes:
+        - name: config
+          configMap:
+            name: helicone-ai-gateway-config
+      {{- end }}
+{{- end }}

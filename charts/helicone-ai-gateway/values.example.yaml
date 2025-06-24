@@ -1,0 +1,71 @@
+helicone:
+  aiGateway:
+    enabled: true
+    image:
+      repository: helicone/ai-gateway
+      pullPolicy: IfNotPresent
+      tag: "main"
+    replicaCount: 1
+    service:
+      annotations: {}
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: false
+      className: "nginx"
+      annotations: {}
+      hosts:
+        - host: helicone.ai/ai-gateway
+          paths:
+            - path: /
+              pathType: Prefix
+      tls: []
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 512Mi
+    extraEnvVars:
+      - name: AI_GATEWAY__SERVER__ADDRESS
+        value: "0.0.0.0"
+      - name: OPENAI_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: helicone-ai-gateway-secrets
+            key: openai_api_key
+      # Only required if deployment target == cloud
+      # - name: AI_GATEWAY__MINIO__ACCESS_KEY
+      #   valueFrom:
+      #     secretKeyRef:
+      #       name: helicone-minio-secrets
+      #       key: root_user
+      # - name: AI_GATEWAY__MINIO__SECRET_KEY
+      #   valueFrom:
+      #     secretKeyRef:
+      #       name: helicone-minio-secrets
+      #       key: root_password
+    config:
+      routers:
+        default:
+          load-balance:
+              chat:
+                strategy: latency
+                targets:
+                  - openai
+                  - anthropic
+
+    # API Keys (these should be set via secure secrets management)
+    secrets:
+      # Set these values using kubectl create secret or your preferred secrets management
+      # kubectl create secret generic helicone-ai-gateway-secrets \
+      #   --from-literal=proxy_helicone_api_key="your-key-here" \
+      #   --from-literal=openai_api_key="your-key-here" \
+      #   --from-literal=anthropic_api_key="your-key-here" \
+      #   --from-literal=gemini_api_key="your-key-here" \
+      #   --from-literal=helicone_api_key="your-key-here"
+      aiGatewayOpenaiApiKey: ""
+      aiGatewayAnthropicApiKey: ""
+      aiGatewayGeminiApiKey: ""
+      aiGatewayHeliconeApiKey: ""
