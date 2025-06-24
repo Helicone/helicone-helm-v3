@@ -3,6 +3,7 @@
 #                            HELICONE CORE
 #
 ################################################################################
+
 global:
   postgresql:
     enabled: true
@@ -86,6 +87,7 @@ helicone:
         pullPolicy: IfNotPresent
         tag: "v2025-06-17"
       resources: {}
+    
     router:
       enabled: true
 
@@ -131,6 +133,20 @@ helicone:
                   - anthropic
       auth:
         require-auth: false
+    # API Keys (these should be set via secure secrets management)
+    secrets:
+      # Set these values using kubectl create secret or your preferred secrets management
+      # kubectl create secret generic helicone-aigateway-secrets \
+      #   --from-literal=proxy_helicone_api_key="your-key-here" \
+      #   --from-literal=openai_api_key="your-key-here" \
+      #   --from-literal=anthropic_api_key="your-key-here" \
+      #   --from-literal=gemini_api_key="your-key-here" \
+      #   --from-literal=helicone_api_key="your-key-here"
+      proxyHeliconeApiKey: ""
+      aigatewayOpenaiApiKey: ""
+      aigatewayAnthropicApiKey: ""
+      aigatewayGeminiApiKey: ""
+      aigatewayHeliconeApiKey: ""
 
   clickhouse:
     enabled: true
@@ -246,12 +262,8 @@ helicone:
     s3Endpoint: "http://helicone-core-minio:9000"
     openaiProxyPort: "8787"
     heliconeApiPort: "8788"
-    heliconeApiKey: ""  # TODO In the future, you shouldn't set this (should be configured from the web UI, and thereby shouldn't be a secret). This is necessary for now to get aigateway working.
-    openaiApiKey: ""  # TODO Confirm that these are the correct keys. Remove after it is implemented within web.
-    anthropicApiKey: ""
-    geminiApiKey: ""
     anthropicProxyPort: "8789"
-    gatewayApiPort: "8790"  # TODO Make sure that these ports are configurable.
+    gatewayApiPort: "8790"
     jawnPort: "8585"
     jawnPublicUrl: "https://filevine.helicone.ai/jawn"
     kongHttpPort: "8000"
@@ -299,7 +311,7 @@ helicone:
     s3SecretKey: ""
     
     # Database secrets
-    postgresPassword: "" 
+    postgresPassword: "your-super-secret-and-long-postgres-password" 
     
     # ClickHouse secrets
     clickhouseUser: "default"
@@ -307,20 +319,17 @@ helicone:
     
     # External API keys (development defaults)
     azureApiKey: ""
-    azureApiVersion: ""
-    azureDeploymentName: ""
+    azureApiVersion: "2023-05-15"
+    azureDeploymentName: "gpt-35-turbo"
     azureBaseUrl: ""
     openaiApiKey: ""
     
     # Monitoring & observability
-    grafanaAdminPassword: ""
+    grafanaAdminPassword: "admin"
     
     # Feature flags and configuration
     enablePromptSecurity: "false"
     enableCronJob: "true"
-    nodeEnv: "development"
-    vercelEnv: "development"
-    env: "development"
 
 mailhog:
   enabled: true
@@ -335,27 +344,6 @@ mailhog:
     limits:
       memory: "256Mi"
       cpu: "200m"
-
-# PostgreSQL subchart configuration
-postgresql:
-  enabled: true
-  auth:
-    postgresPassword: ""
-    username: "helicone_admin"
-    password: ""
-    database: "helicone"
-  primary:
-    persistence:
-      enabled: true
-      size: 8Gi
-      storageClass: "gp2-immediate"
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "250m"
-      limits:
-        memory: "512Mi"
-        cpu: "500m"
 
 # Beyla configuration (disabled in core, managed by infrastructure chart)
 beyla:
