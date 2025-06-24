@@ -1,7 +1,7 @@
-{{- if .Values.helicone.aigateway.ingress.enabled -}}
-{{- $fullName := include "helicone.aigateway.name" . -}}
-{{- $svcPort := .Values.helicone.aigateway.service.port -}}
-{{- if and .Values.helicone.aigateway.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
+{{- if .Values.helicone.aiGateway.ingress.enabled -}}
+{{- $fullName := include "helicone.ai-gateway.name" . -}}
+{{- $svcPort := .Values.helicone.aiGateway.service.port -}}
+{{- if and .Values.helicone.aiGateway.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
   {{- if not (hasKey .Values.helicone.jawn.ingress.annotations "kubernetes.io/ingress.class") }}
   {{- $_ := set .Values.helicone.jawn.ingress.annotations "kubernetes.io/ingress.class" .Values.helicone.jawn.ingress.className}}
   {{- end }}
@@ -12,17 +12,17 @@ metadata:
   name: {{ $fullName }}
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
-  {{- with .Values.helicone.aigateway.ingress.annotations }}
+  {{- with .Values.helicone.aiGateway.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  {{- if and .Values.helicone.aigateway.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
-  ingressClassName: {{ .Values.helicone.aigateway.ingress.className }}
+  {{- if and .Values.helicone.aiGateway.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+  ingressClassName: {{ .Values.helicone.aiGateway.ingress.className }}
   {{- end }}
-  {{- if .Values.helicone.aigateway.ingress.tls }}
+  {{- if .Values.helicone.aiGateway.ingress.tls }}
   tls:
-    {{- range .Values.helicone.aigateway.ingress.tls }}
+    {{- range .Values.helicone.aiGateway.ingress.tls }}
     - hosts:
         {{- range .hosts }}
         - {{ . | quote }}
@@ -31,7 +31,7 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-    {{- range .Values.helicone.aigateway.ingress.hosts }}
+    {{- range .Values.helicone.aiGateway.ingress.hosts }}
     - host: {{ .host | quote }}
       http:
         paths:
