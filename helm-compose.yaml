@@ -13,13 +13,13 @@ releases:
     createNamespace: true
     valueFiles:
       - ./charts/helicone-core/values.yaml
-  # helicone-filevine:
-  #   chart: ./charts/helicone-core
+  # helicone-ai-gateway:
+  #   chart: ./charts/helicone-ai-gateway
   #   chartVersion: 0.1.0
   #   namespace: default
   #   createNamespace: true
   #   valueFiles:
-  #     - ./charts/helicone-core/values.filevine.yaml
+  #     - ./charts/helicone-ai-gateway/values.yaml
   # helicone-infrastructure:
   #   chart: ./charts/helicone-infrastructure
   #   chartVersion: 0.1.0

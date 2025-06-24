@@ -8,6 +8,7 @@ This repository includes Helm charts for complete Helicone stack on Kubernetes. 
 are included:
 
 - **helicone-core** - Main application components (web, jawn, worker, AI gateway, etc.)
+- **helicone-ai-gateway** - Helicone's AI Gateway
 - **helicone-infrastructure** - Infrastructure services (eBPF)
 - **helicone-monitoring** - Monitoring stack (Grafana, Prometheus)
 - **helicone-argocd** - ArgoCD for GitOps workflows
@@ -20,8 +21,8 @@ All Helicone services needed to get up and running are in the `helicone-core` He
    operations
 2. Install **[Helm](https://helm.sh/docs/intro/install/)** - For chart deployment
 3. Set up a cluster. To assist with the creation of this cluster, we have
-   **[Terraform](https://developer.hashicorp.com/terraform/install)** resources for EKS, Route53, and
-   Cloudflare.
+   **[Terraform](https://developer.hashicorp.com/terraform/install)** resources for EKS, Route53,
+   and Cloudflare.
 4. Copy all values.example.yaml files to values.yaml for each of the charts in `charts/` and
    customize as needed for your configuration.
 
@@ -44,49 +45,30 @@ To tear down all components:
 helm compose down
 ```
 
-### Option 2: Manual Helm Installation
-
-Alternatively, you can install components individually:
-
-### Option 1: Using Helm Compose (Recommended)
-
-You can now deploy all Helicone components with a single command using the provided
-`helm-compose.yaml` configuration:
-
-```bash
-helm compose up
-```
-
-This will deploy the complete Helicone stack including:
-
-- **helicone-core** - Main application components (web, jawn, worker, etc.)
-- **helicone-infrastructure** - Infrastructure services (PostgreSQL, Redis, ClickHouse, etc.)
-- **helicone-monitoring** - Monitoring stack (Grafana, Prometheus)
-- **helicone-argocd** - ArgoCD for GitOps workflows
-
-To tear down all components:
-
-```bash
-helm compose down
-```
+You can further specify the charts you with to deploy by altering the releases section of
+`helm-compose.yaml`.
 
 ### Option 2: Manual Helm Installation
 
 Alternatively, you can install components individually:
 
-1. Install necessary helm dependencies:
+1. Install necessary helm dependencies. For example, for helicone-core:
 
    ```bash
-   cd helicone && helm dependency build
+   cd helicone-core && helm dependency build
    ```
 
-2. Use `values.example.yaml` as a starting point, and copy into `values.yaml`
+2. Use `values.example.yaml` as a starting point, and copy into `values.yaml`, then change the
+   secrets accordingly.
 
-3. Install/upgrade each Helm chart individually:
+3. Install/upgrade each Helm chart individually (do so within each respective directory):
 
    ```bash
    # Install core Helicone application components
    helm upgrade --install helicone-core ./helicone-core -f values.yaml
+
+   # Install AI Gateway component
+   helm upgrade --install helicone-ai-gateway ./helicone-ai-gateway -f values.yaml
 
    # Install infrastructure services (autoscaling, [Beyla](https://grafana.com/docs/beyla/latest/))
    helm upgrade --install helicone-infrastructure ./helicone-infrastructure -f values.yaml

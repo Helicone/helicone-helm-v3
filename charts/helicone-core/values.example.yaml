@@ -44,13 +44,13 @@ helicone:
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt-prod"
       hosts:
-        - host: filevine.helicone.ai
+        - host: helicone.ai
           paths:
             - path: /
               pathType: Prefix
       tls:
         - hosts:
-            - filevine.helicone.ai
+            - helicone.ai
           secretName: heliconetest-tls
     resources:
       requests:
@@ -107,7 +107,7 @@ helicone:
       className: "nginx"
       annotations: {}
       hosts:
-        - host: filevine.helicone.ai/ai-gateway
+        - host: helicone.ai/aigateway
           paths:
             - path: /
               pathType: Prefix
@@ -226,7 +226,7 @@ helicone:
       type: ClusterIP
       port: 8585
     extraEnvVars: []
-    publicUrl: "https://filevine.helicone.ai/jawn"
+    publicUrl: "https://helicone.ai/jawn"
     ingress:
       enabled: true
       className: "nginx"
@@ -235,13 +235,13 @@ helicone:
         nginx.ingress.kubernetes.io/proxy-body-size: "100m"
         cert-manager.io/cluster-issuer: "letsencrypt-prod"
       hosts:
-        - host: filevine.helicone.ai
+        - host: helicone.ai
           paths:
             - path: /jawn(/|$)(.*)
               pathType: ImplementationSpecific
       tls:
         - hosts:
-            - filevine.helicone.ai
+            - helicone.ai
           secretName: heliconetest-tls
     resources:
       requests:
@@ -279,12 +279,12 @@ helicone:
     anthropicProxyPort: "8789"
     gatewayApiPort: "8790"
     jawnPort: "8585"
-    jawnPublicUrl: "https://filevine.helicone.ai/jawn"
+    jawnPublicUrl: "https://helicone.ai/jawn"
     kongHttpPort: "8000"
     kongHttpsPort: "8443"
     pgrstDbSchemas: "public,storage,graphql_public"
-    siteUrl: "https://filevine.helicone.ai"
-    betterAuthTrustedOrigins: "https://filevine.helicone.ai,http://filevine.helicone.ai"
+    siteUrl: "https://helicone.ai"
+    betterAuthTrustedOrigins: "https://helicone.ai,http://helicone.ai"
     additionalRedirectUrls: ""
     jwtExpiry: "3600"
     disableSignup: "false"

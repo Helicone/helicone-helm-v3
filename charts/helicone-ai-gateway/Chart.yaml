@@ -1,0 +1,22 @@
+apiVersion: v2
+name: ai-gateway
+description: Helicone AI Gateway
+type: application
+version: 0.1.0
+appVersion: "2025.06.24"
+icon: https://helicone.ai/static/logo.png
+
+keywords:
+  - helicone
+  - ai-gateway
+  - llm
+  - monitoring
+  - observability
+
+maintainers:
+  - name: Helicone Team
+    email: engineering@helicone.ai
+
+home: https://helicone.ai
+sources:
+  - https://github.com/Helicone/helicone
