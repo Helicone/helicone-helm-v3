@@ -326,14 +326,6 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
   value: {{ .Values.helicone.config.siteUrl | default "https://heliconetest.com" | quote }}
 {{- end }}
 
-{{- define "helicone.env.aiGatewayProxyHeliconeApiKey" -}}
-- name: PROXY__HELICONE__API_KEY
-  valueFrom:
-    secretKeyRef:
-      name: helicone-ai-gateway-secrets
-      key: proxy_helicone_api_key
-{{- end }}
-
 # TODO It doesn't make sense for the API keys of the LLMs to be defined separately for ai-gateway.
 {{- define "helicone.env.aiGatewayOpenaiApiKey" -}}
 - name: OPENAI_API_KEY

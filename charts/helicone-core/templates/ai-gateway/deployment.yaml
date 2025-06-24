@@ -24,32 +24,19 @@ spec:
               containerPort: 8080
               protocol: TCP
           {{- if .Values.helicone.aiGateway.config }}
-          command: ["/usr/local/bin/ai-gateway", "-c", "/app/config/config.yaml"] # TODO The issue with this approach is that you cannot have more than one config file.
+          command: ["/usr/local/bin/ai-gateway", "-c", "/app/config/config.yaml"]
           volumeMounts:
             - name: config
               mountPath: /app/config
               readOnly: true
           {{- end }}
           env:
-            # TODO Move to _helpers.tpl, with sensible defaults. Commenting this out for now to get stuff working.
-            - name: PROXY__MINIO__ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: helicone-minio-secrets
-                  key: root_user
-            - name: PROXY__MINIO__SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: helicone-minio-secrets
-                  key: root_password
-            - name: PROXY__HELICONE__API_KEY
+            # TODO Move to _helpers.tpl
+            - name: HELICONE_CONTROL_PLANE_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: helicone-ai-gateway-secrets
                   key: helicone_api_key
-            - name: OTEL_METRIC_EXPORT_INTERVAL
-              value: "5000"  # TODO Make this configurable.
-            # {{- include "helicone.env.aiGatewayHeliconeApiKey" . | nindent 12 }}  # TODO Move the rest to _helpers.tpl like so.
             {{- with .Values.helicone.aiGateway.extraEnvVars }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -59,12 +46,4 @@ spec:
           configMap:
             name: helicone-ai-gateway-config
       {{- end }}
-    #   {{- if .Values.beyla.enabled }}  # TODO Not sure if Beyla should be enabled here
-    #   volumes:
-    #     - name: beyla-config
-    #       configMap:
-    #         name: {{ include "helicone.name" . }}-beyla-config
-    #     - name: var-run-beyla
-    #       emptyDir: {}
-    #   {{- end }}
 {{- end }}
