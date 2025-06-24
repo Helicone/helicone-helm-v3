@@ -61,11 +61,14 @@ Alternatively, you can install components individually:
 2. Use `values.example.yaml` as a starting point, and copy into `values.yaml`, then change the
    secrets accordingly.
 
-3. Install/upgrade each Helm chart individually:
+3. Install/upgrade each Helm chart individually (do so within each respective directory):
 
    ```bash
    # Install core Helicone application components
    helm upgrade --install helicone-core ./helicone-core -f values.yaml
+
+   # Install AI Gateway component
+   helm upgrade --install helicone-ai-gateway ./helicone-ai-gateway -f values.yaml
 
    # Install infrastructure services (autoscaling, [Beyla](https://grafana.com/docs/beyla/latest/))
    helm upgrade --install helicone-infrastructure ./helicone-infrastructure -f values.yaml
