@@ -1,29 +1,29 @@
-{{- if .Values.helicone.aigateway.enabled }}
+{{- if .Values.helicone.aiGateway.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: helicone-aigateway
+  name: helicone-ai-gateway
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "helicone.aigateway.selectorLabels" . | nindent 6 }}
+      {{- include "helicone.ai-gateway.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "helicone.aigateway.selectorLabels" . | nindent 8 }}
+        {{- include "helicone.ai-gateway.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: helicone-aigateway
-          image: "{{ .Values.helicone.aigateway.image.repository }}:{{ .Values.helicone.aigateway.image.tag }}"
-          imagePullPolicy: {{ .Values.helicone.aigateway.image.pullPolicy }}
+        - name: helicone-ai-gateway
+          image: "{{ .Values.helicone.aiGateway.image.repository }}:{{ .Values.helicone.aiGateway.image.tag }}"
+          imagePullPolicy: {{ .Values.helicone.aiGateway.image.pullPolicy }}
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
-          {{- if .Values.helicone.aigateway.config }}
+          {{- if .Values.helicone.aiGateway.config }}
           command: ["/usr/local/bin/ai-gateway", "-c", "/app/config/config.yaml"] # TODO The issue with this approach is that you cannot have more than one config file.
           volumeMounts:
             - name: config
@@ -45,34 +45,19 @@ spec:
             - name: PROXY__HELICONE__API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: helicone-aigateway-secrets
+                  name: helicone-ai-gateway-secrets
                   key: helicone_api_key
-            - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: helicone-aigateway-secrets
-                  key: openai_api_key
-            - name: ANTHROPIC_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: helicone-aigateway-secrets
-                  key: anthropic_api_key
-            - name: GEMINI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: helicone-aigateway-secrets
-                  key: gemini_api_key
             - name: OTEL_METRIC_EXPORT_INTERVAL
               value: "5000"  # TODO Make this configurable.
-            # {{- include "helicone.env.aigatewayHeliconeApiKey" . | nindent 12 }}  # TODO Move the rest to _helpers.tpl like so.
-            {{- with .Values.helicone.aigateway.extraEnvVars }}
+            # {{- include "helicone.env.aiGatewayHeliconeApiKey" . | nindent 12 }}  # TODO Move the rest to _helpers.tpl like so.
+            {{- with .Values.helicone.aiGateway.extraEnvVars }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
-      {{- if .Values.helicone.aigateway.config }}
+      {{- if .Values.helicone.aiGateway.config }}
       volumes:
         - name: config
           configMap:
-            name: helicone-aigateway-config
+            name: helicone-ai-gateway-config
       {{- end }}
     #   {{- if .Values.beyla.enabled }}  # TODO Not sure if Beyla should be enabled here
     #   volumes:
