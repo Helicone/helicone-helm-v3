@@ -21,10 +21,10 @@ spec:
           imagePullPolicy: {{ .Values.helicone.aigateway.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 5678
+              containerPort: 8080
               protocol: TCP
           {{- if .Values.helicone.aigateway.config }}
-          command: ["/usr/local/bin/llm-proxy", "-c", "/app/config/config.yaml"] # TODO The issue with this approach is that you cannot have more than one config file.
+          command: ["/usr/local/bin/ai-gateway", "-c", "/app/config/config.yaml"] # TODO The issue with this approach is that you cannot have more than one config file.
           volumeMounts:
             - name: config
               mountPath: /app/config

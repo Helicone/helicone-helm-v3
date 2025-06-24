@@ -101,7 +101,7 @@ helicone:
     service:
       annotations: {}
       type: ClusterIP
-      port: 5678
+      port: 8080
     ingress:
       enabled: false
       className: "nginx"
@@ -120,7 +120,7 @@ helicone:
         cpu: 250m
         memory: 512Mi
     extraEnvVars:
-      - name: PROXY__SERVER__ADDRESS
+      - name: AI_GATEWAY__SERVER__ADDRESS
         value: "0.0.0.0"
     config:
       routers:
