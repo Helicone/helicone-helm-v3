@@ -131,8 +131,7 @@ helicone:
                 targets:
                   - openai
                   - anthropic
-      auth:
-        require-auth: false
+                  
     # API Keys (these should be set via secure secrets management)
     secrets:
       # Set these values using kubectl create secret or your preferred secrets management
