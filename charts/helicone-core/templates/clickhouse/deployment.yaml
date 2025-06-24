@@ -1,3 +1,4 @@
+{{- if .Values.helicone.clickhouse.enabled }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -52,3 +53,4 @@ spec:
             storage: {{ .Values.helicone.clickhouse.persistence.size }}
         storageClassName: {{ .Values.helicone.clickhouse.persistence.storageClass }}
 
+{{- end }}
