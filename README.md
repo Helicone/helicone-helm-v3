@@ -16,15 +16,13 @@ All Helicone services needed to get up and running are in the `helicone-core` He
 
 ### Prerequisites
 
-1. Install **[AWS CLI](https://aws.amazon.com/cli/)** - Install and configure with appropriate
-   permissions
-2. Install **[kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)** - For Kubernetes
+1. Install **[kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)** - For Kubernetes
    operations
-3. Install **[Helm](https://helm.sh/docs/intro/install/)** - For chart deployment
-4. Set up a cluster. To assist with the creation of this cluster, we have
+2. Install **[Helm](https://helm.sh/docs/intro/install/)** - For chart deployment
+3. Set up a cluster. To assist with the creation of this cluster, we have
    **[Terraform](https://developer.hashicorp.com/terraform/install)** resources for EKS, Route53, and
    Cloudflare.
-5. Copy all values.example.yaml files to values.yaml for each of the charts in `charts/` and
+4. Copy all values.example.yaml files to values.yaml for each of the charts in `charts/` and
    customize as needed for your configuration.
 
 ## Deploy Helm Charts
