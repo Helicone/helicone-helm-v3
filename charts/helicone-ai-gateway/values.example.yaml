@@ -6,6 +6,17 @@ helicone:
       pullPolicy: IfNotPresent
       tag: "main"
     replicaCount: 1
+    
+    # Rolling Update Deployment Strategy
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 25%
+        maxSurge: 25%
+    
+    # Progress deadline for deployments (in seconds)
+    progressDeadlineSeconds: 600
+    
     service:
       annotations: {}
       type: ClusterIP
@@ -27,6 +38,44 @@ helicone:
       limits:
         cpu: 250m
         memory: 512Mi
+    
+    # Health Probes Configuration
+    livenessProbe:
+      enabled: true
+      httpGet:
+        path: /health
+        port: http
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
+      successThreshold: 1
+    
+    readinessProbe:
+      enabled: true
+      httpGet:
+        path: /health
+        port: http
+        scheme: HTTP
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+      successThreshold: 1
+    
+    startupProbe:
+      enabled: true
+      httpGet:
+        path: /health
+        port: http
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 30
+      successThreshold: 1
+    
     extraEnvVars:
       - name: AI_GATEWAY__SERVER__ADDRESS
         value: "0.0.0.0"

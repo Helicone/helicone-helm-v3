@@ -6,7 +6,19 @@ metadata:
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.helicone.aiGateway.replicaCount }}
+  {{- if .Values.helicone.aiGateway.strategy }}
+  strategy:
+    type: {{ .Values.helicone.aiGateway.strategy.type }}
+    {{- if eq .Values.helicone.aiGateway.strategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.helicone.aiGateway.strategy.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.helicone.aiGateway.strategy.rollingUpdate.maxSurge }}
+    {{- end }}
+  {{- end }}
+  {{- if .Values.helicone.aiGateway.progressDeadlineSeconds }}
+  progressDeadlineSeconds: {{ .Values.helicone.aiGateway.progressDeadlineSeconds }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "helicone.ai-gateway.selectorLabels" . | nindent 6 }}
@@ -29,6 +41,52 @@ spec:
             - name: config
               mountPath: /app/config
               readOnly: true
+          {{- end }}
+          {{- if .Values.helicone.aiGateway.resources }}
+          resources:
+            {{- toYaml .Values.helicone.aiGateway.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.helicone.aiGateway.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if .Values.helicone.aiGateway.livenessProbe.httpGet }}
+            httpGet:
+              path: {{ .Values.helicone.aiGateway.livenessProbe.httpGet.path }}
+              port: {{ .Values.helicone.aiGateway.livenessProbe.httpGet.port }}
+              scheme: {{ .Values.helicone.aiGateway.livenessProbe.httpGet.scheme }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.helicone.aiGateway.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.helicone.aiGateway.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.helicone.aiGateway.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.helicone.aiGateway.livenessProbe.failureThreshold }}
+            successThreshold: {{ .Values.helicone.aiGateway.livenessProbe.successThreshold }}
+          {{- end }}
+          {{- if .Values.helicone.aiGateway.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if .Values.helicone.aiGateway.readinessProbe.httpGet }}
+            httpGet:
+              path: {{ .Values.helicone.aiGateway.readinessProbe.httpGet.path }}
+              port: {{ .Values.helicone.aiGateway.readinessProbe.httpGet.port }}
+              scheme: {{ .Values.helicone.aiGateway.readinessProbe.httpGet.scheme }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.helicone.aiGateway.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.helicone.aiGateway.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.helicone.aiGateway.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.helicone.aiGateway.readinessProbe.failureThreshold }}
+            successThreshold: {{ .Values.helicone.aiGateway.readinessProbe.successThreshold }}
+          {{- end }}
+          {{- if .Values.helicone.aiGateway.startupProbe.enabled }}
+          startupProbe:
+            {{- if .Values.helicone.aiGateway.startupProbe.httpGet }}
+            httpGet:
+              path: {{ .Values.helicone.aiGateway.startupProbe.httpGet.path }}
+              port: {{ .Values.helicone.aiGateway.startupProbe.httpGet.port }}
+              scheme: {{ .Values.helicone.aiGateway.startupProbe.httpGet.scheme }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.helicone.aiGateway.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.helicone.aiGateway.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.helicone.aiGateway.startupProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.helicone.aiGateway.startupProbe.failureThreshold }}
+            successThreshold: {{ .Values.helicone.aiGateway.startupProbe.successThreshold }}
           {{- end }}
           env:
             # TODO Move to _helpers.tpl
