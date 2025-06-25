@@ -1,4 +1,4 @@
-{{- if .Values.beyla.enabled }}
+{{- if and .Values.beyla.enabled .Values.monitoring.serviceMonitor.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:

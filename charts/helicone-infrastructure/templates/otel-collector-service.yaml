@@ -1,0 +1,36 @@
+{{- if .Values.otelCollector.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "helicone.name" . }}-otel-collector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    component: otel-collector
+spec:
+  type: {{ .Values.otelCollector.service.type }}
+  ports:
+  {{- range $name, $port := .Values.otelCollector.service.ports }}
+  {{- if $port.enabled }}
+  - name: {{ $name }}
+    port: {{ $port.servicePort }}
+    targetPort: {{ $port.containerPort }}
+    protocol: {{ $port.protocol }}
+  {{- end }}
+  {{- end }}
+  - name: health-check
+    port: 13133
+    targetPort: 13133
+    protocol: TCP
+  - name: pprof
+    port: 1777
+    targetPort: 1777
+    protocol: TCP
+  - name: zpages
+    port: 55679
+    targetPort: 55679
+    protocol: TCP
+  selector:
+    {{- include "helicone.selectorLabels" . | nindent 4 }}
+    component: otel-collector
+{{- end }} 

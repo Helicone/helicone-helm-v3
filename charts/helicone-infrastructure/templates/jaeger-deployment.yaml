@@ -1,0 +1,51 @@
+{{- if .Values.jaeger.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helicone.name" . }}-jaeger
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    component: jaeger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "helicone.selectorLabels" . | nindent 6 }}
+      component: jaeger
+  template:
+    metadata:
+      labels:
+        {{- include "helicone.selectorLabels" . | nindent 8 }}
+        component: jaeger
+    spec:
+      containers:
+      - name: jaeger
+        image: "{{ .Values.jaeger.image.repository }}:{{ .Values.jaeger.image.tag }}"
+        imagePullPolicy: {{ .Values.jaeger.image.pullPolicy }}
+        ports:
+        {{- range $name, $port := .Values.jaeger.service.ports }}
+        - name: {{ $name }}
+          containerPort: {{ $port.targetPort }}
+          protocol: TCP
+        {{- end }}
+        env:
+        {{- range $key, $value := .Values.jaeger.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.jaeger.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 14269
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 14269
+          initialDelaySeconds: 5
+          periodSeconds: 10
+{{- end }} 

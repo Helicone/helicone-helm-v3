@@ -1,0 +1,33 @@
+{{- if .Values.otelCollector.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "helicone.name" . }}-otel-collector-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    component: otel-collector
+data:
+  otel-collector-config.yaml: |
+    receivers:
+{{ toYaml .Values.otelCollector.config.receivers | indent 6 }}
+    
+    processors:
+{{ toYaml .Values.otelCollector.config.processors | indent 6 }}
+    
+    exporters:
+{{ toYaml .Values.otelCollector.config.exporters | indent 6 }}
+    
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+      pprof:
+        endpoint: 0.0.0.0:1777
+      zpages:
+        endpoint: 0.0.0.0:55679
+    
+    service:
+      extensions: [health_check, pprof, zpages]
+      pipelines:
+{{ toYaml .Values.otelCollector.config.service.pipelines | indent 8 }}
+{{- end }} 

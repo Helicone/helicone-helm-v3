@@ -1,0 +1,35 @@
+{{- if and .Values.otelCollector.enabled .Values.monitoring.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "helicone.name" . }}-otel-collector
+  namespace: {{ .Values.monitoring.namespaceOverride | default "monitoring" }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    component: otel-collector
+    release: {{ .Release.Name }}
+    app.kubernetes.io/part-of: helicone
+    monitoring: enabled
+spec:
+  selector:
+    matchLabels:
+      {{- include "helicone.selectorLabels" . | nindent 6 }}
+      component: otel-collector
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: {{ .Values.monitoring.serviceMonitor.interval }}
+      honorLabels: true
+      scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout }}
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_service_name]
+          targetLabel: service
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: source_namespace
+          replacement: {{ .Release.Namespace }}
+{{- end }} 

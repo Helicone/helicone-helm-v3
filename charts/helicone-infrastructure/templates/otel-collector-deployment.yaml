@@ -1,0 +1,66 @@
+{{- if .Values.otelCollector.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helicone.name" . }}-otel-collector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    component: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "helicone.selectorLabels" . | nindent 6 }}
+      component: otel-collector
+  template:
+    metadata:
+      labels:
+        {{- include "helicone.selectorLabels" . | nindent 8 }}
+        component: otel-collector
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/otel-collector-configmap.yaml") . | sha256sum }}
+    spec:
+      containers:
+      - name: otel-collector
+        image: "{{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}"
+        imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
+        args:
+          - --config=/etc/otel-collector-config/otel-collector-config.yaml
+        ports:
+        {{- range $name, $port := .Values.otelCollector.service.ports }}
+        {{- if $port.enabled }}
+        - name: {{ $name }}
+          containerPort: {{ $port.containerPort }}
+          protocol: {{ $port.protocol }}
+        {{- end }}
+        {{- end }}
+        env:
+        - name: GOGC
+          value: "80"
+        resources:
+          {{- toYaml .Values.otelCollector.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 13133
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 13133
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        volumeMounts:
+        - name: otel-collector-config-vol
+          mountPath: /etc/otel-collector-config
+          readOnly: true
+      volumes:
+      - name: otel-collector-config-vol
+        configMap:
+          name: {{ include "helicone.name" . }}-otel-collector-config
+          items:
+          - key: otel-collector-config.yaml
+            path: otel-collector-config.yaml
+{{- end }} 
