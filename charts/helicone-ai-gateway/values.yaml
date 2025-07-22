@@ -33,19 +33,19 @@ helicone:
       tls: []
     resources:
       requests:
-        cpu: 50m
-        memory: 128Mi
+        cpu: 25m
+        memory: 64Mi
       limits:
-        cpu: 250m
-        memory: 512Mi
+        cpu: 200m
+        memory: 256Mi
 
     # Horizontal Pod Autoscaler Configuration
     autoscaling:
       enabled: true
-      minReplicas: 2
-      maxReplicas: 8
-      targetCPUUtilizationPercentage: 70
-      targetMemoryUtilizationPercentage: 70
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 85
+      targetMemoryUtilizationPercentage: 85
       behavior:
         scaleDown:
           stabilizationWindowSeconds: 300
@@ -61,11 +61,11 @@ helicone:
       enabled: true
       updateMode: "Auto"
       minAllowed:
-        cpu: 50m
-        memory: 128Mi
+        cpu: 25m
+        memory: 64Mi
       maxAllowed:
-        cpu: 500m
-        memory: 1Gi
+        cpu: 200m
+        memory: 256Mi
 
     # Health Probes Configuration
     livenessProbe:
