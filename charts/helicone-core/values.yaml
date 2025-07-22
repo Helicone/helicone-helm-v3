@@ -39,8 +39,8 @@ helicone:
         cpu: 500m
         memory: 1Gi
     verticalPodAutoscaler:
-      enabled: false
-      updateMode: "Off"
+      enabled: true
+      updateMode: "Auto"
       minAllowed:
         cpu: 100m
         memory: 128Mi
@@ -155,6 +155,30 @@ helicone:
       limits:
         cpu: 250m
         memory: 512Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 70
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          percentPolicy: 50
+          periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          percentPolicy: 100
+          periodSeconds: 15
+    verticalPodAutoscaler:
+      enabled: true
+      updateMode: "Auto"
+      minAllowed:
+        cpu: 50m
+        memory: 128Mi
+      maxAllowed:
+        cpu: 500m
+        memory: 1Gi
     extraEnvVars:
       - name: AI_GATEWAY__SERVER__ADDRESS
         value: "0.0.0.0"
@@ -329,6 +353,54 @@ helicone:
           stabilizationWindowSeconds: 60
           percentPolicy: 100
           periodSeconds: 15
+    verticalPodAutoscaler:
+      enabled: true
+      updateMode: "Auto"
+      minAllowed:
+        cpu: 50m
+        memory: 128Mi
+      maxAllowed:
+        cpu: 500m
+        memory: 1Gi
+
+  # S3 Service Account Configuration (IRSA)
+  # Enable this to use IAM roles for service accounts instead of access keys
+  s3:
+    serviceAccount:
+      # Set to true to enable service account-based S3 access
+      enabled: false
+      # IAM role ARN that the service accounts will assume
+      # This should be the output from the S3 terraform module
+      # Example: "arn:aws:iam::123456789012:role/helm-request-response-storage-service-account-role"
+      roleArn: ""
+    # S3 configuration when using service accounts
+    bucketName: "helm-request-response-storage"
+    # S3 endpoint (leave default for AWS S3)
+    endpoint: "https://s3.amazonaws.com"
+
+  # Global configuration settings
+  config:
+    # Database configuration
+    dbPort: "5432"
+    dbHost: "helicone-postgres-rw"
+    dbName: "helicone_test"
+    dbUser: "helicone"
+    # Database password (should be overridden in production)
+    heliconePassword: "change-me-in-production"
+    # Site URL for the application
+    siteUrl: "https://filevine.helicone.ai"
+    # Additional application settings
+    vercelEnv: "development"
+    nodeEnv: "development"
+
+  # Secret values (used only when external secrets and sealed secrets are disabled)
+  # In production, override these values using helm install -f secrets.yaml
+  secrets:
+    # ClickHouse database credentials
+    clickhouseUser: "default"
+    clickhousePassword: "change-me-in-production"
+    # Database credentials
+    heliconePassword: "change-me-in-production"
 
 mailhog:
   enabled: true

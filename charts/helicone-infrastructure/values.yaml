@@ -92,6 +92,70 @@ clusterAutoscaler:
     - "--max-node-provision-time=15m"
     - "--scan-interval=10s"
 
+# Vertical Pod Autoscaler configuration
+verticalPodAutoscaler:
+  enabled: true
+  image:
+    repository: registry.k8s.io/autoscaling/vpa-recommender
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+  # VPA components configuration
+  components:
+    recommender:
+      enabled: true
+      resources:
+        requests:
+          cpu: 50m
+          memory: 500Mi
+        limits:
+          cpu: 200m
+          memory: 1000Mi
+
+    updater:
+      enabled: true
+      resources:
+        requests:
+          cpu: 50m
+          memory: 500Mi
+        limits:
+          cpu: 200m
+          memory: 1000Mi
+
+    admissionController:
+      enabled: false # Disable for now to simplify deployment
+      resources:
+        requests:
+          cpu: 50m
+          memory: 200Mi
+        limits:
+          cpu: 200m
+          memory: 500Mi
+
+# Metrics Server configuration
+metricsServer:
+  enabled: true
+  image:
+    repository: registry.k8s.io/metrics-server/metrics-server
+    tag: "v0.7.0"
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 200Mi
+    limits:
+      cpu: 300m
+      memory: 500Mi
+
+  # Additional args for metrics server
+  args:
+    - --cert-dir=/tmp
+    - --secure-port=4443
+    - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+    - --kubelet-use-node-status-port
+    - --metric-resolution=15s
+
 # OpenTelemetry Collector configuration
 otelCollector:
   enabled: true

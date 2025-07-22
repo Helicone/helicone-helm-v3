@@ -1,0 +1,45 @@
+{{- if and .Values.helicone.aiGateway.enabled .Values.helicone.aiGateway.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: helicone-ai-gateway-hpa
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: helicone-ai-gateway
+  minReplicas: {{ .Values.helicone.aiGateway.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.helicone.aiGateway.autoscaling.maxReplicas }}
+  metrics:
+  {{- if .Values.helicone.aiGateway.autoscaling.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.helicone.aiGateway.autoscaling.targetCPUUtilizationPercentage }}
+  {{- end }}
+  {{- if .Values.helicone.aiGateway.autoscaling.targetMemoryUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.helicone.aiGateway.autoscaling.targetMemoryUtilizationPercentage }}
+  {{- end }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: {{ .Values.helicone.aiGateway.autoscaling.behavior.scaleDown.stabilizationWindowSeconds | default 300 }}
+      policies:
+      - type: Percent
+        value: {{ .Values.helicone.aiGateway.autoscaling.behavior.scaleDown.percentPolicy | default 50 }}
+        periodSeconds: {{ .Values.helicone.aiGateway.autoscaling.behavior.scaleDown.periodSeconds | default 60 }}
+    scaleUp:
+      stabilizationWindowSeconds: {{ .Values.helicone.aiGateway.autoscaling.behavior.scaleUp.stabilizationWindowSeconds | default 60 }}
+      policies:
+      - type: Percent
+        value: {{ .Values.helicone.aiGateway.autoscaling.behavior.scaleUp.percentPolicy | default 100 }}
+        periodSeconds: {{ .Values.helicone.aiGateway.autoscaling.behavior.scaleUp.periodSeconds | default 15 }}
+{{- end }} 

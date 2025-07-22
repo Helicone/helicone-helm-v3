@@ -1,0 +1,29 @@
+{{- if and .Values.helicone.jawn.enabled .Values.helicone.jawn.verticalPodAutoscaler.enabled }}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "jawn.name" . }}-vpa
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+  annotations:
+    {{- include "helicone.annotations" . | nindent 4 }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "jawn.name" . }}
+  updatePolicy:
+    updateMode: {{ .Values.helicone.jawn.verticalPodAutoscaler.updateMode | default "Off" }}
+  resourcePolicy:
+    containerPolicies:
+    - containerName: {{ include "jawn.name" . }}
+      {{- if .Values.helicone.jawn.verticalPodAutoscaler.minAllowed }}
+      minAllowed:
+        {{- toYaml .Values.helicone.jawn.verticalPodAutoscaler.minAllowed | nindent 8 }}
+      {{- end }}
+      {{- if .Values.helicone.jawn.verticalPodAutoscaler.maxAllowed }}
+      maxAllowed:
+        {{- toYaml .Values.helicone.jawn.verticalPodAutoscaler.maxAllowed | nindent 8 }}
+      {{- end }}
+      controlledResources: ["cpu", "memory"]
+{{- end }} 

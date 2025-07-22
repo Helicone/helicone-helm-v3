@@ -1,0 +1,27 @@
+{{- if and .Values.helicone.aiGateway.enabled .Values.helicone.aiGateway.verticalPodAutoscaler.enabled }}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: helicone-ai-gateway-vpa
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: helicone-ai-gateway
+  updatePolicy:
+    updateMode: {{ .Values.helicone.aiGateway.verticalPodAutoscaler.updateMode | default "Off" }}
+  resourcePolicy:
+    containerPolicies:
+    - containerName: ai-gateway
+      {{- if .Values.helicone.aiGateway.verticalPodAutoscaler.minAllowed }}
+      minAllowed:
+        {{- toYaml .Values.helicone.aiGateway.verticalPodAutoscaler.minAllowed | nindent 8 }}
+      {{- end }}
+      {{- if .Values.helicone.aiGateway.verticalPodAutoscaler.maxAllowed }}
+      maxAllowed:
+        {{- toYaml .Values.helicone.aiGateway.verticalPodAutoscaler.maxAllowed | nindent 8 }}
+      {{- end }}
+      controlledResources: ["cpu", "memory"]
+{{- end }} 
