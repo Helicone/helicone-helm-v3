@@ -1,0 +1,468 @@
+{{- if .Values.verticalPodAutoscaler.enabled }}
+---
+# VPA CRDs with complete schemas
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: verticalpodautoscalers.autoscaling.k8s.io
+  annotations:
+    api-approved.kubernetes.io: "https://github.com/kubernetes/kubernetes/pull/63797"
+spec:
+  group: autoscaling.k8s.io
+  scope: Namespaced
+  names:
+    plural: verticalpodautoscalers
+    singular: verticalpodautoscaler
+    kind: VerticalPodAutoscaler
+    shortNames:
+    - vpa
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Specification of the behavior of the autoscaler.
+            type: object
+            properties:
+              targetRef:
+                description: TargetRef points to the controller managing the set of
+                  pods for the autoscaler to control - e.g. Deployment, StatefulSet.
+                  VerticalPodAutoscaler can be targeted at controller implementing
+                  scale subresource (the pod set is retrieved from the controller's
+                  ScaleStatus) or some well known controllers (e.g. for DaemonSet
+                  the pod set is read from the controller's spec).
+                type: object
+                properties:
+                  apiVersion:
+                    description: API version of the referent
+                    type: string
+                  kind:
+                    description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
+                    type: string
+                  name:
+                    description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
+                    type: string
+              updatePolicy:
+                description: Describes the rules on how changes are applied to the pods.
+                type: object
+                properties:
+                  updateMode:
+                    description: Controls when autoscaler applies changes to the pod
+                      resources.
+                    type: string
+                    enum:
+                    - "Off"
+                    - "Initial"
+                    - "Recreation"
+                    - "Auto"
+              resourcePolicy:
+                description: Controls how the autoscaler computes recommended resources.
+                type: object
+                properties:
+                  containerPolicies:
+                    description: Per-container resource policies.
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        containerName:
+                          description: Name of the container or DefaultContainerResourcePolicy.
+                          type: string
+                        mode:
+                          description: Whether autoscaler is enabled for the container.
+                          type: string
+                          enum:
+                          - "Auto"
+                          - "Off"
+                        minAllowed:
+                          description: Specifies the minimal amount of resources that will be recommended
+                            for the container.
+                          type: object
+                        maxAllowed:
+                          description: Specifies the maximum amount of resources that will be recommended
+                            for the container.
+                          type: object
+                        controlledResources:
+                          description: Specifies the type of recommendations that will be computed
+                            (and possibly applied) by VPA.
+                          type: array
+                          items:
+                            type: string
+          status:
+            description: Current information about the autoscaler.
+            type: object
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: verticalpodautoscalercheckpoints.autoscaling.k8s.io
+  annotations:
+    api-approved.kubernetes.io: "https://github.com/kubernetes/kubernetes/pull/63797"
+spec:
+  group: autoscaling.k8s.io
+  scope: Namespaced
+  names:
+    plural: verticalpodautoscalercheckpoints
+    singular: verticalpodautoscalercheckpoint
+    kind: VerticalPodAutoscalerCheckpoint
+    shortNames:
+    - vpacheckpoint
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Specification of the checkpoint.
+            type: object
+          status:
+            description: Data of the checkpoint.
+            type: object
+---
+# VPA ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vpa-recommender
+  namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vpa-updater
+  namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vpa-admission-controller
+  namespace: kube-system
+---
+# VPA ClusterRoles
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:vpa-recommender
+rules:
+- apiGroups: [""]
+  resources: ["pods", "nodes", "limitranges"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch", "create"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["autoscaling.k8s.io"]
+  resources: ["verticalpodautoscalers"]
+  verbs: ["get", "list", "watch", "patch"]
+- apiGroups: ["autoscaling.k8s.io"]
+  resources: ["verticalpodautoscalercheckpoints"]
+  verbs: ["get", "list", "watch", "create", "patch", "delete"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:vpa-updater
+rules:
+- apiGroups: [""]
+  resources: ["pods", "nodes", "limitranges"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch", "create"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods/eviction"]
+  verbs: ["create"]
+- apiGroups: ["autoscaling.k8s.io"]
+  resources: ["verticalpodautoscalers"]
+  verbs: ["get", "list", "watch", "patch"]
+- apiGroups: ["autoscaling.k8s.io"]
+  resources: ["verticalpodautoscalercheckpoints"]
+  verbs: ["get", "list", "watch", "create", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:vpa-admission-controller
+rules:
+- apiGroups: [""]
+  resources: ["pods", "configmaps", "nodes", "limitranges"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["mutatingwebhookconfigurations"]
+  verbs: ["create", "delete", "get", "list"]
+- apiGroups: ["autoscaling.k8s.io"]
+  resources: ["verticalpodautoscalers"]
+  verbs: ["get", "list", "watch"]
+---
+# VPA ClusterRoleBindings
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:vpa-recommender
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:vpa-recommender
+subjects:
+- kind: ServiceAccount
+  name: vpa-recommender
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:vpa-updater
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:vpa-updater
+subjects:
+- kind: ServiceAccount
+  name: vpa-updater
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:vpa-admission-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:vpa-admission-controller
+subjects:
+- kind: ServiceAccount
+  name: vpa-admission-controller
+  namespace: kube-system
+---
+{{- if .Values.verticalPodAutoscaler.components.recommender.enabled }}
+# VPA Recommender Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpa-recommender
+  namespace: kube-system
+  labels:
+    app: vpa-recommender
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vpa-recommender
+  template:
+    metadata:
+      labels:
+        app: vpa-recommender
+    spec:
+      serviceAccountName: vpa-recommender
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+      - name: recommender
+        image: "{{ .Values.verticalPodAutoscaler.image.repository }}:{{ .Values.verticalPodAutoscaler.image.tag }}"
+        imagePullPolicy: {{ .Values.verticalPodAutoscaler.image.pullPolicy }}
+        resources:
+          {{- toYaml .Values.verticalPodAutoscaler.components.recommender.resources | nindent 10 }}
+        command:
+        - ./recommender
+        - --v=4
+        - --stderrthreshold=info
+        - --pod-recommendation-min-cpu-millicores=25
+        - --pod-recommendation-min-memory-mb=250
+        ports:
+        - name: metrics
+          containerPort: 8942
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: metrics
+            scheme: HTTP
+          periodSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: metrics
+            scheme: HTTP
+          periodSeconds: 5
+          successThreshold: 1
+---
+{{- end }}
+{{- if .Values.verticalPodAutoscaler.components.updater.enabled }}
+# VPA Updater Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpa-updater
+  namespace: kube-system
+  labels:
+    app: vpa-updater
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vpa-updater
+  template:
+    metadata:
+      labels:
+        app: vpa-updater
+    spec:
+      serviceAccountName: vpa-updater
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+      - name: updater
+        image: "registry.k8s.io/autoscaling/vpa-updater:{{ .Values.verticalPodAutoscaler.image.tag }}"
+        imagePullPolicy: {{ .Values.verticalPodAutoscaler.image.pullPolicy }}
+        resources:
+          {{- toYaml .Values.verticalPodAutoscaler.components.updater.resources | nindent 10 }}
+        command:
+        - ./updater
+        - --v=4
+        - --stderrthreshold=info
+        - --min-replicas=2
+        ports:
+        - name: metrics
+          containerPort: 8943
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: metrics
+            scheme: HTTP
+          periodSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: metrics
+            scheme: HTTP
+          periodSeconds: 5
+          successThreshold: 1
+---
+{{- end }}
+{{- if .Values.verticalPodAutoscaler.components.admissionController.enabled }}
+# VPA Admission Controller Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpa-admission-controller
+  namespace: kube-system
+  labels:
+    app: vpa-admission-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vpa-admission-controller
+  template:
+    metadata:
+      labels:
+        app: vpa-admission-controller
+    spec:
+      serviceAccountName: vpa-admission-controller
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+      - name: admission-controller
+        image: "registry.k8s.io/autoscaling/vpa-admission-controller:{{ .Values.verticalPodAutoscaler.image.tag }}"
+        imagePullPolicy: {{ .Values.verticalPodAutoscaler.image.pullPolicy }}
+        resources:
+          {{- toYaml .Values.verticalPodAutoscaler.components.admissionController.resources | nindent 10 }}
+        command:
+        - ./admission-controller
+        - --v=4
+        - --stderrthreshold=info
+        - --client-ca-file=/etc/tls-certs/caCert.pem
+        - --tls-cert-file=/etc/tls-certs/serverCert.pem
+        - --tls-private-key=/etc/tls-certs/serverKey.pem
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        volumeMounts:
+        - name: tls-certs
+          mountPath: "/etc/tls-certs"
+          readOnly: true
+        ports:
+        - containerPort: 8000
+        - containerPort: 8944
+          name: metrics
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: metrics
+            scheme: HTTP
+          periodSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: metrics
+            scheme: HTTP
+          periodSeconds: 5
+          successThreshold: 1
+      volumes:
+      - name: tls-certs
+        secret:
+          secretName: vpa-tls-certs
+---
+# VPA Admission Controller Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: vpa-webhook
+  namespace: kube-system
+spec:
+  ports:
+  - name: webhook
+    port: 443
+    targetPort: 8000
+  selector:
+    app: vpa-admission-controller
+---
+{{- end }}
+{{- end }} 
