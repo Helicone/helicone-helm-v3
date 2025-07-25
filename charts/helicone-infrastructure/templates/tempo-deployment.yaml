@@ -1,0 +1,91 @@
+{{- if .Values.tempo.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helicone.name" . }}-tempo
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    component: tempo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "helicone.selectorLabels" . | nindent 6 }}
+      component: tempo
+  template:
+    metadata:
+      labels:
+        {{- include "helicone.selectorLabels" . | nindent 8 }}
+        component: tempo
+    spec:
+      containers:
+      - name: tempo
+        image: "{{ .Values.tempo.image.repository }}:{{ .Values.tempo.image.tag }}"
+        imagePullPolicy: {{ .Values.tempo.image.pullPolicy }}
+        {{- if .Values.tempo.config }}
+        args:
+          - "-config.file=/etc/tempo/config.yaml"
+        {{- end }}
+        ports:
+        {{- range $name, $port := .Values.tempo.service.ports }}
+        - name: {{ $name }}
+          containerPort: {{ $port.targetPort }}
+          protocol: TCP
+        {{- end }}
+        resources:
+          {{- toYaml .Values.tempo.resources | nindent 10 }}
+        {{- if .Values.tempo.config }}
+        volumeMounts:
+        - name: config
+          mountPath: /etc/tempo
+          readOnly: true
+        - name: tempo-data
+          mountPath: /var/lib/tempo
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: /ready
+            port: 3200
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3200
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      {{- if .Values.tempo.config }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "helicone.name" . }}-tempo-config
+      - name: tempo-data
+        {{- if .Values.tempo.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "helicone.name" . }}-tempo-data
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
+      {{- end }}
+{{- if and .Values.tempo.persistence.enabled .Values.tempo.config }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "helicone.name" . }}-tempo-data
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    component: tempo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.tempo.persistence.size | default "10Gi" }}
+  {{- if .Values.tempo.persistence.storageClass }}
+  storageClassName: {{ .Values.tempo.persistence.storageClass }}
+  {{- end }}
+{{- end }}
+{{- end }}

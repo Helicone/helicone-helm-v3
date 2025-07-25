@@ -1,0 +1,13 @@
+{{- if and .Values.tempo.enabled .Values.tempo.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "helicone.name" . }}-tempo-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+    component: tempo
+data:
+  config.yaml: |
+{{ .Values.tempo.config | toYaml | indent 4 }}
+{{- end }}

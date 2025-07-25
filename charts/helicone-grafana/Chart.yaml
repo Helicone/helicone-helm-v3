@@ -1,0 +1,10 @@
+apiVersion: v2
+name: helicone-grafana
+description: A Helm chart for Helicone Grafana deployment
+type: application
+version: 0.1.0
+appVersion: "11.0.0"
+dependencies:
+  - name: grafana
+    version: "9.2.10"
+    repository: https://grafana.github.io/helm-charts

@@ -96,8 +96,8 @@ clusterAutoscaler:
 otelCollector:
   enabled: true
   image:
-    repository: otel/opentelemetry-collector-contrib
-    tag: "0.91.0"
+    repository: otel/opentelemetry-collector
+    tag: "0.127.0"
     pullPolicy: IfNotPresent
 
   # Deployment mode: deployment, daemonset, or statefulset
@@ -109,8 +109,8 @@ otelCollector:
       cpu: 100m
       memory: 128Mi
     limits:
-      cpu: 1000m
-      memory: 2Gi
+      cpu: 2000m
+      memory: 4Gi
 
   # Service configuration
   service:
@@ -125,21 +125,6 @@ otelCollector:
         enabled: true
         containerPort: 4318
         servicePort: 4318
-        protocol: TCP
-      jaeger-grpc:
-        enabled: true
-        containerPort: 14250
-        servicePort: 14250
-        protocol: TCP
-      jaeger-thrift:
-        enabled: true
-        containerPort: 14268
-        servicePort: 14268
-        protocol: TCP
-      zipkin:
-        enabled: true
-        containerPort: 9411
-        servicePort: 9411
         protocol: TCP
       metrics:
         enabled: true
@@ -188,21 +173,6 @@ otelCollector:
             endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
-      jaeger:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:14250
-          thrift_http:
-            endpoint: 0.0.0.0:14268
-      zipkin:
-        endpoint: 0.0.0.0:9411
-      prometheus:
-        config:
-          scrape_configs:
-            - job_name: "otel-collector"
-              scrape_interval: 10s
-              static_configs:
-                - targets: ["0.0.0.0:8888"]
 
     processors:
       batch:
@@ -221,84 +191,90 @@ otelCollector:
             action: upsert
 
     exporters:
-      # OTLP exporter to Jaeger
-      otlp/jaeger:
-        endpoint: "jaeger-collector:4317"
+      # OTLP exporter to Tempo
+      otlp/tempo:
+        endpoint: "tempo:4317"
         tls:
           insecure: true
 
       # Prometheus exporter
       prometheus:
         endpoint: "0.0.0.0:8889"
-        const_labels:
-          label1: value1
-
-      # Logging exporter for debugging
-      logging:
-        loglevel: debug
 
     service:
       pipelines:
         traces:
-          receivers: [otlp, jaeger, zipkin]
-          processors: [memory_limiter, resource, batch]
-          exporters: [otlp/jaeger, logging]
-        metrics:
-          receivers: [otlp, prometheus]
-          processors: [memory_limiter, resource, batch]
-          exporters: [prometheus, logging]
-        logs:
           receivers: [otlp]
           processors: [memory_limiter, resource, batch]
-          exporters: [logging]
+          exporters: [otlp/tempo]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, resource, batch]
+          exporters: [prometheus]
 
-# Jaeger configuration
-jaeger:
+# Tempo configuration
+tempo:
   enabled: true
   image:
-    repository: jaegertracing/all-in-one
-    tag: "1.53"
+    repository: grafana/tempo
+    tag: "2.7.2"
     pullPolicy: IfNotPresent
 
   # Resource configuration
   resources:
     requests:
       cpu: 100m
-      memory: 128Mi
+      memory: 256Mi
     limits:
-      cpu: 500m
-      memory: 1Gi
+      cpu: 1000m
+      memory: 2Gi
 
   # Service configuration
   service:
     type: ClusterIP
     ports:
-      jaeger-grpc:
-        port: 14250
-        targetPort: 14250
-      jaeger-thrift:
-        port: 14268
-        targetPort: 14268
-      jaeger-ui:
-        port: 16686
-        targetPort: 16686
-      jaeger-metrics:
-        port: 14269
-        targetPort: 14269
+      otlp-grpc:
+        port: 4317
+        targetPort: 4317
+      tempo-http:
+        port: 3200
+        targetPort: 3200
 
-  # Environment variables
-  env:
-    COLLECTOR_OTLP_ENABLED: "true"
-    COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
-    MEMORY_MAX_TRACES: "50000"
+  # Persistence configuration
+  persistence:
+    enabled: true
+    size: 10Gi
+    # storageClass: "" # Optional: specify storage class
 
-  # Ingress configuration for Jaeger UI
+  # Tempo configuration
+  config:
+    server:
+      http_listen_port: 3200
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+    compactor:
+      compaction:
+        # 4 days
+        block_retention: 96h
+    storage:
+      trace:
+        backend: local
+        wal:
+          path: /var/lib/tempo/wal
+        local:
+          path: /var/lib/tempo/blocks
+
+  # Ingress configuration for Tempo
   ingress:
     enabled: false
     className: ""
     annotations: {}
     hosts:
-      - host: jaeger.local
+      - host: tempo.local
         paths:
           - path: /
             pathType: Prefix
@@ -306,7 +282,7 @@ jaeger:
 
 # Loki configuration for log aggregation
 loki:
-  enabled: true
+  enabled: false
   image:
     repository: grafana/loki
     tag: "2.9.0"
@@ -368,7 +344,7 @@ loki:
 
 # Beyla configuration for eBPF observability
 beyla:
-  enabled: true
+  enabled: false
   image:
     repository: grafana/beyla
     tag: "v1.4.0"
@@ -486,3 +462,46 @@ nginxIngressController:
     serviceAccount:
       create: true
       name: nginx-ingress-controller
+
+# Prometheus configuration
+prometheus:
+  enabled: true
+  # When prometheus is enabled, these subcomponents are configured
+  image:
+    tag: "v3.4.1"
+  alertmanager:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+
+  global:
+    ## How frequently to scrape targets by default
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    ## How frequently to evaluate rules
+    evaluation_interval: 15s
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+  # https://github.com/prometheus-community/helm-charts/blob/ec4f325616989d93c204012c57199e98e84b8c87/charts/prometheus/values.yaml#L702
+  hostNetwork: true
+
+  extraFlags:
+    - web.enable-lifecycle
+    - web.enable-remote-write-receiver
+    - web.enable-otlp-receiver
+    - enable-feature=exemplar-storage
+
+  server:
+    ## Prometheus server container name
+    name: prometheus-server

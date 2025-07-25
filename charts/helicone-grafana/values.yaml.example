@@ -1,0 +1,125 @@
+# Default values for helicone-grafana.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Grafana subchart values
+grafana:
+  enabled: true
+  
+  # Admin credentials
+  adminUser: admin
+  adminPassword: admin # Change this in production
+  
+  # Persistence
+  persistence:
+    enabled: true
+    storageClassName: "gp2"
+    size: 10Gi
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+  
+  # Ingress configuration
+  ingress:
+    enabled: false
+    # className: nginx
+    # annotations:
+    #   cert-manager.io/cluster-issuer: letsencrypt-prod
+    # hosts:
+    #   - host: grafana.example.com
+    #     paths:
+    #       - path: /
+    #         pathType: Prefix
+    # tls:
+    #   - secretName: grafana-tls
+    #     hosts:
+    #       - grafana.example.com
+  
+  # Grafana configuration
+  grafana.ini:
+    server:
+      root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+      serve_from_sub_path: true
+    analytics:
+      reporting_enabled: false
+    auth:
+      disable_login_form: false
+    auth.anonymous:
+      enabled: true
+      org_role: Viewer
+  
+  # Data sources configuration
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-server.helicone-infrastructure:80
+          access: proxy
+          isDefault: true
+        - name: Loki
+          type: loki
+          url: http://loki.helicone-infrastructure:3100
+          access: proxy
+        - name: Tempo
+          type: tempo
+          url: http://tempo.helicone-infrastructure:3100
+          access: proxy
+  
+  # Dashboard provisioning
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+  
+  # Dashboards from ConfigMaps
+  dashboardsConfigMaps:
+    default: helicone-dashboards
+  
+  # Sidecar for dashboard discovery
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      folder: /tmp/dashboards
+      provider:
+        foldersFromFilesStructure: true
+    datasources:
+      enabled: true
+      label: grafana_datasource
+  
+  # Resources
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  # Security context
+  securityContext:
+    runAsUser: 472
+    runAsGroup: 472
+    fsGroup: 472
+  
+  # Environment variables
+  env: {}
+  
+  # Additional volumes
+  extraVolumes: []
+  
+  # Additional volume mounts
+  extraVolumeMounts: []
