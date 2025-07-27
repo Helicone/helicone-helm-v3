@@ -80,12 +80,12 @@ externalSecrets:
 
 # Cluster Autoscaler configuration
 clusterAutoscaler:
-  enabled: false # Disabled to avoid conflicts with existing installation
+  enabled: true
   image:
-    tag: "v1.26.2" # Should match your Kubernetes version
-  clusterName: "helicone-cluster" # Replace with your actual cluster name
+    tag: "v1.29.0"
+  clusterName: "helicone"
   serviceAccount:
-    roleArn: "" # ARN of the IAM role for cluster autoscaler (must be set for production)
+    roleArn: "arn:aws:iam::849596434884:role/helicone-cluster-autoscaler-role"
   extraArgs:
     - "--scale-down-delay-after-add=10m"
     - "--scale-down-unneeded-time=10m"
