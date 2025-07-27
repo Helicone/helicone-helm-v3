@@ -1,0 +1,179 @@
+{{- if .Values.helicone.memorydb.enabled }}
+{{- if not .Values.helicone.memorydb.multiRegion.enabled }}
+  {{- fail "MemoryDB multi-region configuration must be enabled. Set helicone.memorydb.multiRegion.enabled=true and configure regions." }}
+{{- end }}
+{{- if not .Values.helicone.memorydb.multiRegion.regions }}
+  {{- fail "At least one region must be configured in helicone.memorydb.multiRegion.regions" }}
+{{- end }}
+
+{{- $fullName := include "helicone-ai-gateway.fullname" . -}}
+{{- $labels := include "helicone-ai-gateway.labels" . -}}
+{{- $namespace := .Release.Namespace -}}
+
+# Create MemoryDB clusters in each region
+{{- range $index, $region := .Values.helicone.memorydb.multiRegion.regions }}
+---
+apiVersion: elasticache.aws.crossplane.io/v1alpha1
+kind: MemoryDBCluster
+metadata:
+  name: {{ $fullName }}-memorydb-{{ $region.name }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- $labels | nindent 4 }}
+    region: {{ $region.name }}
+spec:
+  forProvider:
+    region: {{ $region.name }}
+    nodeType: {{ $region.nodeType | default $.Values.helicone.memorydb.nodeType }}
+    numShards: {{ $region.numShards | default $.Values.helicone.memorydb.numShards }}
+    numReplicasPerShard: {{ $region.numReplicasPerShard | default $.Values.helicone.memorydb.numReplicasPerShard }}
+    {{- if $.Values.helicone.memorydb.aclName }}
+    aclName: {{ $.Values.helicone.memorydb.aclName }}
+    {{- end }}
+    {{- if $region.parameterGroupName }}
+    parameterGroupName: {{ $region.parameterGroupName }}
+    {{- else if $.Values.helicone.memorydb.createParameterGroup }}
+    parameterGroupName: {{ $fullName }}-param-group-{{ $region.name }}
+    {{- end }}
+    {{- if $region.subnetGroupName }}
+    subnetGroupName: {{ $region.subnetGroupName }}
+    {{- else }}
+    subnetGroupName: {{ $fullName }}-subnet-group-{{ $region.name }}
+    {{- end }}
+    {{- if $region.securityGroupIds }}
+    securityGroupIds:
+      {{- range $region.securityGroupIds }}
+      - {{ . }}
+      {{- end }}
+    {{- end }}
+    {{- if $.Values.helicone.memorydb.tlsEnabled }}
+    tlsEnabled: {{ $.Values.helicone.memorydb.tlsEnabled }}
+    {{- end }}
+    {{- if $region.kmsKeyId }}
+    kmsKeyId: {{ $region.kmsKeyId }}
+    {{- end }}
+    {{- if $.Values.helicone.memorydb.snapshotRetentionLimit }}
+    snapshotRetentionLimit: {{ $.Values.helicone.memorydb.snapshotRetentionLimit }}
+    {{- end }}
+    {{- if $.Values.helicone.memorydb.snapshotWindow }}
+    snapshotWindow: {{ $.Values.helicone.memorydb.snapshotWindow }}
+    {{- end }}
+    {{- if $.Values.helicone.memorydb.maintenanceWindow }}
+    maintenanceWindow: {{ $.Values.helicone.memorydb.maintenanceWindow }}
+    {{- end }}
+    {{- if $.Values.helicone.memorydb.tags }}
+    tags:
+      {{- range $key, $value := $.Values.helicone.memorydb.tags }}
+      - key: {{ $key }}
+        value: {{ $value }}
+      {{- end }}
+      - key: Region
+        value: {{ $region.name }}
+    {{- end }}
+  providerConfigRef:
+    name: {{ $region.providerConfigRef | default $.Values.helicone.memorydb.providerConfigRef | default "aws-provider" }}
+  writeConnectionSecretToRef:
+    name: {{ $fullName }}-memorydb-{{ $region.name }}-connection
+    namespace: {{ $namespace }}
+---
+{{- if not $region.subnetGroupName }}
+apiVersion: elasticache.aws.crossplane.io/v1alpha1
+kind: SubnetGroup
+metadata:
+  name: {{ $fullName }}-subnet-group-{{ $region.name }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- $labels | nindent 4 }}
+    region: {{ $region.name }}
+spec:
+  forProvider:
+    region: {{ $region.name }}
+    description: "Subnet group for {{ $fullName }} MemoryDB cluster in {{ $region.name }}"
+    {{- if $region.subnetIds }}
+    subnetIds:
+      {{- range $region.subnetIds }}
+      - {{ . }}
+      {{- end }}
+    {{- else }}
+      {{- fail (printf "subnetIds must be provided for region %s" $region.name) }}
+    {{- end }}
+    {{- if $.Values.helicone.memorydb.tags }}
+    tags:
+      {{- range $key, $value := $.Values.helicone.memorydb.tags }}
+      - key: {{ $key }}
+        value: {{ $value }}
+      {{- end }}
+      - key: Region
+        value: {{ $region.name }}
+    {{- end }}
+  providerConfigRef:
+    name: {{ $region.providerConfigRef | default $.Values.helicone.memorydb.providerConfigRef | default "aws-provider" }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.helicone.memorydb.multiRegion.globalReplicationGroup }}
+---
+# Create a global datastore for cross-region replication
+apiVersion: elasticache.aws.crossplane.io/v1alpha1
+kind: GlobalReplicationGroup
+metadata:
+  name: {{ $fullName }}-global-replication-group
+  namespace: {{ $namespace }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  forProvider:
+    globalReplicationGroupIdSuffix: {{ .Values.helicone.memorydb.multiRegion.globalReplicationGroup.suffix | default "global" }}
+    globalReplicationGroupDescription: "Global replication group for {{ $fullName }}"
+    primaryReplicationGroupId: {{ $fullName }}-memorydb-{{ (index .Values.helicone.memorydb.multiRegion.regions 0).name }}
+    {{- if .Values.helicone.memorydb.multiRegion.globalReplicationGroup.automaticFailoverEnabled }}
+    automaticFailoverEnabled: {{ .Values.helicone.memorydb.multiRegion.globalReplicationGroup.automaticFailoverEnabled }}
+    {{- end }}
+    {{- if .Values.helicone.memorydb.multiRegion.globalReplicationGroup.cacheNodeType }}
+    cacheNodeType: {{ .Values.helicone.memorydb.multiRegion.globalReplicationGroup.cacheNodeType }}
+    {{- end }}
+    {{- if .Values.helicone.memorydb.multiRegion.globalReplicationGroup.engineVersion }}
+    engineVersion: {{ .Values.helicone.memorydb.multiRegion.globalReplicationGroup.engineVersion }}
+    {{- end }}
+  providerConfigRef:
+    name: {{ .Values.helicone.memorydb.providerConfigRef | default "aws-provider" }}
+{{- end }}
+
+{{- if .Values.helicone.memorydb.createParameterGroup }}
+# Create parameter groups for each region
+{{- range $index, $region := .Values.helicone.memorydb.multiRegion.regions }}
+---
+apiVersion: elasticache.aws.crossplane.io/v1alpha1
+kind: ParameterGroup
+metadata:
+  name: {{ $fullName }}-param-group-{{ $region.name }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- $labels | nindent 4 }}
+    region: {{ $region.name }}
+spec:
+  forProvider:
+    region: {{ $region.name }}
+    family: {{ $.Values.helicone.memorydb.parameterGroupFamily | default "memorydb_valkey8" }}
+    description: "Parameter group for {{ $fullName }} MemoryDB cluster in {{ $region.name }}"
+    {{- if $.Values.helicone.memorydb.parameters }}
+    parameters:
+      {{- range $.Values.helicone.memorydb.parameters }}
+      - parameterName: {{ .name }}
+        parameterValue: {{ .value | quote }}
+      {{- end }}
+    {{- end }}
+    {{- if $.Values.helicone.memorydb.tags }}
+    tags:
+      {{- range $key, $value := $.Values.helicone.memorydb.tags }}
+      - key: {{ $key }}
+        value: {{ $value }}
+      {{- end }}
+      - key: Region
+        value: {{ $region.name }}
+    {{- end }}
+  providerConfigRef:
+    name: {{ $region.providerConfigRef | default $.Values.helicone.memorydb.providerConfigRef | default "aws-provider" }}
+{{- end }}
+{{- end }}
+{{- end }}

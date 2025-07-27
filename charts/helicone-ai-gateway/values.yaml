@@ -6,6 +6,10 @@ helicone:
       pullPolicy: IfNotPresent
       tag: "sha-765b2b1"
     replicaCount: 2
+    
+    # Region where this AI Gateway instance is deployed
+    # This should match one of the regions configured in memorydb.multiRegion.regions
+    region: "us-east-1"
 
     # Rolling Update Deployment Strategy
     strategy:
@@ -112,15 +116,72 @@ helicone:
       helicone:
         authentication: true
 
-    secrets:
-      # Set these values using kubectl create secret or your preferred secrets management
-      # kubectl create secret generic helicone-ai-gateway-secrets \
-      #   --from-literal=proxy_helicone_api_key="your-key-here" \
-      #   --from-literal=openai_api_key="your-key-here" \
-      #   --from-literal=anthropic_api_key="your-key-here" \
-      #   --from-literal=gemini_api_key="your-key-here" \
-      #   --from-literal=helicone_api_key="your-key-here"
-      aiGatewayOpenaiApiKey: ""
-      aiGatewayAnthropicApiKey: ""
-      aiGatewayGeminiApiKey: ""
-      aiGatewayHeliconeApiKey: ""
+  # AWS MemoryDB Configuration (Crossplane)
+  memorydb:
+    enabled: false
+
+    # Global defaults (can be overridden per region)
+    nodeType: db.r7g.large
+    numShards: 1
+    numReplicasPerShard: 1
+    tlsEnabled: true
+
+    # Optional: ACL name for authentication
+    # aclName: "default"
+
+    # Optional: Create a new parameter group
+    createParameterGroup: false
+    parameterGroupFamily: memorydb_valkey8
+    parameters:
+      []
+      # - name: maxmemory-policy
+      #   value: allkeys-lru
+
+    # Optional: Snapshot configuration
+    snapshotRetentionLimit: 7
+    snapshotWindow: "03:00-05:00"
+
+    # Optional: Maintenance window
+    maintenanceWindow: "sun:05:00-sun:06:00"
+
+    # Optional: Tags
+    tags:
+      Environment: production
+      ManagedBy: crossplane
+      Application: helicone-ai-gateway
+
+    # Crossplane provider configuration reference
+    providerConfigRef: aws-provider
+
+    # Multi-region configuration
+    multiRegion:
+      enabled: false
+      regions:
+        []
+        # - name: us-east-1
+        #   nodeType: db.r7g.large  # Optional: Override global nodeType
+        #   numShards: 1            # Optional: Override global numShards
+        #   numReplicasPerShard: 1  # Optional: Override global numReplicasPerShard
+        #   subnetIds:
+        #     - subnet-12345678
+        #     - subnet-87654321
+        #   securityGroupIds:       # Optional: Override global securityGroupIds
+        #     - sg-12345678
+        #   kmsKeyId: "arn:aws:kms:us-east-1:account:key/..."  # Optional: Override global KMS key
+        #   providerConfigRef: aws-provider-us-east-1  # Optional: Override provider config
+        # - name: us-west-2
+        #   subnetIds:
+        #     - subnet-abcdef12
+        #     - subnet-fedcba21
+        #   kmsKeyId: "arn:aws:kms:us-west-2:account:key/..."
+        # - name: eu-west-1
+        #   subnetIds:
+        #     - subnet-11111111
+        #     - subnet-22222222
+
+      # Global replication group configuration (optional)
+      globalReplicationGroup:
+        suffix: global
+        automaticFailoverEnabled: true
+        # cacheNodeType: cache.r7g.large  # Optional: Override node type for global replication
+        # engineVersion: "7.0"            # Optional: Specify engine version
