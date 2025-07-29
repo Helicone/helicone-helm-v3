@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aws-gateway-controller
+  namespace: helicone-infrastructure
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helicone-infrastructure-gateway-controller
+  namespace: helicone-infrastructure
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: gateway-controller
+  template:
+    spec:
+      serviceAccountName: aws-gateway-controller
+      containers:
+        - name: controller
+          image: public.ecr.aws/aws-application-networking-k8s/aws-gateway-controller:v1.0.0
+status:
+  replicas: 1
+  readyReplicas: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: helicone-infrastructure-gateway-controller-webhook
+  namespace: helicone-infrastructure
+spec:
+  ports:
+    - name: webhook
+      port: 443
+      targetPort: webhook
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: helicone-infrastructure-gateway-controller
+rules:
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gateways
+      - gatewayclasses
+      - httproutes
+      - tcproutes
+      - tlsroutes
+      - referencegrants
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: helicone-infrastructure-gateway-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: helicone-infrastructure-gateway-controller
+subjects:
+  - kind: ServiceAccount
+    name: aws-gateway-controller
+    namespace: helicone-infrastructure

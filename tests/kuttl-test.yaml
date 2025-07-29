@@ -1,0 +1,12 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+testDirs:
+  - ./e2e/
+timeout: 300
+parallel: 1
+skipDelete: false
+reportFormat: JSON
+artifactsDir: ./_artifacts
+commands:
+  - command: kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
+    namespaced: false

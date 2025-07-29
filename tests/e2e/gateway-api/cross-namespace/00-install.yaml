@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-namespace
+---
+# Create a test application in a different namespace
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-app
+  namespace: app-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-app
+  template:
+    metadata:
+      labels:
+        app: test-app
+    spec:
+      containers:
+        - name: httpbin
+          image: kennethreitz/httpbin
+          ports:
+            - containerPort: 80
+              name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-app
+  namespace: app-namespace
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  selector:
+    app: test-app
+---
+# Create an HTTPRoute in app-namespace that references the NLB Gateway in helicone-infrastructure
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: cross-namespace-route
+  namespace: app-namespace
+spec:
+  parentRefs:
+    - name: helicone-infrastructure-nlb-gateway
+      namespace: helicone-infrastructure
+  hostnames:
+    - "test-app.example.com"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api
+      backendRefs:
+        - name: test-app
+          port: 80
+---
+# Create a ReferenceGrant to allow the Gateway to reference services in app-namespace
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-gateway-ref
+  namespace: app-namespace
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: app-namespace
+  to:
+    - group: ""
+      kind: Service
+      name: test-app

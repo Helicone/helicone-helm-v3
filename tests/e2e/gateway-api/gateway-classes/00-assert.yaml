@@ -1,0 +1,47 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: amazon-vpc-lattice
+spec:
+  controllerName: application-networking.k8s.aws/gateway-api-controller
+  parametersRef:
+    group: application-networking.k8s.aws
+    kind: VpcAssociationPolicy
+    name: default-vpc-association
+    namespace: helicone-infrastructure
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: aws-gateway-controller-nlb
+spec:
+  controllerName: networking.k8s.aws/gateway-api-controller
+  parametersRef:
+    group: ""
+    kind: ConfigMap
+    name: helicone-infrastructure-nlb-params
+    namespace: helicone-infrastructure
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: helicone-infrastructure-nlb-params
+  namespace: helicone-infrastructure
+data:
+  aws-load-balancer-type: "nlb"
+  aws-load-balancer-scheme: "internet-facing"
+  aws-load-balancer-backend-protocol: "tcp"
+  aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+  aws-load-balancer-target-type: "ip"
+---
+apiVersion: application-networking.k8s.aws/v1beta1
+kind: VpcAssociationPolicy
+metadata:
+  name: default-vpc-association
+  namespace: helicone-infrastructure
+spec:
+  securityGroupIds: []
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: "*"

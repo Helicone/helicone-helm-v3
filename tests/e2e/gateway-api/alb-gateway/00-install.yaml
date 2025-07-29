@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: helicone
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-values-alb
+  namespace: helicone
+data:
+  values.yaml: |
+    aiGateway:
+      enabled: true
+      service:
+        type: NodePort
+        port: 8080
+      gateway:
+        enabled: true
+        className: "amazon-vpc-lattice"
+        annotations:
+          application-networking.k8s.aws/lattice-vpc-association: "default"
+          application-networking.k8s.aws/load-balancer-type: "application"
+          application-networking.k8s.aws/scheme: "internal"
+          application-networking.k8s.aws/healthcheck-path: "/health"
+          application-networking.k8s.aws/idle-timeout-seconds: "300"
+          application-networking.k8s.aws/http2-enabled: "true"
+        tls:
+          enabled: true
+          certificateRefs:
+            - name: helicone-ai-tls-cert
+              kind: Secret
+        httpRoute:
+          hostnames:
+            - "ai-gateway.helicone.ai"
+          rules:
+            - matches:
+                - path:
+                    type: PathPrefix
+                    value: /
+---
+# Mock service to test routing
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-gateway
+  namespace: helicone
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: ai-gateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-gateway
+  namespace: helicone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-gateway
+  template:
+    metadata:
+      labels:
+        app: ai-gateway
+    spec:
+      containers:
+        - name: mock-server
+          image: kennethreitz/httpbin
+          ports:
+            - containerPort: 80
+              name: http
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - command: helm upgrade --install helicone-ai-gateway-cloud ../../../../charts/helicone-ai-gateway-cloud -n helicone --values /tmp/test-values-alb.yaml --wait
+    namespaced: false

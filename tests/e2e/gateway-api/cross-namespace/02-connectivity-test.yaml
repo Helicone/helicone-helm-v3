@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: connectivity-test
+  namespace: app-namespace
+spec:
+  template:
+    spec:
+      containers:
+        - name: curl
+          image: curlimages/curl:latest
+          command:
+            - sh
+            - -c
+            - |
+              # Test connectivity through the Gateway
+              echo "Testing cross-namespace routing through Gateway..."
+
+              # Give the gateway some time to be ready
+              sleep 10
+
+              # Test the HTTPRoute path
+              echo "Testing HTTPRoute at test-app.example.com/api..."
+              if curl -f -H "Host: test-app.example.com" http://helicone-infrastructure-nlb-gateway.helicone-infrastructure/api/get; then
+                echo "✓ Cross-namespace routing successful!"
+                exit 0
+              else
+                echo "✗ Cross-namespace routing failed!"
+                exit 1
+              fi
+      restartPolicy: Never
+  backoffLimit: 3
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 120
+---
+# Assert the job completes successfully
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: connectivity-test
+  namespace: app-namespace
+status:
+  succeeded: 1
