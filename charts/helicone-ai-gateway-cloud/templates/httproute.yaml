@@ -1,0 +1,58 @@
+{{- if .Values.aiGateway.gateway.enabled -}}
+{{- $fullName := include "helicone.ai-gateway.name" . -}}
+{{- $svcPort := .Values.aiGateway.service.port -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "helicone.ai-gateway.name" . }}-route
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+  - name: {{ include "helicone.ai-gateway.name" . }}-gateway
+    namespace: {{ .Release.Namespace }}
+    {{- if .Values.aiGateway.gateway.httpRoute.sectionName }}
+    sectionName: {{ .Values.aiGateway.gateway.httpRoute.sectionName }}
+    {{- end }}
+  {{- if .Values.aiGateway.gateway.httpRoute.hostnames }}
+  hostnames:
+  {{- range .Values.aiGateway.gateway.httpRoute.hostnames }}
+  - {{ . | quote }}
+  {{- end }}
+  {{- end }}
+  rules:
+  {{- range .Values.aiGateway.gateway.httpRoute.rules }}
+  - {{- if .matches }}
+    matches:
+    {{- range .matches }}
+    - {{- if .path }}
+      path:
+        type: {{ .path.type | default "PathPrefix" }}
+        value: {{ .path.value | default "/" }}
+      {{- end }}
+      {{- if .headers }}
+      headers:
+      {{- toYaml .headers | nindent 6 }}
+      {{- end }}
+      {{- if .queryParams }}
+      queryParams:
+      {{- toYaml .queryParams | nindent 6 }}
+      {{- end }}
+      {{- if .method }}
+      method: {{ .method }}
+      {{- end }}
+    {{- end }}
+    {{- end }}
+    {{- if .filters }}
+    filters:
+    {{- toYaml .filters | nindent 4 }}
+    {{- end }}
+    backendRefs:
+    - name: {{ $fullName }}
+      port: {{ $svcPort }}
+      {{- if .weight }}
+      weight: {{ .weight }}
+      {{- end }}
+  {{- end }}
+{{- end }}

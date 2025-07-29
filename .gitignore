@@ -50,3 +50,8 @@ secrets.yaml
 # Task files
 # tasks.json
 # tasks/
+
+# Test files
+_artifacts/
+*.test
+test-output/

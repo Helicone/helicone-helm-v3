@@ -1,0 +1,60 @@
+{{- if .Values.aiGateway.gateway.enabled -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ include "helicone.ai-gateway.name" . }}-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.aiGateway.gateway.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  gatewayClassName: {{ .Values.aiGateway.gateway.className }}
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: {{ .Values.aiGateway.gateway.allowedRoutes.namespaces.from | default "Same" }}
+        {{- if .Values.aiGateway.gateway.allowedRoutes.namespaces.selector }}
+        selector:
+          {{- toYaml .Values.aiGateway.gateway.allowedRoutes.namespaces.selector | nindent 10 }}
+        {{- end }}
+  {{- if .Values.aiGateway.gateway.tls.enabled }}
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      {{- range .Values.aiGateway.gateway.tls.certificateRefs }}
+      - name: {{ .name }}
+        {{- if .namespace }}
+        namespace: {{ .namespace }}
+        {{- end }}
+        {{- if .group }}
+        group: {{ .group }}
+        {{- end }}
+        {{- if .kind }}
+        kind: {{ .kind }}
+        {{- end }}
+      {{- end }}
+    allowedRoutes:
+      namespaces:
+        from: {{ .Values.aiGateway.gateway.allowedRoutes.namespaces.from | default "Same" }}
+        {{- if .Values.aiGateway.gateway.allowedRoutes.namespaces.selector }}
+        selector:
+          {{- toYaml .Values.aiGateway.gateway.allowedRoutes.namespaces.selector | nindent 10 }}
+        {{- end }}
+  {{- end }}
+  {{- if .Values.aiGateway.gateway.addresses }}
+  addresses:
+  {{- range .Values.aiGateway.gateway.addresses }}
+  - type: {{ .type }}
+    value: {{ .value }}
+  {{- end }}
+  {{- end }}
+{{- end }}

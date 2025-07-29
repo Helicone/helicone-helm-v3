@@ -143,6 +143,46 @@ Once the Ingress controller is set up and DNS is configured, deploy your Helicon
 described below. By default, ingress is set up for web and jawn, which is thereafter accessible at
 the domains you configured.
 
+## Gateway API Testing
+
+This repository includes comprehensive KUTTL tests for validating the Gateway API implementation that replaces traditional Ingress resources. The Gateway API provides better separation of concerns and more powerful traffic management capabilities.
+
+### Running Tests
+
+The tests validate AWS Gateway Controller deployment, GatewayClass resources, ALB/NLB Gateway functionality, and cross-namespace routing.
+
+#### Prerequisites
+
+```bash
+# Install KUTTL
+brew tap kudobuilder/tap
+brew install kuttl-cli
+
+# Install Gateway API CRDs
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
+```
+
+#### Run Tests
+
+```bash
+# Run all Gateway API tests
+cd tests/
+kubectl kuttl test
+
+# Run specific test suites
+kubectl kuttl test --test e2e/gateway-api/gateway-controller
+kubectl kuttl test --test e2e/gateway-api/cross-namespace
+
+# Run with verbose output
+kubectl kuttl test --verbose
+```
+
+#### Automated Testing
+
+Tests automatically run on pull requests via GitHub Actions. Results are posted as PR comments with pass/fail status for each test suite.
+
+For more details, see the [test documentation](tests/README.md).
+
 ## Infrastructure Deployment with Terraform
 
 ### Module Structure

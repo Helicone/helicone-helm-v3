@@ -27,70 +27,52 @@ clusterAutoscaler:
     headers: ""
     protocol: "grpc"
 
-# Nginx Ingress Controller configuration
-nginxIngressController:
-  enabled: true
-  namespace: helicone-infrastructure
-  fullnameOverride: "nginx-controller"
+# Gateway API configuration for NLB
+gateway:
+  enabled: true # Gateway API for NLB
+  className: "aws-gateway-controller-nlb" # AWS Gateway Controller class for NLB
+  annotations:
+    # AWS Gateway Controller annotations for NLB
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+    # NLB specific settings
+    service.beta.kubernetes.io/aws-load-balancer-target-type: "ip"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "TCP"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "traffic-port"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-interval: "10"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold: "2"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-unhealthy-threshold: "2"
+  tls:
+    mode: "Passthrough" # NLB typically uses Passthrough for TLS
+    certificateRefs: [] # Not needed for Passthrough mode
+  allowedRoutes:
+    namespaces:
+      from: All # Allow routes from all namespaces (cross-namespace support)
+      # selector:  # Optional: restrict to specific namespaces
+      #   matchLabels:
+      #     gateway-access: "true"
+  addresses: [] # Optional: specify static IPs
 
-  # Set to false if you have an existing nginx-ingress-controller that conflicts
-  # This will skip creating nginx resources to avoid ownership conflicts
-  skipExistingResources: false
-
-  # Watch all namespaces for ingress resources
-  watchIngressWithoutClass: true
-  watchNamespaces: "" # Empty string means watch all namespaces
-
-  # Controller configuration
-  controller:
-    image:
-      repository: registry.k8s.io/ingress-nginx/controller
-      tag: "v1.8.2"
-      pullPolicy: IfNotPresent
-
-    # Enable cross-namespace ingress support
-    extraArgs:
-      - "--watch-ingress-without-class=true"
-      - "--ingress-class=nginx"
-      - "--enable-ssl-passthrough"
-
-    # Resource configuration
-    resources:
-      requests:
-        cpu: 100m
-        memory: 90Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
-
-    # Service configuration - Using Pod Identity with proper permissions
-    service:
-      type: LoadBalancer # Back to LoadBalancer - Pod Identity should fix permissions
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-type: nlb
-        service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing # Make NLB internet-facing
-        service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-        # Pod Identity handles authentication automatically - no more manual annotations needed
-      ports:
-        http: 80
-        https: 443
-
-    # Ingress class configuration
-    ingressClass:
-      name: nginx
-      enabled: true
-      default: true # Keep nginx as default for existing ingresses
-      controllerValue: "k8s.io/ingress-nginx"
-
-    # RBAC configuration for cross-namespace access
-    rbac:
-      create: true
-      scope: true # Cluster-wide scope for all namespaces
-
-    # Service account - IMPORTANT: Must match Terraform Pod Identity association
-    serviceAccount:
-      create: true
-      name: nginx-ingress-controller # This matches the Pod Identity association
+# AWS Gateway Controller configuration
+awsGatewayController:
+  enabled: true # AWS Gateway Controller for managing Gateway API resources
+  version: "v1.0.0" # Specify the version
+  region: "us-east-1" # AWS region
+  vpcId: "" # VPC ID where the controller will operate
+  accountId: "" # AWS Account ID
+  serviceAccount:
+    create: true
+    name: aws-gateway-controller
+    annotations: {} # Will be populated with IRSA annotations
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
 
 # Prometheus configuration
 prometheus:
