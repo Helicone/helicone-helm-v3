@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+
+# Guidelines
+
+- Use the pod identity agent instead of IRSA.
+- Rather than applying through kubectl, make sure that it can be installed via a helm chart.
