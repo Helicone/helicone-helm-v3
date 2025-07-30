@@ -227,7 +227,7 @@ helicone:
             - "GRANT postgres TO helicone;"
       storage:
         size: 5Gi
-        storageClass: "gp2-immediate"
+        storageClass: "gp2"
       monitoring:
         enabled: true
       backup:
@@ -260,7 +260,7 @@ helicone:
         memory: "1Gi"
         cpu: "500m"
     persistence:
-      storageClass: "gp2-immediate"
+      storageClass: "gp2"
       size: 10Gi
 
   # Note: If enabled is set to false, then S3 is used instead of MinIO
@@ -297,7 +297,7 @@ helicone:
     image:
       repository: helicone/jawn
       pullPolicy: IfNotPresent
-      tag: "v2025-06-17"
+      tag: "v2025.06.05"
     replicaCount: 1
     service:
       annotations: {}
