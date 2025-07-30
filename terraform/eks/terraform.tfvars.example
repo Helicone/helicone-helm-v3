@@ -56,4 +56,20 @@ enable_ingress_nginx_lb_lookup = false
 
 # Enable EKS Pod Identity Agent addon (required for pod identity authentication)
 enable_pod_identity_agent = true
-pod_identity_agent_version = "v1.0.0-eksbuild.1" 
+pod_identity_agent_version = "v1.0.0-eksbuild.1"
+
+#################################################################################
+# AI Gateway Configuration
+#################################################################################
+
+# Valkey cache ARNs per region
+valkey_cache_arns = {
+  "us-west-2" = "arn:aws:elasticache:us-west-2:ACCOUNT:serverlesscache:helicone-valkey-cache-us-west-2"
+  "us-east-1" = "arn:aws:elasticache:us-east-1:ACCOUNT:serverlesscache:helicone-valkey-cache-us-east-1"
+}
+
+# S3 bucket ARNs per region
+s3_bucket_arns = {
+  "us-west-2" = "arn:aws:s3:::helicone-request-response-storage-us-west-2"
+  "us-east-1" = "arn:aws:s3:::helicone-request-response-storage-us-east-1"
+} 

@@ -16,7 +16,8 @@ terraform {
 }
 
 provider "aws" {
-  region = var.region
+  # not used for anything actually so can be hard coded
+  region = "us-east-1"
 }
 
 # Global Accelerator

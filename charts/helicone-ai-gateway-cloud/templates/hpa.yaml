@@ -1,0 +1,51 @@
+{{- if .Values.aiGateway.enabled }}
+{{- if .Values.aiGateway.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: helicone-ai-gateway
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: helicone-ai-gateway
+  minReplicas: {{ .Values.aiGateway.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.aiGateway.autoscaling.maxReplicas }}
+  metrics:
+  {{- if .Values.aiGateway.autoscaling.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.aiGateway.autoscaling.targetCPUUtilizationPercentage }}
+  {{- end }}
+  {{- if .Values.aiGateway.autoscaling.targetMemoryUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.aiGateway.autoscaling.targetMemoryUtilizationPercentage }}
+  {{- end }}
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: {{ .Values.aiGateway.autoscaling.behavior.scaleUp.stabilizationWindowSeconds }}
+      policies:
+      - type: Percent
+        value: {{ .Values.aiGateway.autoscaling.behavior.scaleUp.percent }}
+        periodSeconds: {{ .Values.aiGateway.autoscaling.behavior.scaleUp.periodSeconds }}
+      - type: Pods
+        value: {{ .Values.aiGateway.autoscaling.behavior.scaleUp.pods }}
+        periodSeconds: {{ .Values.aiGateway.autoscaling.behavior.scaleUp.periodSeconds }}
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: {{ .Values.aiGateway.autoscaling.behavior.scaleDown.stabilizationWindowSeconds }}
+      policies:
+      - type: Pods
+        value: {{ .Values.aiGateway.autoscaling.behavior.scaleDown.pods }}
+        periodSeconds: {{ .Values.aiGateway.autoscaling.behavior.scaleDown.periodSeconds }}
+{{- end }}
+{{- end }}

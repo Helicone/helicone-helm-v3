@@ -7,13 +7,13 @@ region      = "us-west-2"
 environment = "production"
 enable_versioning = true
 
-# Service Account Access (IRSA) Configuration
-# Set to true to enable service account-based access instead of access keys
+# Service Account Access (Pod Identity Agent) Configuration
+# Set to true to enable service account-based access via Pod Identity Agent instead of access keys
 enable_service_account_access = true
 
-# EKS OIDC provider URL (without https://)
-# Get this from: aws eks describe-cluster --name YOUR_CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||'
-eks_oidc_provider = "oidc.eks.us-west-2.amazonaws.com/id/YOUR_CLUSTER_OIDC_ID"
+# EKS cluster name for Pod Identity Agent
+# Get this from: aws eks list-clusters --query "clusters[]" --output text
+eks_cluster_name = "YOUR_EKS_CLUSTER_NAME"
 
 # Kubernetes namespace where helicone workloads run
 kubernetes_namespace = "helicone"

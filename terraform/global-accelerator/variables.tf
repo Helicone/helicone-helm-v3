@@ -4,12 +4,6 @@ variable "accelerator_name" {
   default     = "helicone-global-accelerator"
 }
 
-variable "region" {
-  description = "AWS region for the provider"
-  type        = string
-  default     = "us-west-2"
-}
-
 variable "environment" {
   description = "Environment tag for the Global Accelerator"
   type        = string

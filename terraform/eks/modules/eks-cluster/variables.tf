@@ -212,7 +212,7 @@ variable "alb_controller_policy_arn" {
 variable "enable_pod_identity_agent" {
   description = "Enable EKS Pod Identity Agent addon"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "pod_identity_agent_version" {
@@ -287,4 +287,10 @@ variable "valkey_cache_arn" {
 variable "s3_bucket_arn" {
   description = "ARN of the S3 bucket for AI Gateway"
   type        = string
+}
+
+variable "ai_gateway_namespace" {
+  description = "Namespace for AI Gateway"
+  type        = string
+  default     = "ai-gateway"
 }

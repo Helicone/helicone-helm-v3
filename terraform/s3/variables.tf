@@ -60,13 +60,13 @@ variable "cors_max_age_seconds" {
 
 # Service Account Access Configuration
 variable "enable_service_account_access" {
-  description = "Enable IAM roles for service accounts (IRSA) for S3 access"
+  description = "Enable IAM roles for service accounts via Pod Identity Agent for S3 access"
   type        = bool
   default     = false
 }
 
-variable "eks_oidc_provider" {
-  description = "EKS OIDC provider URL (without https://)"
+variable "eks_cluster_name" {
+  description = "EKS cluster name for Pod Identity Agent access"
   type        = string
   default     = ""
 }

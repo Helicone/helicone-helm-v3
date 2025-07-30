@@ -1,23 +1,6 @@
-variable "project_name" {
-  description = "Name of the project"
+variable "region" {
+  description = "AWS region where resources will be created"
   type        = string
-  default     = "helicone"
-}
-
-variable "environment" {
-  description = "Environment name"
-  type        = string
-  default     = "production"
-}
-
-variable "tags" {
-  description = "Common tags to apply to all resources"
-  type        = map(string)
-  default = {
-    Project     = "Helicone"
-    Environment = "production"
-    ManagedBy   = "Terraform"
-  }
 }
 
 variable "valkey_cache_name" {
@@ -92,32 +75,16 @@ variable "snapshot_retention_limit" {
   }
 }
 
-# VPC and Subnet Configuration
-variable "vpc_ids" {
-  description = "Map of region to VPC ID where the cache will be created. If empty, uses default VPC"
-  type        = map(string)
-  default     = {
-    us-west-2 = ""
-    us-east-1 = ""
-  }
+variable "vpc_id" {
+  description = "VPC ID where the cache will be created. If empty, uses default VPC"
+  type        = string
+  default     = ""
 }
 
 variable "subnet_ids" {
-  description = "Map of region to list of subnet IDs for the cache subnet group. If empty, uses default VPC subnets"
-  type        = map(list(string))
-  default     = {
-    us-west-2 = []
-    us-east-1 = []
-  }
-}
-
-variable "allowed_security_group_ids" {
-  description = "Map of region to list of security group IDs allowed to access the cache"
-  type        = map(list(string))
-  default     = {
-    us-west-2 = []
-    us-east-1 = []
-  }
+  description = "List of subnet IDs for the cache subnet group. If empty, uses default VPC subnets"
+  type        = list(string)
+  default     = []
 }
 
 variable "create_subnet_group" {
@@ -130,4 +97,16 @@ variable "allowed_cidr_blocks" {
   description = "List of CIDR blocks allowed to access the cache"
   type        = list(string)
   default     = []
-} 
+}
+
+variable "allowed_security_group_ids" {
+  description = "List of security group IDs allowed to access the cache"
+  type        = list(string)
+  default     = []
+}
+
+variable "tags" {
+  description = "Common tags to apply to all resources"
+  type        = map(string)
+  default     = {}
+}

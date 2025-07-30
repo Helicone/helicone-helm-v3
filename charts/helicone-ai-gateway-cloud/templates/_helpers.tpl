@@ -68,6 +68,16 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
     secretKeyRef:
       name: ai-gateway-secrets
       key: dbCert
+- name: AI_GATEWAY__MINIO__ACCESS_KEY
+  valueFrom:
+    secretKeyRef:
+      name: ai-gateway-secrets
+      key: aiGwS3AccessKey
+- name: AI_GATEWAY__MINIO__SECRET_KEY
+  valueFrom:
+    secretKeyRef:
+      name: ai-gateway-secrets
+      key: aiGwS3SecretKey
 {{- with .Values.aiGateway.extraEnvVars }}
 {{- toYaml . | nindent 0 }}
 {{- end }}

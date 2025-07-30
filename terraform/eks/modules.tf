@@ -55,8 +55,8 @@ module "eks_us_west_2" {
   cluster_autoscaler_policy_arn    = var.cluster_autoscaler_policy_arn
   
   # AI Gateway Configuration
-  valkey_cache_arn = var.valkey_cache_arn
-  s3_bucket_arn    = var.s3_bucket_arn
+  valkey_cache_arn = try(var.valkey_cache_arns["us-west-2"], "")
+  s3_bucket_arn    = try(var.s3_bucket_arns["us-west-2"], "")
   
   # Tags
   tags = merge(var.tags, {
@@ -126,8 +126,8 @@ module "eks_us_east_1" {
   cluster_autoscaler_policy_arn    = var.cluster_autoscaler_policy_arn
   
   # AI Gateway Configuration
-  valkey_cache_arn = var.valkey_cache_arn
-  s3_bucket_arn    = var.s3_bucket_arn
+  valkey_cache_arn = try(var.valkey_cache_arns["us-east-1"], "")
+  s3_bucket_arn    = try(var.s3_bucket_arns["us-east-1"], "")
   
   # Tags
   tags = merge(var.tags, {

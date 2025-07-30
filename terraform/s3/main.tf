@@ -78,10 +78,10 @@ locals {
 }
 
 #################################################################################
-# IAM Role for S3 Access via Service Accounts (IRSA)
+# IAM Role for S3 Access via Pod Identity Agent
 #################################################################################
 
-# Trust policy for Kubernetes service accounts
+# Trust policy for Pod Identity Agent
 data "aws_iam_policy_document" "s3_service_account_trust" {
   count = var.enable_service_account_access ? 1 : 0
 
@@ -89,25 +89,22 @@ data "aws_iam_policy_document" "s3_service_account_trust" {
     effect = "Allow"
 
     principals {
-      type        = "Federated"
-      identifiers = ["arn:${local.partition}:iam::${local.account_id}:oidc-provider/${var.eks_oidc_provider}"]
+      type        = "Service"
+      identifiers = ["pods.eks.amazonaws.com"]
     }
 
-    actions = ["sts:AssumeRoleWithWebIdentity"]
+    actions = ["sts:AssumeRole", "sts:TagSession"]
 
     condition {
       test     = "StringEquals"
-      variable = "${var.eks_oidc_provider}:sub"
-      values   = [
-        "system:serviceaccount:${var.kubernetes_namespace}:helicone-core-web",
-        "system:serviceaccount:${var.kubernetes_namespace}:helicone-core-jawn"
-      ]
+      variable = "aws:SourceAccount"
+      values   = [local.account_id]
     }
 
     condition {
       test     = "StringEquals"
-      variable = "${var.eks_oidc_provider}:aud"
-      values   = ["sts.amazonaws.com"]
+      variable = "eks:cluster-name"
+      values   = [var.eks_cluster_name]
     }
   }
 }
@@ -157,4 +154,56 @@ resource "aws_iam_role_policy_attachment" "s3_service_account" {
 
   role       = aws_iam_role.s3_service_account[0].name
   policy_arn = aws_iam_policy.s3_access[0].arn
+}
+
+#################################################################################
+# EKS Pod Identity Associations
+#################################################################################
+
+# Pod Identity Association for helicone-core-web
+resource "aws_eks_pod_identity_association" "helicone_core_web" {
+  count = var.enable_service_account_access ? 1 : 0
+
+  cluster_name    = var.eks_cluster_name
+  namespace       = var.kubernetes_namespace
+  service_account = "helicone-core-web" 
+  role_arn        = aws_iam_role.s3_service_account[0].arn
+
+  tags = var.tags
+}
+
+# Pod Identity Association for helicone-core-jawn
+resource "aws_eks_pod_identity_association" "helicone_core_jawn" {
+  count = var.enable_service_account_access ? 1 : 0
+
+  cluster_name    = var.eks_cluster_name
+  namespace       = var.kubernetes_namespace
+  service_account = "helicone-core-jawn"
+  role_arn        = aws_iam_role.s3_service_account[0].arn
+
+  tags = var.tags
+}
+
+# Pod Identity Association for helicone-ai-gateway
+resource "aws_eks_pod_identity_association" "helicone_ai_gateway" {
+  count = var.enable_service_account_access ? 1 : 0
+
+  cluster_name    = var.eks_cluster_name
+  namespace       = var.kubernetes_namespace
+  service_account = "helicone-ai-gateway"
+  role_arn        = aws_iam_role.s3_service_account[0].arn
+
+  tags = var.tags
+}
+
+# Pod Identity Association for helicone-us-east-1-ai-gateway-sa
+resource "aws_eks_pod_identity_association" "helicone_us_east_1_ai_gateway" {
+  count = var.enable_service_account_access ? 1 : 0
+
+  cluster_name    = var.eks_cluster_name
+  namespace       = var.kubernetes_namespace
+  service_account = "helicone-us-east-1-ai-gateway-sa"
+  role_arn        = aws_iam_role.s3_service_account[0].arn
+
+  tags = var.tags
 } 

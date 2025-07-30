@@ -3,7 +3,6 @@
 
 # Global Accelerator Configuration
 accelerator_name = "helicone-global-accelerator"
-region          = "us-west-2"
 environment     = "production"
 ip_address_type = "IPV4"
 enabled         = true

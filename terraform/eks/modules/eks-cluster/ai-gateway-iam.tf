@@ -52,20 +52,11 @@ resource "aws_iam_policy" "ai_gateway_iam_policy" {
         Effect = "Allow"
         Action = [
           "s3:GetObject",
-          "s3:PutObject"
-        ]
-        Resource = [
-          "${var.s3_bucket_arn}/*"
-        ]
-      }],
-      # S3 bucket permissions
-      [{
-        Effect = "Allow"
-        Action = [
+          "s3:PutObject",
           "s3:ListBucket"
         ]
         Resource = [
-          var.s3_bucket_arn
+          "${var.s3_bucket_arn}/*"
         ]
       }]
     )
@@ -86,8 +77,8 @@ resource "aws_iam_role_policy_attachment" "gateway_policy_attachment" {
 resource "aws_eks_pod_identity_association" "ai_gateway_association" {
   count           = 1
   cluster_name    = var.cluster_name
-  namespace       = var.alb_controller_namespace
-  service_account = "helicone-ai-gateway"
+  namespace       = var.ai_gateway_namespace
+  service_account = "${var.cluster_name}-${var.region}-ai-gateway-sa"
   role_arn        = aws_iam_role.ai_gateway_pod_identity_role.arn
 
   tags = var.tags

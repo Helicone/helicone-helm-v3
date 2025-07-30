@@ -253,16 +253,22 @@ variable "nginx_ingress_controller_namespace" {
 # AI Gateway Configuration
 #################################################################################
 
-variable "valkey_cache_arn" {
-  description = "ARN of the Valkey serverless cache"
-  type        = string
-  default     = ""
+variable "valkey_cache_arns" {
+  description = "Map of region to Valkey serverless cache ARN"
+  type        = map(string)
+  default     = {
+    us-west-2 = ""
+    us-east-1 = ""
+  }
 }
 
-variable "s3_bucket_arn" {
-  description = "S3 bucket ARN for request-response storage"
-  type        = string
-  default     = "arn:aws:s3:::request-response-storage"
+variable "s3_bucket_arns" {
+  description = "Map of region to S3 bucket ARN for request-response storage"
+  type        = map(string)
+  default     = {
+    us-west-2 = "arn:aws:s3:::request-response-storage-us-west-2"
+    us-east-1 = "arn:aws:s3:::request-response-storage-us-east-1"
+  }
 }
 
 variable "common_tags" {

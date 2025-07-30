@@ -520,7 +520,7 @@ resource "aws_eks_pod_identity_association" "alb_controller" {
   count           = var.enable_alb_controller ? 1 : 0
   cluster_name    = aws_eks_cluster.eks_cluster.name
   namespace       = var.alb_controller_namespace
-  service_account = "helicone-infrastructure-aws-load-balancer-controller"  # Fixed to match actual service account
+  service_account = "${var.cluster_name}-${var.region}-alb-controller-sa"
   role_arn        = aws_iam_role.alb_controller_role[0].arn
 
   tags = var.tags

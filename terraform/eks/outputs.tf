@@ -42,6 +42,11 @@ output "us_west_2_oidc_provider_arn" {
   value       = module.eks_us_west_2.oidc_provider_arn
 }
 
+output "us_west_2_cluster_security_group_id" {
+  description = "Security group ID attached to the EKS cluster in us-west-2"
+  value       = module.eks_us_west_2.cluster_security_group_id
+}
+
 # US-East-1 Outputs
 output "us_east_1_cluster_id" {
   description = "The name/id of the EKS cluster in us-east-1"
@@ -82,6 +87,11 @@ output "us_east_1_alb_controller_role_arn" {
 output "us_east_1_oidc_provider_arn" {
   description = "ARN of the OIDC Provider for EKS in us-east-1"
   value       = module.eks_us_east_1.oidc_provider_arn
+}
+
+output "us_east_1_cluster_security_group_id" {
+  description = "Security group ID attached to the EKS cluster in us-east-1"
+  value       = module.eks_us_east_1.cluster_security_group_id
 }
 
 # Combined outputs for all regions

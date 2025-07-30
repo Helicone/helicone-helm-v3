@@ -155,6 +155,8 @@ resource "aws_iam_role_policy_attachment" "eks_ebs_csi_driver_policy" {
 }
 
 # Additional policy for EKS nodes to create LoadBalancers
+# TODO: the `shield:*`, `s3:*` related perms are for the alb controller and gw respectively,
+# which should be moved to use EKS Pod Identity and the `shield:*` perms removed from here
 resource "aws_iam_policy" "eks_node_loadbalancer_policy" {
       name        = "${var.cluster_name}-${var.region}-node-loadbalancer-policy"
   description = "IAM policy for EKS nodes to create LoadBalancers"
@@ -213,6 +215,16 @@ resource "aws_iam_policy" "eks_node_loadbalancer_policy" {
           "ec2:AuthorizeSecurityGroupIngress",
           "ec2:RevokeSecurityGroupIngress",
           "ec2:DeleteSecurityGroup"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "shield:GetSubscriptionState",
+          "shield:DescribeProtection",
+          "shield:CreateProtection",
+          "shield:DeleteProtection"
         ]
         Resource = "*"
       }

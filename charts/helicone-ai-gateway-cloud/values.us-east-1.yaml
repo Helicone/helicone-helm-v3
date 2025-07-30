@@ -8,11 +8,12 @@ aiGateway:
 
   serviceAccount:
     enabled: true
-    name: "helicone-ai-gateway"
+    name: "helicone-us-east-1-ai-gateway-sa"
     annotations: {}
 
+  podAnnotations: {}
+
   # TODO: add canaries or blue-green
-  # Rolling Update Deployment Strategy
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -106,20 +107,13 @@ aiGateway:
     targetMemoryUtilizationPercentage: 80
     behavior:
       scaleUp:
-        # 120 seconds stabilization window to ignore startup spikes
         stabilizationWindowSeconds: 120
-        # Allow scaling up by 100% of current pods
         percent: 100
-        # Allow adding up to 2 pods at once
         pods: 2
-        # Every 140 seconds
         periodSeconds: 140
       scaleDown:
-        # 180 seconds (3 minutes) stabilization before scaling down
         stabilizationWindowSeconds: 180
-        # Allow removing 1 pod at once
         pods: 1
-        # Every 60 seconds
         periodSeconds: 60
 
   config:
@@ -139,11 +133,11 @@ aiGateway:
 
     cache-store:
       type: redis
-      host-url: "rediss://helicone-valkey-cache-hmjlk9.serverless.usw2.cache.amazonaws.com:6379"
+      host-url: "rediss://helicone-valkey-cache-us-east-1-t4dz5b.serverless.use1.cache.amazonaws.com"
 
     rate-limit-store:
       type: redis
-      host-url: "rediss://helicone-valkey-cache-hmjlk9.serverless.usw2.cache.amazonaws.com:6379"
+      host-url: "rediss://helicone-valkey-cache-us-east-1-t4dz5b.serverless.use1.cache.amazonaws.com"
 
     deployment-target:
       type: cloud

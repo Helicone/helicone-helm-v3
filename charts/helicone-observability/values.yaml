@@ -188,15 +188,15 @@ opentelemetry-collector:
 
     exporters:
       otlp:
-        endpoint: tempo.helicone-infrastructure.svc.cluster.local:4317
+        endpoint: tempo.helicone-observability.svc.cluster.local:4317
         tls:
           insecure: true
       # otlphttp:
-      #   endpoint: http://loki.helicone-infrastructure.svc.cluster.local:3100/otlp
+      #   endpoint: http://loki.helicone-observability.svc.cluster.local:3100/otlp
       #   tls:
       #     insecure: true
       prometheusremotewrite:
-        endpoint: http://prometheus.helicone-infrastructure.svc.cluster.local:80/api/v1/write
+        endpoint: http://prometheus.helicone-observability.svc.cluster.local:80/api/v1/write
         tls:
           insecure: true
 
@@ -275,3 +275,30 @@ opentelemetry-collector:
       enabled: false
     metrics:
       enabled: false
+
+  # Init containers to wait for dependencies
+  initContainers:
+    - name: wait-for-tempo
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for Tempo to be ready..."
+          until nc -z tempo.helicone-observability.svc.cluster.local 4317; do
+            echo "Tempo is not ready yet. Waiting..."
+            sleep 5
+          done
+          echo "Tempo is ready!"
+    - name: wait-for-prometheus
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for Prometheus to be ready..."
+          until nc -z prometheus.helicone-observability.svc.cluster.local 80; do
+            echo "Prometheus is not ready yet. Waiting..."
+            sleep 5
+          done
+          echo "Prometheus is ready!"

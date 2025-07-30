@@ -1,5 +1,4 @@
 # Valkey ElastiCache Serverless Configuration
-aws_region         = "us-west-2"
 valkey_cache_name  = "helicone-valkey-cache"
 
 # Capacity and performance settings
@@ -12,26 +11,32 @@ snapshot_retention_limit = 7
 
 # Network configuration
 create_subnet_group = true
-# vpc_id = "vpc-xxxxxxxxx"  # Optional: specify VPC ID
-# subnet_ids = ["subnet-xxxxxxxxx", "subnet-yyyyyyyyy"]  # Optional: specify subnet IDs
 
-# Security groups that should have access (EKS node groups, etc.)
-allowed_security_group_ids = [
-  # "sg-xxxxxxxxx"  # Add your EKS cluster security group here
-]
+# VPC IDs for each region (optional: if empty, uses default VPC)
+vpc_ids = {
+  us-west-2 = ""  # "vpc-xxxxxxxxx"
+  us-east-1 = ""  # "vpc-yyyyyyyyy"
+}
+
+# Subnet IDs for each region (optional: if empty, uses default VPC subnets)
+subnet_ids = {
+  us-west-2 = []  # ["subnet-xxx", "subnet-yyy", "subnet-zzz"]
+  us-east-1 = []  # ["subnet-aaa", "subnet-bbb", "subnet-ccc"]
+}
+
+# Security groups that should have access per region (EKS node groups, etc.)
+allowed_security_group_ids = {
+  us-west-2 = []  # ["sg-xxxxxxxxx"]  # Add your EKS cluster security group here
+  us-east-1 = []  # ["sg-yyyyyyyyy"]  # Add your EKS cluster security group here
+}
 
 # CIDR blocks that should have access (if needed)
 allowed_cidr_blocks = [
   # "10.0.0.0/16"  # Add your VPC CIDR or specific networks
 ]
 
-# EKS Pod Identity Configuration (REQUIRED for pod identity)
-eks_cluster_name                  = "helicone"                    # Must match your EKS cluster name
-kubernetes_namespace              = "default"                    # Namespace where your pods run
-kubernetes_service_account_name   = "helicone-ai-gateway"        # Service account name from Helm chart
-
 # Common tags
-common_tags = {
+tags = {
   Project     = "Helicone"
   Environment = "production"
   ManagedBy   = "Terraform"

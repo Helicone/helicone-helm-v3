@@ -120,3 +120,14 @@ output "cluster_connection_command" {
   description = "Command to update kubeconfig for cluster access"
   value       = "aws eks update-kubeconfig --region ${var.region} --name ${aws_eks_cluster.eks_cluster.name}"
 }
+
+# Service Account Names for Pod Identity
+output "ai_gateway_service_account_name" {
+  description = "Service account name expected for AI Gateway Pod Identity association"
+  value       = "${var.cluster_name}-${var.region}-ai-gateway-sa"
+}
+
+output "alb_controller_service_account_name" {
+  description = "Service account name expected for ALB Controller Pod Identity association"
+  value       = "${var.cluster_name}-${var.region}-alb-controller-sa"
+}

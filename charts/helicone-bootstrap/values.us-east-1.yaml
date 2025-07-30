@@ -103,7 +103,7 @@ aws-load-balancer-controller:
 
   serviceAccount:
     create: true
-    name: "aws-load-balancer-controller"
+    name: "helicone-us-east-1-alb-controller-sa"
 
   # Controller configuration
   replicaCount: 2
