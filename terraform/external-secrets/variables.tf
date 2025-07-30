@@ -59,13 +59,13 @@ variable "recovery_window_days" {
 # EKS Configuration
 #################################################################################
 
-variable "eks_oidc_provider" {
-  description = "EKS OIDC provider URL (without https://)"
+variable "eks_cluster_name" {
+  description = "Name of the EKS cluster for Pod Identity Association"
   type        = string
 
   validation {
-    condition     = can(regex("^oidc\\.eks\\.", var.eks_oidc_provider))
-    error_message = "EKS OIDC provider must be a valid EKS OIDC provider URL."
+    condition     = length(var.eks_cluster_name) > 0
+    error_message = "EKS cluster name cannot be empty."
   }
 }
 

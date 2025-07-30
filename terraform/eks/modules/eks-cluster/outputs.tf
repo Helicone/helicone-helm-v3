@@ -1,5 +1,3 @@
-# Module outputs for EKS Cluster
-
 output "cluster_id" {
   description = "The name/id of the EKS cluster"
   value       = aws_eks_cluster.eks_cluster.id
@@ -88,14 +86,6 @@ output "node_group_status" {
 output "node_group_asg_names" {
   description = "Names of the Auto Scaling Groups associated with the EKS Node Group"
   value       = aws_eks_node_group.eks_nodes.resources[0].autoscaling_groups[*].name
-}
-
-# Note: Remove node_security_group_id since there's no dedicated node security group in the current setup
-# The cluster security group is used instead
-
-output "oidc_provider_arn" {
-  description = "ARN of the OIDC Provider for EKS"
-  value       = aws_iam_openid_connect_provider.eks.arn
 }
 
 output "region" {

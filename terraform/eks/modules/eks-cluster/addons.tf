@@ -141,7 +141,7 @@ resource "aws_iam_policy" "ebs_csi_driver" {
   tags = var.tags
 }
 
-# EBS CSI Driver IAM Role for Service Account
+# EBS CSI Driver IAM Role for Pod Identity
 resource "aws_iam_role" "ebs_csi_driver" {
   count = var.enable_ebs_csi_driver ? 1 : 0
   name  = "${var.cluster_name}-${var.region}-ebs-csi-driver-role"
@@ -151,15 +151,12 @@ resource "aws_iam_role" "ebs_csi_driver" {
     Statement = [{
       Effect = "Allow"
       Principal = {
-        Federated = aws_iam_openid_connect_provider.eks.arn
+        Service = "pods.eks.amazonaws.com"
       }
-      Action = "sts:AssumeRoleWithWebIdentity"
-      Condition = {
-        StringEquals = {
-          "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub" = "system:serviceaccount:kube-system:ebs-csi-controller-sa"
-          "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:aud" = "sts.amazonaws.com"
-        }
-      }
+      Action = [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ]
     }]
   })
 
@@ -208,10 +205,14 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
   addon_version            = var.ebs_csi_driver_version
-  service_account_role_arn = aws_iam_role.ebs_csi_driver[0].arn
+  
+  # Explicitly set to null to remove IRSA configuration
+  service_account_role_arn = null
 
   depends_on = [
-    aws_eks_node_group.eks_nodes
+    aws_eks_node_group.eks_nodes,
+    aws_eks_addon.pod_identity_agent,
+    aws_eks_pod_identity_association.ebs_csi_driver
   ]
 }
 
@@ -623,6 +624,17 @@ resource "aws_eks_pod_identity_association" "nginx_ingress_controller" {
   namespace       = var.nginx_ingress_controller_namespace
   service_account = "nginx-ingress-controller"  # This should be correct based on our values.yaml
   role_arn        = aws_iam_role.nginx_ingress_controller_role[0].arn
+
+  tags = var.tags
+}
+
+# EKS Pod Identity Association for EBS CSI Driver
+resource "aws_eks_pod_identity_association" "ebs_csi_driver" {
+  count           = var.enable_ebs_csi_driver ? 1 : 0
+  cluster_name    = aws_eks_cluster.eks_cluster.name
+  namespace       = "kube-system"
+  service_account = "ebs-csi-controller-sa"
+  role_arn        = aws_iam_role.ebs_csi_driver[0].arn
 
   tags = var.tags
 } 

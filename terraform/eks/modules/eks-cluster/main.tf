@@ -155,10 +155,9 @@ resource "aws_iam_role_policy_attachment" "eks_ebs_csi_driver_policy" {
 }
 
 # Additional policy for EKS nodes to create LoadBalancers
-# TODO: the `shield:*`, `s3:*` related perms are for the alb controller and gw respectively,
-# which should be moved to use EKS Pod Identity and the `shield:*` perms removed from here
+# Note: ALB controller and AI Gateway now use Pod Identity, so shield permissions removed
 resource "aws_iam_policy" "eks_node_loadbalancer_policy" {
-      name        = "${var.cluster_name}-${var.region}-node-loadbalancer-policy"
+  name        = "${var.cluster_name}-${var.region}-node-loadbalancer-policy"
   description = "IAM policy for EKS nodes to create LoadBalancers"
 
   policy = jsonencode({
@@ -218,16 +217,7 @@ resource "aws_iam_policy" "eks_node_loadbalancer_policy" {
         ]
         Resource = "*"
       },
-      {
-        Effect = "Allow"
-        Action = [
-          "shield:GetSubscriptionState",
-          "shield:DescribeProtection",
-          "shield:CreateProtection",
-          "shield:DeleteProtection"
-        ]
-        Resource = "*"
-      }
+
     ]
   })
 
@@ -273,20 +263,8 @@ resource "aws_eks_node_group" "eks_nodes" {
   ]
 }
 
-# OIDC Provider for EKS
-data "tls_certificate" "eks" {
-  url = aws_eks_cluster.eks_cluster.identity[0].oidc[0].issuer
-}
-
-resource "aws_iam_openid_connect_provider" "eks" {
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
-  url             = aws_eks_cluster.eks_cluster.identity[0].oidc[0].issuer
-
-  tags = merge(var.tags, {
-    Name = "${var.cluster_name}-oidc-provider"
-  })
-}
+# OIDC Provider for EKS - REMOVED (replaced by Pod Identity Agent)
+# The EKS Pod Identity Agent eliminates the need for OIDC providers for service account authentication
 
 # Get the load balancer from Kubernetes (for other modules like route53-acm and cloudflare)
 data "kubernetes_service" "ingress_nginx" {
@@ -351,13 +329,6 @@ resource "kubernetes_config_map_v1" "aws_auth" {
         username = "system:node:{{EC2PrivateDNSName}}"
         groups   = ["system:bootstrappers", "system:nodes"]
       }],
-          # Cluster autoscaler role removed - now managed by Helm chart
-      # EBS CSI driver role (if enabled)
-      var.enable_ebs_csi_driver ? [{
-        rolearn  = aws_iam_role.ebs_csi_driver[0].arn
-        username = "ebs-csi-controller-sa"
-        groups   = ["system:masters"]
-      }] : [],
       # Additional external roles (for GitHub Actions, etc.)
       var.additional_aws_auth_roles
     ))

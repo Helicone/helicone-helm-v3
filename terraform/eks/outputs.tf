@@ -37,11 +37,6 @@ output "us_west_2_alb_controller_role_arn" {
   value       = module.eks_us_west_2.alb_controller_role_arn
 }
 
-output "us_west_2_oidc_provider_arn" {
-  description = "ARN of the OIDC Provider for EKS in us-west-2"
-  value       = module.eks_us_west_2.oidc_provider_arn
-}
-
 output "us_west_2_cluster_security_group_id" {
   description = "Security group ID attached to the EKS cluster in us-west-2"
   value       = module.eks_us_west_2.cluster_security_group_id
@@ -82,11 +77,6 @@ output "us_east_1_vpc_id" {
 output "us_east_1_alb_controller_role_arn" {
   description = "ARN of the IAM role for AWS Load Balancer Controller in us-east-1"
   value       = module.eks_us_east_1.alb_controller_role_arn
-}
-
-output "us_east_1_oidc_provider_arn" {
-  description = "ARN of the OIDC Provider for EKS in us-east-1"
-  value       = module.eks_us_east_1.oidc_provider_arn
 }
 
 output "us_east_1_cluster_security_group_id" {
