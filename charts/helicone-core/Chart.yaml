@@ -12,8 +12,8 @@ dependencies:
     repository: "oci://registry-1.docker.io/helicone"
     condition: helicone.aiGateway.enabled
   - name: cloudnative-pg
-    version: "1.0.2"
-    repository: "https://charts.bitnami.com/bitnami"
+    version: "0.25.0"
+    repository: "https://cloudnative-pg.github.io/charts"
     condition: helicone.cloudnativepg.enabled
 
 keywords:
