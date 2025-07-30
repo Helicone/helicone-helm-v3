@@ -7,10 +7,10 @@
 argocd:
   enabled: true
   createProject: true
-  skipCRDCheck: false
+  skipCRDCheck: true
   source:
     repoURL: "https://github.com/Helicone/helicone-helm-v3.git"
-    targetRevision: main
+    targetRevision: argocd-gitops-deployment
     path: charts/helicone-core
     helm:
       valueFiles:
