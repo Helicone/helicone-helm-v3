@@ -10,7 +10,7 @@ argocd:
   skipCRDCheck: true
   source:
     repoURL: "https://github.com/Helicone/helicone-helm-v3.git"
-    targetRevision: main
+    targetRevision: argocd-gitops-deployment  # TODO Change this to main when we merge the argocd-gitops-deployment branch
     path: charts/helicone-core
     helm:
       valueFiles:
