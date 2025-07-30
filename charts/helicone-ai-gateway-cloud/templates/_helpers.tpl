@@ -57,27 +57,38 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
+{{/*
+Annotations
+*/}}
+{{- define "helicone.annotations" -}}
+{{- if .Values.global }}
+{{- if .Values.global.annotations }}
+{{- toYaml .Values.global.annotations }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 {{- define "helicone.ai-gateway.env" -}}
 - name: AI_GATEWAY__DATABASE__URL
   valueFrom:
     secretKeyRef:
       name: ai-gateway-secrets
-      key: dbUrl
+      key: {{ if .Values.externalSecrets.enabled }}db_url{{ else }}dbUrl{{ end }}
 - name: PGSSLROOTCERT
   valueFrom:
     secretKeyRef:
       name: ai-gateway-secrets
-      key: dbCert
+      key: {{ if .Values.externalSecrets.enabled }}db_cert{{ else }}dbCert{{ end }}
 - name: AI_GATEWAY__MINIO__ACCESS_KEY
   valueFrom:
     secretKeyRef:
       name: ai-gateway-secrets
-      key: aiGwS3AccessKey
+      key: {{ if .Values.externalSecrets.enabled }}minio_access_key{{ else }}aiGwS3AccessKey{{ end }}
 - name: AI_GATEWAY__MINIO__SECRET_KEY
   valueFrom:
     secretKeyRef:
       name: ai-gateway-secrets
-      key: aiGwS3SecretKey
+      key: {{ if .Values.externalSecrets.enabled }}minio_secret_key{{ else }}aiGwS3SecretKey{{ end }}
 {{- with .Values.aiGateway.extraEnvVars }}
 {{- toYaml . | nindent 0 }}
 {{- end }}

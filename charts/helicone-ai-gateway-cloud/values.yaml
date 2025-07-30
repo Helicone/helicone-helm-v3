@@ -139,11 +139,24 @@ aiGateway:
 
     cache-store:
       type: redis
-      host-url: "rediss://helicone-valkey-cache-hmjlk9.serverless.usw2.cache.amazonaws.com:6379"
+      host-url: "rediss://helicone-valkey-cache-us-west-2-hmjlk9.serverless.usw2.cache.amazonaws.com:6379"
 
     rate-limit-store:
       type: redis
-      host-url: "rediss://helicone-valkey-cache-hmjlk9.serverless.usw2.cache.amazonaws.com:6379"
+      host-url: "rediss://helicone-valkey-cache-us-west-2-hmjlk9.serverless.usw2.cache.amazonaws.com:6379"
 
     deployment-target:
       type: cloud
+
+externalSecrets:
+  enabled: true
+  # Refresh interval for secret synchronization
+  refreshInterval: "30s"
+  # AWS Secrets Manager configuration
+  aws:
+    region: "us-west-2"
+  # Service account for AWS authentication
+  serviceAccount:
+    name: "external-secrets-sa"
+  # Secret prefix in AWS Secrets Manager
+  secretPrefix: "helicone"
