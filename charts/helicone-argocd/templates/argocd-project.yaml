@@ -1,13 +1,16 @@
 {{- if and .Values.argocd.enabled .Values.argocd.createProject }}
+{{- if .Values.argocd.skipCRDCheck }}
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: {{ .Values.argocd.project | default "helicone" }}
-  namespace: {{ .Values.argocd.namespace | default "argocd" }}
+  name: {{ .Values.argocd.project | default .Release.Name }}
+  namespace: {{ .Values.argocd.namespace | default .Release.Namespace }}
   labels:
     {{- include "helicone.labels" . | nindent 4 }}
   annotations:
     argocd.argoproj.io/sync-wave: "1"
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -24,7 +27,7 @@ spec:
   destinations:
     - namespace: {{ .Values.argocd.destination.namespace | default .Release.Namespace }}
       server: {{ .Values.argocd.destination.server | default "https://kubernetes.default.svc" }}
-    - namespace: "argocd"
+    - namespace: {{ .Values.argocd.namespace | default .Release.Namespace }}
       server: {{ .Values.argocd.destination.server | default "https://kubernetes.default.svc" }}
     - namespace: "monitoring"
       server: {{ .Values.argocd.destination.server | default "https://kubernetes.default.svc" }}
@@ -64,17 +67,18 @@ spec:
     - name: admin
       description: "Admin access to Helicone project"
       policies:
-        - p, proj:{{ .Values.argocd.project | default "helicone" }}:admin, applications, *, {{ .Values.argocd.project | default "helicone" }}/*, allow
-        - p, proj:{{ .Values.argocd.project | default "helicone" }}:admin, repositories, *, *, allow
-        - p, proj:{{ .Values.argocd.project | default "helicone" }}:admin, clusters, get, *, allow
+        - p, proj:{{ .Values.argocd.project | default .Release.Name }}:admin, applications, *, {{ .Values.argocd.project | default .Release.Name }}/*, allow
+        - p, proj:{{ .Values.argocd.project | default .Release.Name }}:admin, repositories, *, *, allow
+        - p, proj:{{ .Values.argocd.project | default .Release.Name }}:admin, clusters, get, *, allow
       groups:
         - helicone:admin
     - name: developer
       description: "Developer access to Helicone project"
       policies:
-        - p, proj:{{ .Values.argocd.project | default "helicone" }}:developer, applications, get, {{ .Values.argocd.project | default "helicone" }}/*, allow
-        - p, proj:{{ .Values.argocd.project | default "helicone" }}:developer, applications, sync, {{ .Values.argocd.project | default "helicone" }}/*, allow
-        - p, proj:{{ .Values.argocd.project | default "helicone" }}:developer, repositories, get, *, allow
+        - p, proj:{{ .Values.argocd.project | default .Release.Name }}:developer, applications, get, {{ .Values.argocd.project | default .Release.Name }}/*, allow
+        - p, proj:{{ .Values.argocd.project | default .Release.Name }}:developer, applications, sync, {{ .Values.argocd.project | default .Release.Name }}/*, allow
+        - p, proj:{{ .Values.argocd.project | default .Release.Name }}:developer, repositories, get, *, allow
       groups:
         - helicone:developer
+{{- end }}
 {{- end }} 

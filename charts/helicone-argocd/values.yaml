@@ -7,8 +7,7 @@
 argocd:
   enabled: true
   createProject: true
-  namespace: helicone-argocd
-  project: helicone
+  skipCRDCheck: false
   source:
     repoURL: "https://github.com/Helicone/helicone-helm-v3.git"
     targetRevision: main
