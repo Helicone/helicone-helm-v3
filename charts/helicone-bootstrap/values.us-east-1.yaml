@@ -26,7 +26,7 @@ externalSecrets:
   serviceAccount:
     name: external-secrets
     annotations:
-      eks.amazonaws.com/role-arn: arn:aws:iam::849596434884:role/helicone-external-secrets-role
+      aws.amazon.com/pod-identity: "enabled"
   resources:
     requests:
       cpu: 100m

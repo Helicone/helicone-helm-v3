@@ -47,9 +47,9 @@ spec:
     - group: "cert-manager.io"
       kind: ClusterIssuer
     - group: "admissionregistration.k8s.io"
-      kind: ValidatingAdmissionWebhook
+      kind: ValidatingWebhookConfiguration
     - group: "admissionregistration.k8s.io"
-      kind: MutatingAdmissionWebhook
+      kind: MutatingWebhookConfiguration
     - group: "scheduling.k8s.io"
       kind: PriorityClass
     - group: "storage.k8s.io"

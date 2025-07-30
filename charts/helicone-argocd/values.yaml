@@ -10,7 +10,7 @@ argocd:
   skipCRDCheck: true
   source:
     repoURL: "https://github.com/Helicone/helicone-helm-v3.git"
-    targetRevision: argocd-gitops-deployment
+    targetRevision: main
     path: charts/helicone-core
     helm:
       valueFiles:
@@ -44,8 +44,31 @@ argo-cd:
     install: true
     keep: true
 
+  # Service account configurations for pod identity
+  controller:
+    serviceAccount:
+      create: true
+      annotations:
+        aws.amazon.com/pod-identity: "enabled"
+
+  repoServer:
+    serviceAccount:
+      create: true
+      annotations:
+        aws.amazon.com/pod-identity: "enabled"
+
+  applicationSet:
+    serviceAccount:
+      create: true
+      annotations:
+        aws.amazon.com/pod-identity: "enabled"
+
   # Server configuration
   server:
+    serviceAccount:
+      create: true
+      annotations:
+        aws.amazon.com/pod-identity: "enabled"
     service:
       type: ClusterIP
       servicePortHttp: 80

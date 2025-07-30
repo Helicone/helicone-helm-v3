@@ -8,11 +8,10 @@ helicone:
   # S3 configuration for service account-based access
   # TODO Make sure that the correct IAM role is used for the service account such that the cluster can access the bucket.
   s3:
-    # Set to true to use service accounts with IAM roles instead of access keys
+    # Set to true to use service accounts with pod identity instead of access keys
     serviceAccount:
       enabled: true
-      # IAM role ARN for the service account to assume (will be updated after terraform apply)
-      roleArn: "arn:aws:iam::849596434884:role/helm-request-response-storage-service-account-role"
+      # Pod identity handles role association automatically via aws_eks_pod_identity_association
       # AWS region for S3 service
       region: "us-west-2"
     # S3 bucket name (used when serviceAccount.enabled is true)
