@@ -44,6 +44,7 @@ spec:
       - ServerSideApply=true
       - RespectIgnoreDifferences=true
       - Replace=true
+      - Replace=CustomResourceDefinition
     retry:
       limit: {{ .Values.argocd.syncPolicy.retry.limit | default 5 }}
       backoff:
@@ -56,10 +57,14 @@ spec:
       name: poolers.postgresql.cnpg.io
       jsonPointers:
         - /metadata/annotations
+        - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
+        - /metadata/managedFields
     - group: apiextensions.k8s.io
       kind: CustomResourceDefinition
       jsonPointers:
         - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
+        - /metadata/annotations
+        - /metadata/managedFields
   revisionHistoryLimit: {{ .Values.argocd.revisionHistoryLimit | default 3 }}
 {{- end }}
 {{- end }} 
