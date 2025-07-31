@@ -17,7 +17,7 @@ helicone:
     image:
       repository: helicone/web
       pullPolicy: IfNotPresent
-      tag: "v2025-06-17"
+      tag: "v2025.07.23"
     replicaCount: 1
     service:
       annotations: {}
