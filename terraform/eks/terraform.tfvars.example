@@ -1,9 +1,23 @@
 # Example Terraform variables file for EKS cluster
 # Copy this file to terraform.tfvars and update with your actual values
 
-# AWS Configuration
+# AWS Configuration - Multi-Region Support
+# Specify the regions where you want to deploy EKS clusters
+# Note: Due to Terraform limitations, deploy one region at a time using workspaces or separate state files
+regions = ["us-west-2", "us-east-1"]  # Add or remove regions as needed
+
+# Default region (for backwards compatibility)
 region       = "us-west-2"
 cluster_name = "helicone"
+
+# VPC CIDR Configuration per region
+# Each region needs a unique CIDR block to avoid conflicts
+vpc_cidrs = {
+  "us-west-2"      = "10.0.0.0/16"
+  "us-east-1"      = "10.1.0.0/16"
+  "eu-west-1"      = "10.2.0.0/16"
+  "ap-southeast-1" = "10.3.0.0/16"
+}
 
 # Node Configuration
 node_instance_types = ["t3.large"]
@@ -72,4 +86,31 @@ valkey_cache_arns = {
 s3_bucket_arns = {
   "us-west-2" = "arn:aws:s3:::helicone-request-response-storage-us-west-2"
   "us-east-1" = "arn:aws:s3:::helicone-request-response-storage-us-east-1"
-} 
+}
+
+#################################################################################
+# Multi-Region Deployment Instructions
+#################################################################################
+#
+# To deploy EKS clusters to multiple regions:
+#
+# Option 1: Using Terraform Workspaces (Recommended)
+# --------------------------------------------------
+# terraform workspace new us-west-2
+# terraform apply -var='regions=["us-west-2"]'
+#
+# terraform workspace new us-east-1
+# terraform apply -var='regions=["us-east-1"]'
+#
+# terraform workspace new eu-west-1
+# terraform apply -var='regions=["eu-west-1"]'
+#
+# Option 2: Using Separate State Files
+# ------------------------------------
+# terraform apply -var='regions=["us-west-2"]' -state=terraform-us-west-2.tfstate
+# terraform apply -var='regions=["us-east-1"]' -state=terraform-us-east-1.tfstate
+# terraform apply -var='regions=["eu-west-1"]' -state=terraform-eu-west-1.tfstate
+#
+# Note: Make sure to update the valkey_cache_arns and s3_bucket_arns 
+# for any new regions you add.
+################################################################################# 
