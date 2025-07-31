@@ -86,20 +86,11 @@ Alternatively, you can install components individually:
 
 Deploy the modules in this specific order due to dependencies:
 
-1. **Deploy EKS Infrastructure** (required)
+**Deploy EKS Infrastructure** (required)
    <!-- TODO Explain how the modules for different regions work -->
 
    ```bash
    cd terraform/eks
-   terraform init
-   terraform validate
-   terraform apply
-   ```
-
-2. **Deploy Route53/ACM Module** (required for SSL and DNS)
-
-   ```bash
-   cd terraform/route53-acm
    terraform init
    terraform validate
    terraform apply
