@@ -21,6 +21,9 @@ recovery_window_days = 7
 # EKS Configuration
 #################################################################################
 
+# EKS cluster name - should match the cluster created by the EKS terraform
+eks_cluster_name = "helicone"
+
 # Replace with your actual EKS OIDC provider URL (without https://)
 # Get this from: aws eks describe-cluster --name YOUR_CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||'
 eks_oidc_provider = "oidc.eks.us-west-2.amazonaws.com/id/ABCDEF1234567890ABCDEF1234567890"
@@ -31,7 +34,7 @@ eks_oidc_provider = "oidc.eks.us-west-2.amazonaws.com/id/ABCDEF1234567890ABCDEF1
 
 # Database secrets for CloudNativePG
 database_secrets = {
-  username = "postgres"
+  username = "helicone"
   password = "your-secure-postgres-password-here"
   database = "helicone_test"
 }
@@ -53,10 +56,11 @@ web_secrets = {
 # AI Gateway secrets (optional)
 create_ai_gateway_secrets = true
 ai_gateway_secrets = {
-  openai_api_key    = "sk-your-openai-api-key-here"
-  anthropic_api_key = "sk-ant-your-anthropic-api-key-here"
-  gemini_api_key    = "your-gemini-api-key-here"
-  helicone_api_key  = "sk-your-helicone-api-key-here"
+  # Cloud secrets for ECS deployment
+  database_url      = "postgresql://helicone:password@your-db-host:5432/helicone"
+  pg_ssl_root_cert  = "your-postgres-ssl-certificate-here"
+  minio_access_key  = "your-minio-access-key"
+  minio_secret_key  = "your-minio-secret-key"
 }
 
 # ClickHouse secrets (optional)

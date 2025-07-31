@@ -77,12 +77,12 @@ resource "aws_secretsmanager_secret_version" "web" {
   }
 }
 
-# AI Gateway API keys
+# AI Gateway cloud secrets for ECS deployment
 resource "aws_secretsmanager_secret" "ai_gateway" {
   count = var.create_ai_gateway_secrets ? 1 : 0
 
-  name                    = "${var.secret_prefix}/ai-gateway"
-  description             = "Helicone AI Gateway API keys"
+  name                    = "${var.secret_prefix}/ai-gateway-cloud-secrets"
+  description             = "Helicone AI Gateway cloud secrets for ECS deployment"
   recovery_window_in_days = var.recovery_window_days
 
   tags = var.tags
@@ -93,10 +93,10 @@ resource "aws_secretsmanager_secret_version" "ai_gateway" {
 
   secret_id = aws_secretsmanager_secret.ai_gateway[0].id
   secret_string = jsonencode({
-    openai_api_key    = var.ai_gateway_secrets.openai_api_key
-    anthropic_api_key = var.ai_gateway_secrets.anthropic_api_key
-    gemini_api_key    = var.ai_gateway_secrets.gemini_api_key
-    helicone_api_key  = var.ai_gateway_secrets.helicone_api_key
+    AI_GATEWAY__DATABASE__URL = var.ai_gateway_secrets.database_url
+    PGSSLROOTCERT            = var.ai_gateway_secrets.pg_ssl_root_cert
+    AI_GATEWAY__MINIO__ACCESS_KEY = var.ai_gateway_secrets.minio_access_key
+    AI_GATEWAY__MINIO__SECRET_KEY = var.ai_gateway_secrets.minio_secret_key
   })
 
   lifecycle {
@@ -120,7 +120,8 @@ resource "aws_secretsmanager_secret_version" "clickhouse" {
 
   secret_id = aws_secretsmanager_secret.clickhouse[0].id
   secret_string = jsonencode({
-    user = var.clickhouse_secrets.user
+    user     = var.clickhouse_secrets.user
+    password = var.clickhouse_secrets.password
   })
 
   lifecycle {
