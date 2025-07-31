@@ -1,0 +1,80 @@
+{{- if .Values.argocd.enabled }}
+{{- if .Values.argocd.skipCRDCheck }}
+{{- range .Values.argocd.applications }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.argocd.namespace | default $.Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ .name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ $.Values.argocd.project | default $.Release.Name }}
+  source:
+    repoURL: {{ .source.repoURL | required "ArgoCD source repoURL is required" }}
+    targetRevision: {{ .source.targetRevision | default "HEAD" }}
+    path: {{ .source.path | required "ArgoCD source path is required" }}
+    {{- if .source.helm }}
+    helm:
+      {{- if .source.helm.valueFiles }}
+      valueFiles:
+        {{- range .source.helm.valueFiles }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
+      {{- if .source.helm.parameters }}
+      parameters:
+        {{- range .source.helm.parameters }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  destination:
+    server: {{ .destination.server | default "https://kubernetes.default.svc" }}
+    namespace: {{ .destination.namespace | required "Destination namespace is required" }}
+  syncPolicy:
+    automated:
+      prune: {{ $.Values.argocd.syncPolicy.automated.prune | default true }}
+      selfHeal: {{ $.Values.argocd.syncPolicy.automated.selfHeal | default true }}
+      allowEmpty: {{ $.Values.argocd.syncPolicy.automated.allowEmpty | default false }}
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+      - Replace=true
+      - Replace=CustomResourceDefinition
+    retry:
+      limit: {{ $.Values.argocd.syncPolicy.retry.limit | default 5 }}
+      backoff:
+        duration: {{ $.Values.argocd.syncPolicy.retry.backoff.duration | default "5s" }}
+        factor: {{ $.Values.argocd.syncPolicy.retry.backoff.factor | default 2 }}
+        maxDuration: {{ $.Values.argocd.syncPolicy.retry.backoff.maxDuration | default "3m" }}
+  ignoreDifferences:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      name: poolers.postgresql.cnpg.io
+      jsonPointers:
+        - /metadata/annotations
+        - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
+        - /metadata/managedFields
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      jsonPointers:
+        - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
+        - /metadata/annotations
+        - /metadata/managedFields
+  revisionHistoryLimit: {{ $.Values.argocd.revisionHistoryLimit | default 3 }}
+{{- end }}
+{{- end }}
+{{- end }}

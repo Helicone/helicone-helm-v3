@@ -18,14 +18,20 @@ spec:
   
   # Source repositories that applications in this project can pull from
   sourceRepos:
-    {{- if .Values.argocd.source.repoURL }}
-    - {{ .Values.argocd.source.repoURL }}
+    {{- if .Values.argocd.applications }}
+    {{- range .Values.argocd.applications }}
+    {{- if .source.repoURL }}
+    - {{ .source.repoURL }}
+    {{- end }}
+    {{- end }}
     {{- end }}
     - "*" # Allow all repositories (restrict in production)
     
   # Destination clusters and namespaces that applications may deploy into
   destinations:
-    - namespace: {{ .Values.argocd.destination.namespace | default .Release.Namespace }}
+    - namespace: "helicone"
+      server: {{ .Values.argocd.destination.server | default "https://kubernetes.default.svc" }}
+    - namespace: "ai-gateway-cloud"
       server: {{ .Values.argocd.destination.server | default "https://kubernetes.default.svc" }}
     - namespace: {{ .Values.argocd.namespace | default .Release.Namespace }}
       server: {{ .Values.argocd.destination.server | default "https://kubernetes.default.svc" }}
@@ -56,6 +62,8 @@ spec:
       kind: StorageClass
     - group: "autoscaling.k8s.io"
       kind: VerticalPodAutoscaler
+    - group: "external-secrets.io"
+      kind: ClusterSecretStore
       
   # Namespace-scoped resources which may be deployed
   namespaceResourceWhitelist:

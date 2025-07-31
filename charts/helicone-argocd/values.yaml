@@ -8,18 +8,38 @@ argocd:
   enabled: true
   createProject: true
   skipCRDCheck: true
-  source:
-    repoURL: "https://github.com/Helicone/helicone-helm-v3.git"
-    targetRevision: argocd-gitops-deployment  # TODO Change this to main when we merge the argocd-gitops-deployment branch
-    path: charts/helicone-core
-    helm:
-      valueFiles:
-        - values.yaml
-      parameters: []
+  namespace: argocd
+  project: helicone
+  
+  applications:
+    - name: helicone-core
+      source:
+        repoURL: "https://github.com/Helicone/helicone-helm-v3.git"
+        targetRevision: main
+        path: charts/helicone-core
+        helm:
+          valueFiles:
+            - values.yaml
+          parameters: []
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: helicone
+    - name: helicone-ai-gateway-cloud
+      source:
+        repoURL: "https://github.com/Helicone/helicone-helm-v3.git"
+        targetRevision: main
+        path: charts/helicone-ai-gateway-cloud
+        helm:
+          valueFiles:
+            - values.yaml
+          parameters: []
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: ai-gateway-cloud
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: helicone
+    namespace: argocd
 
   syncPolicy:
     automated:
@@ -41,6 +61,8 @@ argo-cd:
     domain: argocd.helicone.ai
 
   crds:
+    # Set to false if CRDs are already installed in the cluster
+    # This prevents helm install failures when CRDs already exist
     install: true
     keep: true
 
