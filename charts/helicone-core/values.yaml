@@ -80,18 +80,13 @@ helicone:
         tag: "v2025.07.30"
       resources: {}
 
-    # Cloud SQL Auth Proxy configuration
-    # Enable this to use Cloud SQL Auth Proxy as a sidecar container
     cloudSqlProxy:
       enabled: false
       image:
         repository: gcr.io/cloudsql-docker/gce-proxy
         tag: "1.33.2"
         pullPolicy: IfNotPresent
-      # Cloud SQL connection name in format: project:region:instance
-      # Example: "my-project:us-central1:my-instance"
       connectionName: ""
-      # Local port for the proxy (should match your database port)
       port: 5432
       resources:
         requests:
@@ -101,35 +96,13 @@ helicone:
           memory: "128Mi"
           cpu: "100m"
 
-      # Authentication method 1: Service Account Key (less secure)
-      # Service account secret name containing the JSON key
       serviceAccountSecretName: "cloudsql-key"
       serviceAccountSecretKey: "key.json"
 
-      # Authentication method 2: Workload Identity (recommended for GKE)
-      # Set to true to use Workload Identity instead of service account key
       useWorkloadIdentity: false
-      # GCP service account email for Workload Identity
-      # Example: "my-service-account@my-project.iam.gserviceaccount.com"
       workloadIdentityAnnotation: ""
 
-      # Additional command line arguments for the proxy
       extraArgs: []
-
-      # Example configuration for key-based authentication:
-      # enabled: true
-      # connectionName: "my-project:us-central1:my-db-instance"
-      # port: 5432
-      # useWorkloadIdentity: false
-      # serviceAccountSecretName: "cloudsql-key"
-      # serviceAccountSecretKey: "key.json"
-
-      # Example configuration for Workload Identity:
-      # enabled: true
-      # connectionName: "my-project:us-central1:my-db-instance"
-      # port: 5432
-      # useWorkloadIdentity: true
-      # workloadIdentityAnnotation: "my-service-account@my-project.iam.gserviceaccount.com"
 
     router:
       enabled: true

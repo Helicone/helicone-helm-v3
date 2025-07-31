@@ -132,7 +132,7 @@ aiGateway:
     helicone:
       features: all
 
-    minio:
+    minio:  # TODO Is it possible to swap this out for s3?
       bucket-name: "request-response-storage"
       region: "us-west-2"
       host: "https://s3.us-west-2.amazonaws.com"
