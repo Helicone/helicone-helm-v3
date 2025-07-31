@@ -56,7 +56,6 @@ web_secrets = {
 # AI Gateway secrets (optional)
 create_ai_gateway_secrets = true
 ai_gateway_secrets = {
-  # Cloud secrets for ECS deployment
   database_url      = "postgresql://helicone:password@your-db-host:5432/helicone"
   pg_ssl_root_cert  = "your-postgres-ssl-certificate-here"
   minio_access_key  = "your-minio-access-key"

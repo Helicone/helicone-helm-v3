@@ -186,6 +186,26 @@ variable "clickhouse_secrets" {
   sensitive = true
 }
 
+variable "ai_gateway_api_keys" {
+  description = "AI Gateway API keys for Helm deployment"
+  type = object({
+    openai_api_key    = string
+    anthropic_api_key = string
+    gemini_api_key    = string
+    helicone_api_key  = string
+  })
+  sensitive = true
+}
+
+variable "external_clickhouse_secrets" {
+  description = "External ClickHouse secret values"
+  type = object({
+    username = string
+    password = string
+  })
+  sensitive = true
+}
+
 #################################################################################
 # KMS Configuration
 #################################################################################

@@ -52,6 +52,26 @@ output "clickhouse_secret_name" {
   value       = var.create_clickhouse_secrets ? aws_secretsmanager_secret.clickhouse[0].name : null
 }
 
+output "ai_gateway_api_keys_secret_arn" {
+  description = "ARN of the AI Gateway API keys secret"
+  value       = aws_secretsmanager_secret.ai_gateway_api_keys.arn
+}
+
+output "ai_gateway_api_keys_secret_name" {
+  description = "Name of the AI Gateway API keys secret"
+  value       = aws_secretsmanager_secret.ai_gateway_api_keys.name
+}
+
+output "external_clickhouse_secret_arn" {
+  description = "ARN of the external ClickHouse credentials secret"
+  value       = aws_secretsmanager_secret.external_clickhouse.arn
+}
+
+output "external_clickhouse_secret_name" {
+  description = "Name of the external ClickHouse credentials secret"
+  value       = aws_secretsmanager_secret.external_clickhouse.name
+}
+
 #################################################################################
 # IAM Resources
 #################################################################################
@@ -109,8 +129,10 @@ output "secret_update_commands" {
     database   = "aws secretsmanager update-secret --secret-id ${aws_secretsmanager_secret.database.name} --secret-string '{\"username\":\"postgres\",\"password\":\"your-password\",\"database\":\"helicone_test\"}'"
     storage    = "aws secretsmanager update-secret --secret-id ${aws_secretsmanager_secret.storage.name} --secret-string '{\"access_key\":\"your-access-key\",\"secret_key\":\"your-secret-key\",\"minio-root-user\":\"your-user\",\"minio-root-password\":\"your-password\"}'"
     web        = "aws secretsmanager update-secret --secret-id ${aws_secretsmanager_secret.web.name} --secret-string '{\"BETTER_AUTH_SECRET\":\"your-secret\",\"STRIPE_SECRET_KEY\":\"sk_...\"}'"
-    ai_gateway = var.create_ai_gateway_secrets ? "aws secretsmanager update-secret --secret-id ${aws_secretsmanager_secret.ai_gateway[0].name} --secret-string '{\"openai_api_key\":\"sk-...\",\"anthropic_api_key\":\"sk-...\",\"gemini_api_key\":\"your-key\",\"helicone_api_key\":\"your-key\"}'" : null
-    clickhouse = var.create_clickhouse_secrets ? "aws secretsmanager update-secret --secret-id ${aws_secretsmanager_secret.clickhouse[0].name} --secret-string '{\"user\":\"default\"}'" : null
+    ai_gateway = var.create_ai_gateway_secrets ? "aws secretsmanager update-secret --secret-id ${aws_secretsmanager_secret.ai_gateway[0].name} --secret-string '{\"AI_GATEWAY__DATABASE__URL\":\"postgresql://...\",\"PGSSLROOTCERT\":\"...\",\"AI_GATEWAY__MINIO__ACCESS_KEY\":\"...\",\"AI_GATEWAY__MINIO__SECRET_KEY\":\"...\"}'" : null
+    ai_gateway_api_keys = "aws secretsmanager update-secret --secret-id ${aws_secretsmanager_secret.ai_gateway_api_keys.name} --secret-string '{\"openai_api_key\":\"sk-...\",\"anthropic_api_key\":\"sk-...\",\"gemini_api_key\":\"your-key\",\"helicone_api_key\":\"your-key\"}'"
+    clickhouse = var.create_clickhouse_secrets ? "aws secretsmanager update-secret --secret-id ${aws_secretsmanager_secret.clickhouse[0].name} --secret-string '{\"user\":\"default\",\"password\":\"your-password\"}'" : null
+    external_clickhouse = "aws secretsmanager update-secret --secret-id ${aws_secretsmanager_secret.external_clickhouse.name} --secret-string '{\"username\":\"default\",\"password\":\"your-password\"}'"
   }
   sensitive = true
 }

@@ -129,6 +129,50 @@ resource "aws_secretsmanager_secret_version" "clickhouse" {
   }
 }
 
+# AI Gateway API keys for Helm deployment
+resource "aws_secretsmanager_secret" "ai_gateway_api_keys" {
+  name                    = "${var.secret_prefix}/ai-gateway"
+  description             = "Helicone AI Gateway API keys for Helm deployment"
+  recovery_window_in_days = var.recovery_window_days
+
+  tags = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "ai_gateway_api_keys" {
+  secret_id = aws_secretsmanager_secret.ai_gateway_api_keys.id
+  secret_string = jsonencode({
+    openai_api_key    = var.ai_gateway_api_keys.openai_api_key
+    anthropic_api_key = var.ai_gateway_api_keys.anthropic_api_key
+    gemini_api_key    = var.ai_gateway_api_keys.gemini_api_key
+    helicone_api_key  = var.ai_gateway_api_keys.helicone_api_key
+  })
+
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}
+
+# External ClickHouse secrets
+resource "aws_secretsmanager_secret" "external_clickhouse" {
+  name                    = "${var.secret_prefix}/external-clickhouse"
+  description             = "Helicone external ClickHouse credentials"
+  recovery_window_in_days = var.recovery_window_days
+
+  tags = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "external_clickhouse" {
+  secret_id = aws_secretsmanager_secret.external_clickhouse.id
+  secret_string = jsonencode({
+    username = var.external_clickhouse_secrets.username
+    password = var.external_clickhouse_secrets.password
+  })
+
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}
+
 #################################################################################
 # IAM Role for External Secrets Operator (Pod Identity)
 #################################################################################
@@ -182,6 +226,8 @@ data "aws_iam_policy_document" "external_secrets_policy" {
       aws_secretsmanager_secret.database.arn,
       aws_secretsmanager_secret.storage.arn,
       aws_secretsmanager_secret.web.arn,
+      aws_secretsmanager_secret.ai_gateway_api_keys.arn,
+      aws_secretsmanager_secret.external_clickhouse.arn,
     ]
   }
 
@@ -284,6 +330,46 @@ resource "aws_eks_pod_identity_association" "external_secrets_external_secrets" 
 resource "aws_eks_pod_identity_association" "external_secrets_helicone" {
   cluster_name    = var.eks_cluster_name
   namespace       = "helicone"
+  service_account = "external-secrets-sa"
+  role_arn        = aws_iam_role.external_secrets.arn
+
+  tags = var.tags
+}
+
+# Pod Identity Association for External Secrets Operator in default namespace
+resource "aws_eks_pod_identity_association" "external_secrets_default" {
+  cluster_name    = var.eks_cluster_name
+  namespace       = "default"
+  service_account = "external-secrets-sa"
+  role_arn        = aws_iam_role.external_secrets.arn
+
+  tags = var.tags
+}
+
+# Pod Identity Association for External Secrets Operator in bootstrap namespace
+resource "aws_eks_pod_identity_association" "external_secrets_bootstrap" {
+  cluster_name    = var.eks_cluster_name
+  namespace       = "bootstrap"
+  service_account = "bootstrap-external-secrets"
+  role_arn        = aws_iam_role.external_secrets.arn
+
+  tags = var.tags
+}
+
+# Pod Identity Association for External Secrets in argocd namespace
+resource "aws_eks_pod_identity_association" "external_secrets_argocd" {
+  cluster_name    = var.eks_cluster_name
+  namespace       = "argocd"
+  service_account = "external-secrets-sa"
+  role_arn        = aws_iam_role.external_secrets.arn
+
+  tags = var.tags
+}
+
+# Pod Identity Association for External Secrets in ai-gateway-cloud namespace
+resource "aws_eks_pod_identity_association" "external_secrets_ai_gateway_cloud" {
+  cluster_name    = var.eks_cluster_name
+  namespace       = "ai-gateway-cloud"
   service_account = "external-secrets-sa"
   role_arn        = aws_iam_role.external_secrets.arn
 
