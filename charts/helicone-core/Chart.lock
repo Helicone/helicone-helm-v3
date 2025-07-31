@@ -3,7 +3,7 @@ dependencies:
   repository: oci://registry-1.docker.io/helicone
   version: 0.2.0
 - name: cloudnative-pg
-  repository: https://cloudnative-pg.github.io/charts
-  version: 0.25.0
-digest: sha256:3523857556c09102de97e9181fa87e0331c6744ab24fe66478dacf8fbcc31792
-generated: "2025-07-30T14:27:31.866072-07:00"
+  repository: https://charts.bitnami.com/bitnami
+  version: 1.0.8
+digest: sha256:46f71c0cf36b0cb6694ad67b84b1bbde69ed09d5349bdf8160d3da32cdcd00a5
+generated: "2025-07-30T17:40:04.467525-07:00"
