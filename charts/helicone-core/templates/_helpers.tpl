@@ -288,20 +288,27 @@ ClickHouse host for Jawn application (URL format for Node.js client)
 
 {{- define "helicone.db.connectionString" -}}
 {{- if .Values.helicone.cloudnativepg.enabled }}
-{{- printf "%s:%s@%s-rw:%s/%s?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" (include "helicone.env.dbUser" . | fromYaml).value (include "helicone.env.dbPassword" . | fromYaml).value ( .Values.helicone.cloudnativepg.cluster.name ) (include "helicone.env.dbPort" . | fromYaml).value (include "helicone.env.dbName" . | fromYaml).value }}
+{{- printf "%s:$(DB_PASSWORD)@%s-rw:$(DB_PORT)/%s?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" .Values.helicone.cloudnativepg.cluster.bootstrap.initdb.owner .Values.helicone.cloudnativepg.cluster.name .Values.helicone.cloudnativepg.cluster.bootstrap.initdb.database }}
 {{- else if .Values.helicone.web.cloudSqlProxy.enabled }}
-{{- printf "%s:%s@localhost:%s/%s?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" (include "helicone.env.dbUser" . | fromYaml).value (include "helicone.env.dbPassword" . | fromYaml).value (include "helicone.env.dbPort" . | fromYaml).value (include "helicone.env.dbName" . | fromYaml).value }}
+{{- printf "$(DB_USER):$(DB_PASSWORD)@localhost:%s/$(DB_NAME)?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" (include "helicone.cloudSqlProxy.port" .) }}
 {{- else }}
-{{- printf "%s:%s@%s:%s/%s?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" (include "helicone.env.dbUser" . | fromYaml).value (include "helicone.env.dbPassword" . | fromYaml).value (include "helicone.env.dbHost" . | fromYaml).value (include "helicone.env.dbPort" . | fromYaml).value (include "helicone.env.dbName" . | fromYaml).value }}
+{{- printf "$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" }}
 {{- end }}
 {{- end }}
 
 {{- define "helicone.env.databaseUrl" -}}
-- name: DATABASE_URL
+- name: SUPABASE_DATABASE_URL
 {{- if .Values.helicone.cloudnativepg.enabled }}
   value: {{ printf "postgresql://%s" (include "helicone.db.connectionString" .) | quote }}
 {{- else }}
-  value: {{ .Values.helicone.config.databaseUrl | default (printf "postgresql://%s" (include "helicone.db.connectionString" .)) | quote }}
+  {{- if and (.Values.helicone.config.databaseUrl) (ne .Values.helicone.config.databaseUrl "") }}
+  value: {{ .Values.helicone.config.databaseUrl | quote }}
+  {{- else }}
+  valueFrom:
+    secretKeyRef:
+      name: postgres-credentials
+      key: url
+  {{- end }}
 {{- end }}
 {{- end }}
 
@@ -338,23 +345,9 @@ ClickHouse host for Jawn application (URL format for Node.js client)
 {{- end }}
 {{- end }}
 
-# Supabase environment variables are tech debt as a result of Jawn still having the Supabase database url in the config.
-{{- define "helicone.env.supabaseDatabaseUrl" -}}
-- name: SUPABASE_DATABASE_URL
-{{- if .Values.helicone.cloudnativepg.enabled }}
-  value: {{ printf "postgresql://%s" (include "helicone.db.connectionString" .) | quote }}
-{{- else }}
-  value: {{ .Values.helicone.config.databaseUrl | default (printf "postgresql://%s" (include "helicone.db.connectionString" .)) | quote }}
-{{- end }}
-{{- end }}
-
 {{- define "helicone.env.clickhouseHostDocker" -}}
 - name: CLICKHOUSE_HOST_DOCKER
-{{- if .Values.helicone.clickhouse.enabled }}
-  value: {{ printf "http://%s:8123" (include "clickhouse.name" .) | quote }}
-{{- else }}
-  value: {{ .Values.helicone.config.externalClickhouseUrl | default .Values.helicone.config.clickhouseHost | required "When clickhouse.enabled is false, either helicone.config.externalClickhouseUrl or helicone.config.clickhouseHost must be provided" | quote }}
-{{- end }}
+  value: "$(CLICKHOUSE_URL)"
 {{- end }}
 
 {{- define "helicone.env.clickhousePort" -}}

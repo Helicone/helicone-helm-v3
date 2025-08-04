@@ -26,6 +26,7 @@ resource "aws_secretsmanager_secret_version" "database" {
     username = var.database_secrets.username
     password = var.database_secrets.password
     database = var.database_secrets.database
+    url = var.database_secrets.url
   })
 
   lifecycle {

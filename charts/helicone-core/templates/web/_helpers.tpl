@@ -37,7 +37,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{ include "helicone.env.azureBaseUrl" . }}
 {{ include "helicone.env.openaiApiKey" . }}
 {{ include "helicone.env.enablePromptSecurity" . }}
-{{ include "helicone.env.supabaseDatabaseUrl" . }}
 {{ include "helicone.env.databaseUrl" . }}
 {{ include "helicone.env.enableCronJob" . }}
 {{ include "helicone.env.env" . }}

@@ -37,6 +37,7 @@ database_secrets = {
   username = "helicone"
   password = "your-secure-postgres-password-here"
   database = "helicone_test"
+  url = "postgresql://helicone:your-secure-postgres-password-here@localhost:5432/helicone_test"
 }
 
 # Storage secrets (S3/MinIO)
