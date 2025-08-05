@@ -33,10 +33,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- include "helicone.env.azureBaseUrl" . | nindent 12 }}
 {{- include "helicone.env.openaiApiKey" . | nindent 12 }}
 {{- include "helicone.env.enablePromptSecurity" . | nindent 12 }}
+{{- include "helicone.env.supabaseUrl" . | nindent 12 }}
+{{- include "helicone.env.supabaseDatabaseUrl" . | nindent 12 }}
 {{- include "helicone.env.enableCronJob" . | nindent 12 }}
 {{- include "helicone.env.databaseUrl" . | nindent 12 }}
 {{- include "helicone.env.env" . | nindent 12 }}
 {{- include "helicone.env.nextPublicBetterAuth" . | nindent 12 }}
-# TODO: remove from helm once Jawn no longer requires (feature is deprecated)
-{{- include "helicone.env.csbApiKey" . | nindent 12 }}
 {{- end }}

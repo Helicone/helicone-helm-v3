@@ -297,18 +297,11 @@ ClickHouse host for Jawn application (URL format for Node.js client)
 {{- end }}
 
 {{- define "helicone.env.databaseUrl" -}}
-- name: SUPABASE_DATABASE_URL
+- name: DATABASE_URL
 {{- if .Values.helicone.cloudnativepg.enabled }}
   value: {{ printf "postgresql://%s" (include "helicone.db.connectionString" .) | quote }}
 {{- else }}
-  {{- if and (.Values.helicone.config.databaseUrl) (ne .Values.helicone.config.databaseUrl "") }}
-  value: {{ .Values.helicone.config.databaseUrl | quote }}
-  {{- else }}
-  valueFrom:
-    secretKeyRef:
-      name: postgres-credentials
-      key: url
-  {{- end }}
+  value: {{ .Values.helicone.config.databaseUrl | default (printf "postgresql://%s" (include "helicone.db.connectionString" .)) | quote }}
 {{- end }}
 {{- end }}
 
@@ -343,6 +336,17 @@ ClickHouse host for Jawn application (URL format for Node.js client)
       name: {{ .Values.helicone.config.dbPasswordSecretName | default "postgres-credentials" | quote }}
       key: {{ .Values.helicone.config.dbPasswordSecretKey | default "password" | quote }}
 {{- end }}
+{{- end }}
+
+# Supabase environment variables are tech debt as a result of Jawn still having the Supabase database url in the config.
+{{- define "helicone.env.supabaseUrl" -}}
+- name: SUPABASE_URL
+  value: "http://$(DB_HOST):$(DB_PORT)"
+{{- end }}
+
+{{- define "helicone.env.supabaseDatabaseUrl" -}}
+- name: SUPABASE_DATABASE_URL
+  value: "$(DATABASE_URL)"
 {{- end }}
 
 {{- define "helicone.env.clickhouseHostDocker" -}}
@@ -542,11 +546,4 @@ Web deployment specific environment variables
 {{- define "helicone.env.nextPublicIsOnPrem" -}}
 - name: NEXT_PUBLIC_IS_ON_PREM
   value: "true"
-{{- end }}
-
-{{- define "helicone.env.csbApiKey" -}}
-- name: CSB_API_KEY
-  # feature is deprecated, real value not required, remove from Helm
-  # once backend no longer requires for startup
-  value: "csb-.."
 {{- end }}

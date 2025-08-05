@@ -267,7 +267,7 @@ helicone:
     image:
       repository: helicone/jawn
       pullPolicy: IfNotPresent
-      tag: "v2025.08.04"
+      tag: "v2025.07.23"
     replicaCount: 1
     service:
       annotations: {}
