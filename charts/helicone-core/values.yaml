@@ -17,7 +17,7 @@ helicone:
     image:
       repository: helicone/web
       pullPolicy: IfNotPresent
-      tag: "v2025.08.05-2"
+      tag: "v2025.08.06-1"
     replicaCount: 1
     service:
       annotations: {}
@@ -73,39 +73,40 @@ helicone:
           stabilizationWindowSeconds: 60
           percentPolicy: 100
           periodSeconds: 15
-    migrationRunner:
-      image:
-        repository: helicone/migrations
-        pullPolicy: IfNotPresent
-        tag: "v2025.08.05-2"
-      resources: {}
-
-    cloudSqlProxy:
-      enabled: false
-      image:
-        repository: gcr.io/cloudsql-docker/gce-proxy
-        tag: "1.33.2"
-        pullPolicy: IfNotPresent
-      connectionName: ""
-      port: 5432
-      resources:
-        requests:
-          memory: "64Mi"
-          cpu: "50m"
-        limits:
-          memory: "128Mi"
-          cpu: "100m"
-
-      serviceAccountSecretName: "cloudsql-key"
-      serviceAccountSecretKey: "key.json"
-
-      useWorkloadIdentity: false
-      workloadIdentityAnnotation: ""
-
-      extraArgs: []
 
     router:
       enabled: true
+
+  cloudSqlProxy:
+    enabled: false
+    image:
+      repository: gcr.io/cloudsql-docker/gce-proxy
+      tag: "1.33.2"
+      pullPolicy: IfNotPresent
+    connectionName: ""
+    port: 5432
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "50m"
+      limits:
+        memory: "128Mi"
+        cpu: "100m"
+
+    serviceAccountSecretName: "cloudsql-key"
+    serviceAccountSecretKey: "key.json"
+
+    useWorkloadIdentity: false
+    workloadIdentityAnnotation: ""
+
+    extraArgs: []
+
+  migrationRunner:
+    image:
+      repository: helicone/migrations
+      pullPolicy: IfNotPresent
+      tag: "v2025.08.06-1"
+    resources: {}
 
   cloudnativepg:
     enabled: true
@@ -213,7 +214,7 @@ helicone:
     image:
       repository: helicone/jawn
       pullPolicy: IfNotPresent
-      tag: "v2025.08.05-2"
+      tag: "v2025.08.06-1"
     replicaCount: 1
     service:
       annotations: {}
@@ -266,8 +267,7 @@ helicone:
     dbPort: "5432" # Default port for PostgreSQL
     heliconePassword: "changeme-in-production" # Password for helicone app user
     vercelEnv: "development"
-    clickhouseHost: "https://ucewi94kth.us-west-2.aws.clickhouse.cloud" # TODO Not doing DRY between the two configs (above configuration as well)
-    clickhousePort: "8443"
+    clickhouseUrl: "https://ucewi94kth.us-west-2.aws.clickhouse.cloud:8443" # TODO Not doing DRY between the two configs (above configuration as well)
     clickhouseUser: "default"
     s3BucketName: "helm-request-response-storage"
     s3Endpoint: "http://helicone-core-minio:9000"

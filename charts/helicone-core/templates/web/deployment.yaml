@@ -17,20 +17,20 @@ spec:
       labels:
         {{- include "helicone.web.selectorLabels" . | nindent 8 }}
     spec:
-      {{- if or (and .Values.helicone.web.cloudSqlProxy.enabled .Values.helicone.web.cloudSqlProxy.useWorkloadIdentity) (and .Values.helicone.s3 .Values.helicone.s3.serviceAccount .Values.helicone.s3.serviceAccount.enabled) }}
+      {{- if or (and .Values.helicone.cloudSqlProxy.enabled .Values.helicone.cloudSqlProxy.useWorkloadIdentity) (and .Values.helicone.s3 .Values.helicone.s3.serviceAccount .Values.helicone.s3.serviceAccount.enabled) }}
       serviceAccountName: {{ include "web.name" . }}
       {{- end }}
       initContainers:
-        {{- if .Values.helicone.web.cloudSqlProxy.enabled }}
+        {{- if .Values.helicone.cloudSqlProxy.enabled }}
         - name: cloud-sql-proxy
           image: {{ include "helicone.cloudSqlProxy.image" . }}
-          imagePullPolicy: {{ .Values.helicone.web.cloudSqlProxy.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.helicone.cloudSqlProxy.image.pullPolicy }}
           args: {{- include "helicone.cloudSqlProxy.args" . | nindent 12 }}
           ports:
             - name: sql-proxy
               containerPort: {{ include "helicone.cloudSqlProxy.port" . }}
               protocol: TCP
-          {{- if not .Values.helicone.web.cloudSqlProxy.useWorkloadIdentity }}
+          {{- if not .Values.helicone.cloudSqlProxy.useWorkloadIdentity }}
           volumeMounts:
             - name: cloudsql-key
               mountPath: /secrets/cloudsql
@@ -44,7 +44,7 @@ spec:
             - name: CSQL_PROXY_HTTP_ADDRESS
               value: 0.0.0.0
           restartPolicy: Always
-          {{- with .Values.helicone.web.cloudSqlProxy.resources }}
+          {{- with .Values.helicone.cloudSqlProxy.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -58,83 +58,18 @@ spec:
             timeoutSeconds: 2
             failureThreshold: 6
         {{- end }}
-        - name: wait-for-postgres
-          image: postgres:15-alpine
-          command:
-            - sh
-            - -c
-            - |
-              echo "Waiting for PostgreSQL to be ready..."
-              {{- if .Values.helicone.web.cloudSqlProxy.enabled }}
-              until pg_isready -h localhost -p {{ include "helicone.cloudSqlProxy.port" . }} -U $(DB_USER); do
-              {{- else }}
-              until pg_isready -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER); do
-              {{- end }}
-                echo "PostgreSQL is not ready yet. Waiting..."
-                sleep 2
-              done
-              echo "PostgreSQL is ready!"
-          env:
-            {{- if not .Values.helicone.web.cloudSqlProxy.enabled }}
-            {{- include "helicone.env.dbHost" . | nindent 12 }}
-            {{- include "helicone.env.dbPort" . | nindent 12 }}
-            {{- end }}
-            {{- include "helicone.env.dbUser" . | nindent 12 }}
-            {{- include "helicone.env.dbPassword" . | nindent 12 }}
-        {{- if .Values.helicone.minio.enabled }}
-        - name: wait-for-minio
-          image: minio/mc:latest
-          command:
-            - sh
-            - -c
-            - |
-              echo "Waiting for MinIO to be ready..."
-              until mc alias set localminio http://{{ include "minio.name" . }}:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}; do
-                echo "MinIO is not ready yet. Waiting..."
-                sleep 2
-              done
-              echo "MinIO is ready!"
-          env:
-            - name: MINIO_ROOT_USER
-              valueFrom:
-                secretKeyRef:
-                  name: helicone-secrets
-                  key: minio-root-user
-            - name: MINIO_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: helicone-secrets
-                  key: minio-root-password
-        {{- end }}
-        {{- if .Values.helicone.clickhouse.enabled }}
-        - name: wait-for-clickhouse
+        - name: wait-for-jawn
           image: curlimages/curl:latest
           command:
             - sh
             - -c
             - |
-              echo "Waiting for ClickHouse to be ready..."
-              until curl -sSf http://{{ include "clickhouse.name" . }}:8123/ping; do
-                echo "ClickHouse is not ready yet. Waiting..."
+              echo "Waiting for Jawn to be ready..."
+              until curl -sSf http://{{ include "jawn.name" . }}:{{ .Values.helicone.jawn.service.port }}/healthcheck; do
+                echo "Jawn is not ready yet. Waiting..."
                 sleep 2
               done
-              echo "ClickHouse is ready!"
-        {{- end }}
-        - name: migration-runner
-          image: "{{ .Values.helicone.web.migrationRunner.image.repository }}:{{ .Values.helicone.web.migrationRunner.image.tag }}"
-          imagePullPolicy: IfNotPresent
-          {{- with .Values.helicone.web.migrationRunner.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          env:
-            {{- include "helicone.env.flywayUrl" . | nindent 12 }}
-            {{- include "helicone.env.flywayUser" . | nindent 12 }}
-            {{- include "helicone.env.flywayPassword" . | nindent 12 }}
-            {{- include "helicone.env.clickhouseHostForMigrations" . | nindent 12 }}
-            {{- include "helicone.env.clickhousePort" . | nindent 12 }}
-            {{- include "helicone.env.clickhouseUser" . | nindent 12 }}
-            {{- include "helicone.env.clickhousePassword" . | nindent 12 }}
+              echo "Jawn is ready!"
       containers:
         - name: web
           image: "{{ .Values.helicone.web.image.repository }}:{{ .Values.helicone.web.image.tag }}"
@@ -166,13 +101,13 @@ spec:
             initialDelaySeconds: 120
             periodSeconds: 10
             failureThreshold: 4
-      {{- if and .Values.helicone.web.cloudSqlProxy.enabled (not .Values.helicone.web.cloudSqlProxy.useWorkloadIdentity) }}
+      {{- if and .Values.helicone.cloudSqlProxy.enabled (not .Values.helicone.cloudSqlProxy.useWorkloadIdentity) }}
       volumes:
         - name: cloudsql-key
           secret:
-            secretName: {{ .Values.helicone.web.cloudSqlProxy.serviceAccountSecretName }}
+            secretName: {{ .Values.helicone.cloudSqlProxy.serviceAccountSecretName }}
             items:
-              - key: {{ .Values.helicone.web.cloudSqlProxy.serviceAccountSecretKey }}
+              - key: {{ .Values.helicone.cloudSqlProxy.serviceAccountSecretKey }}
                 path: key.json
       {{- end }}
 {{- end }}

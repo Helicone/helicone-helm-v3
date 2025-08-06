@@ -73,28 +73,7 @@ ClickHouse URL with scheme and port eg http://localhost:18123
 {{- if .Values.helicone.clickhouse.enabled }}
   value: {{ printf "http://%s:8123" (include "clickhouse.name" .) | quote }}
 {{- else }}
-  value: {{ (.Values.helicone.config.externalClickhouseUrl | default .Values.helicone.config.clickhouseHost | required "When clickhouse.enabled is false, either helicone.config.externalClickhouseUrl or helicone.config.clickhouseHost must be provided") | quote }}
-{{- end }}
-{{- end }}
-
-{{/*
-ClickHouse hostname for migration scripts (just hostname, no protocol/port, eg `clickhouse`)
-*/}}
-{{- define "helicone.env.clickhouseHostForMigrations" -}}
-- name: CLICKHOUSE_HOST
-{{- if .Values.helicone.clickhouse.enabled }}
-  value: {{ include "clickhouse.name" . | quote }}
-{{- else }}
-  value: {{ .Values.helicone.config.externalClickhouseHost | required "When clickhouse.enabled is false, helicone.config.externalClickhouseHost must be provided" }}
-{{- end }}
-{{- end }}
-
-{{- define "helicone.env.clickhousePort" -}}
-- name: CLICKHOUSE_PORT
-{{- if .Values.helicone.clickhouse.enabled }}
-  value: "8123"
-{{- else }}
-  value: {{ .Values.helicone.config.externalClickhousePort | default .Values.helicone.config.clickhousePort | required "When clickhouse.enabled is false, either helicone.config.externalClickhousePort or helicone.config.clickhousePort must be provided" | quote }}
+  value: {{ (.Values.helicone.config.externalClickhouseUrl | default .Values.helicone.config.clickhouseUrl | required "When clickhouse.enabled is false, either helicone.config.externalClickhouseUrl or helicone.config.clickhouseUrl must be provided") | quote }}
 {{- end }}
 {{- end }}
 
@@ -227,7 +206,7 @@ ClickHouse hostname for migration scripts (just hostname, no protocol/port, eg `
 - name: DB_HOST
 {{- if .Values.helicone.cloudnativepg.enabled }}
   value: {{ printf "%s-rw" .Values.helicone.cloudnativepg.cluster.name | quote }}
-{{- else if .Values.helicone.web.cloudSqlProxy.enabled }}
+{{- else if .Values.helicone.cloudSqlProxy.enabled }}
   value: "localhost"
 {{- else }}
   value: {{ .Values.helicone.config.dbHost | required "When cloudnativepg.enabled is false, helicone.config.dbHost must be provided" | quote }}
@@ -236,7 +215,7 @@ ClickHouse hostname for migration scripts (just hostname, no protocol/port, eg `
 
 {{- define "helicone.env.dbPort" -}}
 - name: DB_PORT
-{{- if .Values.helicone.web.cloudSqlProxy.enabled }}
+{{- if .Values.helicone.cloudSqlProxy.enabled }}
   value: {{ include "helicone.cloudSqlProxy.port" . | quote }}
 {{- else }}
   value: {{ .Values.helicone.config.dbPort | default "5432" | quote }}
@@ -277,7 +256,7 @@ ClickHouse hostname for migration scripts (just hostname, no protocol/port, eg `
 {{- define "helicone.db.connectionString" -}}
 {{- if .Values.helicone.cloudnativepg.enabled }}
 {{- printf "%s:$(DB_PASSWORD)@%s-rw:$(DB_PORT)/%s?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" .Values.helicone.cloudnativepg.cluster.bootstrap.initdb.owner .Values.helicone.cloudnativepg.cluster.name .Values.helicone.cloudnativepg.cluster.bootstrap.initdb.database }}
-{{- else if .Values.helicone.web.cloudSqlProxy.enabled }}
+{{- else if .Values.helicone.cloudSqlProxy.enabled }}
 {{- printf "%s:%s@localhost:%s/%s?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" .Values.helicone.config.dbHost .Values.helicone.config.dbPassword (include "helicone.cloudSqlProxy.port" .) .Values.helicone.config.dbName }}
 {{- else }}
 {{- printf "$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" }}
@@ -288,7 +267,7 @@ ClickHouse hostname for migration scripts (just hostname, no protocol/port, eg `
 - name: FLYWAY_URL
 {{- if .Values.helicone.cloudnativepg.enabled }}
   value: {{ printf "jdbc:postgresql://%s-rw:5432/%s?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" .Values.helicone.cloudnativepg.cluster.name .Values.helicone.cloudnativepg.cluster.bootstrap.initdb.database | quote }}
-{{- else if .Values.helicone.web.cloudSqlProxy.enabled }}
+{{- else if .Values.helicone.cloudSqlProxy.enabled }}
   value: {{ printf "jdbc:postgresql://localhost:%s/%s?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" (include "helicone.cloudSqlProxy.port" .) .Values.helicone.config.dbName | quote }}
 {{- else }}
   value: {{ .Values.helicone.config.flywayUrl | default (printf "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions") | quote }}
@@ -430,26 +409,26 @@ ClickHouse hostname for migration scripts (just hostname, no protocol/port, eg `
 Cloud SQL Auth Proxy helpers
 */}}
 {{- define "helicone.cloudSqlProxy.enabled" -}}
-{{- .Values.helicone.web.cloudSqlProxy.enabled -}}
+{{- .Values.helicone.cloudSqlProxy.enabled -}}
 {{- end }}
 
 {{- define "helicone.cloudSqlProxy.connectionName" -}}
-{{- .Values.helicone.web.cloudSqlProxy.connectionName | required "When cloudSqlProxy.enabled is true, connectionName must be provided" -}}
+{{- .Values.helicone.cloudSqlProxy.connectionName | required "When cloudSqlProxy.enabled is true, connectionName must be provided" -}}
 {{- end }}
 
 {{- define "helicone.cloudSqlProxy.port" -}}
-{{- .Values.helicone.web.cloudSqlProxy.port | default 5432 -}}
+{{- .Values.helicone.cloudSqlProxy.port | default 5432 -}}
 {{- end }}
 
 {{- define "helicone.cloudSqlProxy.image" -}}
-{{- printf "%s:%s" .Values.helicone.web.cloudSqlProxy.image.repository .Values.helicone.web.cloudSqlProxy.image.tag -}}
+{{- printf "%s:%s" .Values.helicone.cloudSqlProxy.image.repository .Values.helicone.cloudSqlProxy.image.tag -}}
 {{- end }}
 
 {{- define "helicone.cloudSqlProxy.args" -}}
-{{- if not .Values.helicone.web.cloudSqlProxy.useWorkloadIdentity -}}
+{{- if not .Values.helicone.cloudSqlProxy.useWorkloadIdentity -}}
 - "--credentials-file=/secrets/cloudsql/key.json"
 {{- end -}}
-{{- range .Values.helicone.web.cloudSqlProxy.extraArgs }}
+{{- range .Values.helicone.cloudSqlProxy.extraArgs }}
 - "{{ . }}"
 {{- end }}
 - "--port={{ include "helicone.cloudSqlProxy.port" . | int }}"
