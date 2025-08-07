@@ -265,6 +265,8 @@ helicone:
   config:
     # External database configuration (not needed when cloudnativepg.enabled=true)
     dbPort: "5432" # Default port for PostgreSQL
+    databaseUrlSecretName: ""
+    databaseUrlSecretKey: ""
     heliconePassword: "changeme-in-production" # Password for helicone app user
     vercelEnv: "development"
     clickhouseUrl: "https://ucewi94kth.us-west-2.aws.clickhouse.cloud:8443" # TODO Not doing DRY between the two configs (above configuration as well)

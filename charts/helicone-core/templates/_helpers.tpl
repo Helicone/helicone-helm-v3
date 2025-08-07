@@ -253,16 +253,6 @@ ClickHouse URL with scheme and port eg http://localhost:18123
 {{- end }}
 {{- end }}
 
-{{- define "helicone.db.connectionString" -}}
-{{- if .Values.helicone.cloudnativepg.enabled }}
-{{- printf "%s:$(DB_PASSWORD)@%s-rw:$(DB_PORT)/%s?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" .Values.helicone.cloudnativepg.cluster.bootstrap.initdb.owner .Values.helicone.cloudnativepg.cluster.name .Values.helicone.cloudnativepg.cluster.bootstrap.initdb.database }}
-{{- else if .Values.helicone.cloudSqlProxy.enabled }}
-{{- printf "%s:%s@localhost:%s/%s?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" .Values.helicone.config.dbHost .Values.helicone.config.dbPassword (include "helicone.cloudSqlProxy.port" .) .Values.helicone.config.dbName }}
-{{- else }}
-{{- printf "$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&options=-c%%20search_path%%3Dpublic,extensions" }}
-{{- end }}
-{{- end }}
-
 {{- define "helicone.env.flywayUrl" -}}
 - name: FLYWAY_URL
 {{- if .Values.helicone.cloudnativepg.enabled }}
@@ -301,27 +291,47 @@ ClickHouse URL with scheme and port eg http://localhost:18123
 - name: SUPABASE_DATABASE_URL
   {{- if and (.Values.helicone.config.databaseUrl) (ne .Values.helicone.config.databaseUrl "") }}
   value: {{ .Values.helicone.config.databaseUrl | quote }}
+  {{- else if and .Values.helicone.config.databaseUrlSecretName (ne .Values.helicone.config.databaseUrlSecretName "") }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.helicone.config.databaseUrlSecretName | quote }}
+      key: {{ .Values.helicone.config.databaseUrlSecretKey | default "url" | quote }}
   {{- else if .Values.externalSecrets.enabled }}
   valueFrom:
     secretKeyRef:
       name: postgres-credentials
       key: url
   {{- else }}
-  value: {{ printf "postgresql://%s" (include "helicone.db.connectionString" .) | quote }}
+  value: {{ printf "postgresql://%s:%s@%s:%s/%s" 
+    (.Values.helicone.config.dbUser | default "postgres") 
+    (.Values.helicone.config.dbPassword | default "postgres") 
+    (.Values.helicone.config.dbHost | default "localhost") 
+    (.Values.helicone.config.dbPort | default "5432") 
+    (.Values.helicone.config.dbName | default "postgres") | quote }}
   {{- end }}
 
 - name: DATABASE_URL
   {{- if and (.Values.helicone.config.databaseUrl) (ne .Values.helicone.config.databaseUrl "") }}
   value: {{ .Values.helicone.config.databaseUrl | quote }}
+  {{- else if and .Values.helicone.config.databaseUrlSecretName (ne .Values.helicone.config.databaseUrlSecretName "") }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.helicone.config.databaseUrlSecretName | quote }}
+      key: {{ .Values.helicone.config.databaseUrlSecretKey | default "url" | quote }}
   {{- else if .Values.externalSecrets.enabled }}
   valueFrom:
     secretKeyRef:
       name: postgres-credentials
       key: url
   {{- else }}
-  value: {{ printf "postgresql://%s" (include "helicone.db.connectionString" .) | quote }}
+  value: {{ printf "postgresql://%s:%s@%s:%s/%s" 
+    (.Values.helicone.config.dbUser | default "postgres") 
+    (.Values.helicone.config.dbPassword | default "postgres") 
+    (.Values.helicone.config.dbHost | default "localhost") 
+    (.Values.helicone.config.dbPort | default "5432") 
+    (.Values.helicone.config.dbName | default "postgres") | quote }}
   {{- end }}
-{{- end }}
+  {{- end }}
 
 {{- define "helicone.env.smtpHost" -}}
 - name: SMTP_HOST
