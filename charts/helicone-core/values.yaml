@@ -283,6 +283,7 @@ helicone:
     kongHttpsPort: "8443"
     pgrstDbSchemas: "public,storage,graphql_public"
     siteUrl: "https://filevine.helicone.ai"
+    nextPublicAppUrl: "https://filevine.helicone.ai"
     betterAuthTrustedOrigins: "https://filevine.helicone.ai,http://filevine.helicone.ai"
     additionalRedirectUrls: ""
     jwtExpiry: "3600"

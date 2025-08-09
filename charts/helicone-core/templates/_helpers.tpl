@@ -456,6 +456,11 @@ Cloud SQL Auth Proxy helpers
   value: {{ .Values.helicone.config.siteUrl | default "https://heliconetest.com" | quote }}
 {{- end }}
 
+{{- define "helicone.env.nextPublicAppUrl" -}}
+- name: NEXT_PUBLIC_APP_URL
+  value: {{ .Values.helicone.config.nextPublicAppUrl | default .Values.helicone.config.siteUrl | default "https://heliconetest.com" | quote }}
+{{- end }}
+
 # TODO It doesn't make sense for the API keys of the LLMs to be defined separately for ai-gateway.
 {{- define "helicone.env.aiGatewayOpenaiApiKey" -}}
 - name: OPENAI_API_KEY

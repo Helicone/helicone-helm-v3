@@ -27,6 +27,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{ include "helicone.env.betterAuthSecret" . }}
 {{ include "helicone.env.betterAuthUrl" . }}
 {{ include "helicone.env.siteUrl" . }}
+{{ include "helicone.env.nextPublicAppUrl" . }}
 {{ include "helicone.env.betterAuthTrustedOrigins" . }}
 {{ include "helicone.env.stripeSecretKey" . }}
 {{ include "helicone.env.azureApiKey" . }}
