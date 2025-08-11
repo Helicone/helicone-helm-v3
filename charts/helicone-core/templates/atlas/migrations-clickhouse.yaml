@@ -1,0 +1,28 @@
+{{- if and .Values.helicone.atlas.enabled .Values.helicone.atlas.migrations.clickhouse.enabled }}
+apiVersion: atlasgo.io/v1alpha1
+kind: AtlasMigration
+metadata:
+  name: {{ include "helicone.name" . }}-clickhouse-migrations
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  {{- if .Values.externalSecrets.enabled }}
+  urlFrom:
+    secretKeyRef:
+      name: {{ .Values.helicone.config.clickhouseSecretsName | default (printf "%s-secrets" (include "clickhouse.name" .)) | quote }}
+      key: {{ .Values.helicone.config.clickhouseUrlKey | default "url" | quote }}
+  {{- else }}
+  url: {{ .Values.helicone.config.clickhouseUrl | required "helicone.config.clickhouseUrl must be provided when externalSecrets is disabled" | quote }}
+  {{- end }}
+  dir:
+    url: {{ if .Values.helicone.atlas.migrations.clickhouse.dir }}{{ .Values.helicone.atlas.migrations.clickhouse.dir | quote }}{{ else }}{{ printf "oci://%s:%s?subdir=clickhouse/migrations" .Values.helicone.atlas.ociRepository .Values.helicone.atlas.version | quote }}{{ end }}
+  {{- with .Values.helicone.atlas.migrations.clickhouse.extraEnv }}
+  env:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+
+

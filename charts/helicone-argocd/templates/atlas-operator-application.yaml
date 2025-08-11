@@ -1,0 +1,41 @@
+{{- if and .Values.argocd.enabled .Values.atlasOperator.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: atlas-operator
+  namespace: {{ .Values.argocd.namespace | default "argocd" }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+spec:
+  project: {{ .Values.argocd.project | default .Release.Name }}
+  source:
+    repoURL: "https://helm.ariga.io"
+    chart: atlas-operator
+    targetRevision: {{ .Values.atlasOperator.targetRevision | default "*" | quote }}
+    helm:
+      values: |
+        replicaCount: 1
+  destination:
+    server: {{ .Values.argocd.destination.server | default "https://kubernetes.default.svc" }}
+    namespace: {{ .Values.atlasOperator.namespace | default "atlas-operator" }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+      - ServerSideApply=false
+      - SkipDryRunOnMissingResource=true
+      - ApplyOutOfSyncOnly=true
+      - Replace=true
+      - Validate=false
+      - FailOnSharedResource=false
+{{- end }}
+
+

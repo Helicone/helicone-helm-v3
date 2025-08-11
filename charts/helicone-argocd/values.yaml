@@ -41,6 +41,11 @@ argocd:
 
   revisionHistoryLimit: 3
 
+atlasOperator:
+  enabled: true
+  namespace: atlas-operator
+  targetRevision: "0.4.0"
+
 argo-cd:
   enabled: true
   global:

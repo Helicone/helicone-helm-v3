@@ -101,12 +101,20 @@ helicone:
 
     extraArgs: []
 
-  migrationRunner:
-    image:
-      repository: helicone/migrations
-      pullPolicy: IfNotPresent
-      tag: "v2025.08.08-4"
-    resources: {}
+  atlas:
+    enabled: true
+    controllerNamespace: "atlas-operator"
+    ociRepository: "ghcr.io/helicone/atlas-migrations"
+    version: "latest"
+    migrations:
+      postgres:
+        enabled: true
+        dir: ""
+        extraEnv: []
+      clickhouse:
+        enabled: true
+        dir: ""
+        extraEnv: []
 
   cloudnativepg:
     enabled: true

@@ -1,0 +1,30 @@
+{{- if and .Values.helicone.atlas.enabled .Values.helicone.atlas.migrations.postgres.enabled }}
+apiVersion: atlasgo.io/v1alpha1
+kind: AtlasMigration
+metadata:
+  name: {{ include "helicone.name" . }}-postgres-migrations
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "helicone.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  # Prefer URL from secret when External Secrets are enabled
+  {{- if .Values.externalSecrets.enabled }}
+  urlFrom:
+    secretKeyRef:
+      name: postgres-credentials
+      key: url
+  {{- else }}
+  # Fallback explicit URL from values (for non-ExternalSecrets setups)
+  url: {{ printf "postgres://%s:%s@%s:%d/%s?sslmode=disable" (.Values.helicone.config.dbUser | default "postgres") (.Values.helicone.config.dbPassword | default "postgres") (.Values.helicone.config.dbHost | default "localhost") (.Values.helicone.config.dbPort | default 5432) (.Values.helicone.config.dbName | default "postgres") | quote }}
+  {{- end }}
+  dir:
+    url: {{ if .Values.helicone.atlas.migrations.postgres.dir }}{{ .Values.helicone.atlas.migrations.postgres.dir | quote }}{{ else }}{{ printf "oci://%s:%s?subdir=postgres/migrations" .Values.helicone.atlas.ociRepository .Values.helicone.atlas.version | quote }}{{ end }}
+  {{- with .Values.helicone.atlas.migrations.postgres.extraEnv }}
+  env:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+
+
